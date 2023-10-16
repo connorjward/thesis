@@ -1,0 +1,69 @@
+\documentclass[a4,10pt]{article}
+
+\usepackage{mymacros}
+
+\title{\pyop3: A Domain-Specific Language for Expressing Iterations over Mesh-like Data Structures}
+\author{Connor J. Ward and David A. Ham}
+\date{\today}
+
+\begin{document}
+  \maketitle
+
+  \begin{abstract}
+
+  \end{abstract}
+
+  \section{Introduction}
+
+  % Discuss DSLs
+
+  \section{\pyop3}
+  % mention sparsity?
+  % mention ragged (good for star(vertex))
+
+  \subsection{Representing mesh-like data layouts}
+
+  % start with P3?
+
+  \subsection{A language for loops}
+
+  % give an example
+
+  % typed multi-indices and substitution
+  % context-sensitive
+
+  \subsection{Compilation}
+
+  \section{Performance}
+
+  % all about minimising memory bandwidth, aim for roofline peak at all points
+  % I need to implement the map compression algorithm (generically)
+
+  % demonstrate that function calls (e.g. VecSetValues) are super slow? Not
+  % really worth implementing.
+
+  % key principle: optimisations are easy, synthesis is hard. Level of abstraction
+  % facilitates memory optimisations.
+
+  \section{Related work}
+
+  % What other array languages/frameworks exist in this space?
+  % * OP2
+  % * PyOP2
+  % * TACO (tree structure but not SoA-like)
+  % * Halide?
+  % * Liszt
+  % * Simit
+  % * Taichi
+  % * AwkwardArray (ragged)
+  % * DistArray (distributed)
+
+  % ---
+
+  % Does related work go here or in a separate section at the end?
+  % Almost easier to put at the end as the concepts/distinctions are hard
+  % to explain without having read the rest of the paper.
+
+
+  \section{Conclusions}
+\end{document}
