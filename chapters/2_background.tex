@@ -1,0 +1,165 @@
+\chapter{Background}
+
+% ====== NOTES ======
+
+% meshes
+  % dmplex (introduce PETSc here)
+
+% FEM demo here?
+
+% data layouts on meshes
+  % continuity between cells done by associating DoFs with vertices and edges etc
+  % stencils
+    % stencils in dmplex, topological query language
+
+% performance considerations for FEM?
+
+% codegen + DSLs
+  % how does loopy work?
+
+% ----------------------------
+
+% definitely need a section on "the rest of the software stack" - needs to be before I
+% start using DMPlex terminology
+% \section{Stencil languages}
+% \section{Firedrake}
+% \section{PyOP2}
+% \section{Code generation for PDEs}
+
+% explain loopy's programming model of kernel plus transformations. It is fundamentally
+% very similar to how high level mathematical DSLs like UFL work except for loops.
+
+\subsection{Inspector-executor model}
+% two programs, an inspector that generates a schedule, and an executor that uses it. Executor
+% is a transformed original program.
+% these aim to improve data locality and parallelisation opportunities.
+% important point is that I/E strategies utilise runtime information to generate optimal schedules
+% this is very important for unstructured applications where the compilers would have a really hard time!
+% we care less about parallelisation because mesh decomposition is a solved problem/out of scope
+% and we, like PETSc, believe that threading is not a useful model for massively parallel
+% simulations.
+\cite{knepleyExascaleComputingThreads2015} % PETSc rebuttal
+
+\cite{stroutSparsePolyhedralFramework2018} % review article
+\cite{mirchandaneyPrinciplesRuntimeSupport1988} % old (general purpose) example
+\cite{arenazInspectorExecutorAlgorithmIrregular2004} % fem example but specifically parallelisation
+% perhaps also cite Luporini for sparse tiling? yes I think that would be good.
+
+% Interesting note: composing inspector-executor transformations is difficult.
+% see "The Sparse Polyhedral Framework: Composing Compiler-Generated Inspector-Executor Code"
+% DSLs like loopy and pyop3 can make this easier to handle.
+
+
+% mesh numbering is an example of an inspector-executor thing.
+% so is determining core and owned to overlap communication and computation
+
+% DSLs help a lot to implement this sort of thing because transformations can be a lot easier to
+% express using a high-level representation.
+
+% -----------------
+\section{Domain-specific languages}
+
+% UFL paper has a lot to say on this.
+% special note: we use an embedded DSL for simpler interop with other libraries.
+% "seamless integration with other libraries."
+% also can use parser of host language
+
+% stress "composed in arbitrary ways"
+% UFL paper: "Paraphrasing P. Hudak [1996], a DSEL is the ultimate abstraction, allowing the user to reason about the program within the domain semantics, rather than within the semantics of the programming language."
+
+% should also discuss the advantages of high level abstractions, helicopter principle?
+
+% why not JIT like Julia or numba?
+% - loses semantic information, precluding domain-specific optimisations
+%   (e.g. sum factorisation (i.e. common subexpr elimination) from tensor repr)
+% - we target loopy because it is a convenient abstraction for expressing the types
+%   of optimisations relevant to our use case. From loopy it is more natural to lower to
+%   C/CUDA than something like Julia or numba.
+
+% ----------------
+
+\subsection{An example of a complicated stencil function: solving the Stokes equations using the finite element method}
+
+For a moderately complex stencil operation that we will refer to throughout this thesis we consider solving the Stokes equations using the finite element method (FEM)~\citep{larsonFiniteElementMethod2013}.
+The Stokes equations are a linearisation of the Navier-Stokes equations and are used to describe fluid flow for laminar (slow and calm) media.
+For domain $\Omega$ they are given by
+
+% split into sub-equations that may be separately labelled
+\begin{align}
+  \label{strong_stokes_equation}
+  - \nu \Delta u + \nabla p &= f \quad \textrm{in} \ \Omega, \\
+  \nabla \cdot u &= 0 \quad \textrm{in} \ \Omega, \\
+\end{align}
+
+where $u$ is the fluid velocity, $p$ the pressure, $\nu$ the viscosity and $f$ is a known forcing term.
+We also prescribe Dirichlet boundary conditions for the velocity across the entire boundary
+
+\begin{equation}
+  \label{strong_stokes_equation_bc}
+  u = g \quad \textrm{on} \ \Gamma. 
+\end{equation}
+
+For the finite element method we seek the solution to the \textit{variational}, or \textit{weak}, formulation of these equations.
+These are obtained by multiplying each equation by a suitable \textit{test function} and integrating over the domain.
+% should use sub-equation
+For \ref{strong_stokes_equation}, with $v$ as the test function and integrating by parts, this gives
+
+% taken from https://nbviewer.org/github/firedrakeproject/firedrake/blob/master/docs/notebooks/06-pde-constrained-optimisation.ipynb
+\begin{equation}
+  \int \nu \nabla u : \nabla v \textrm{d}\Omega
+  - \int p \nabla \cdot v \textrm{d}\Omega
+  = \int f \cdot v \textrm{d}\Omega
+\end{equation}
+
+% TODO Explain reduced function spaces better to motivate V vs V_0
+% Or, just say "prescribing Dirichlet boundary conditions on the full surface gives..."
+Note that the surface terms from the integration by parts can be dropped since $v$ is defined to be zero at Dirichlet nodes.
+
+For the second equation we simply get
+
+\begin{equation}
+  \int q \, \nabla \cdot u \textrm{d}\Omega = 0.
+\end{equation}
+
+In order for these equations to be well-posed we require that the functions $u$, $v$, $p$ and $q$ be drawn from appropriate function spaces\dots
+
+% now introduce discrete function spaces V_h and Q_h and convert equations to basis function form
+% with coefficients for u and p
+  % the coefficients for v may be ignored as they cancel
+% this is a block matrix vector system, test functions are rows and trial functions are columns
+% (see Homolya thesis)
+
+% *** Associating DoFs with mesh entities *** (new section)
+% what constraints are there on the function spaces? H1 and L2
+% specify the chosen element pair with Taylor-Hood (vec Pk, Pk-1, in this case k=3)?
+% show what the basis functions look like, use defelement
+% in FEM, basis functions overlap with points in closure(support(p)) - adjacency.
+
+% ---
+
+% now we have discrete basis function form, convert to a cellwise sum of integrals
+% this is a stencil calculation - for each cell, compute the contribution of all basis
+% functions that have support on the cell. This is closure(cell) - a stencil! Applies to both LHS and RHS
+
+% can show my pretty diagram now!
+
+% explain discontinuous case? interior facets? separate section.
+% "just" a different stencil. find an example integral with, say, a jump term.
+% could have a diagram for this too!
+
+
+\section{Related work}  % here? not really, need to introduce data layout abstraction first...
+
+% What other array languages/frameworks exist in this space?
+% * OP2
+% * PyOP2
+% * TACO (tree structure but not SoA-like)
+% * Chill sparse compiler thing, sparse polyhedral framework
+% * Halide?
+% * Liszt
+% * Simit
+% * Taichi
+% * AwkwardArray (ragged)
+% * DistArray (distributed)
+% * libCEED - batches kernel launches, specifically one-form assembly at high-order
+  % exploit vectorisation opportunities at different levels? like "unified residual assembly"

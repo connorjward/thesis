@@ -1,0 +1,92 @@
+\chapter{Introduction}
+
+% WHAT IS THE PROBLEM THAT I AM TRYING TO SOLVE AND WHY DOES IT MATTER?
+
+% solving PDEs is very important for lots of things
+% * climate
+% * manufacturing
+% * fluids...
+% * ???
+
+% 1. what is the problem area? what is it important for?
+% - stencil calcs?
+% - mesh iteration?
+
+% * mesh iteration is ubiquitous in numerical solution of PDEs
+
+% -----------------
+
+% WHAT ARE THE KEY ISSUES THAT ONE ENCOUNTERS WHEN ATTEMPTING TO SOLVE THIS PROBLEM?
+
+% solving them can be very complicated, and solving them efficiently can
+% be VERY complicated. So many things to consider: portability, performance, scaling,
+% discretisation/convergence...
+
+% code generation frameworks rely on having a data layout abstraction
+% the data layout abstraction needs to be able to interface with the generated code in some
+% (performant) way.
+% assumptions about the data layout (e.g. regularity, depth) can prohibit numerical methods.
+% requires a major redesign in order to get things right/sufficiently flexible.
+
+% "One of the major roadblocks to implementing mesh based simulation code is in"
+% "finangling the data structures. Complex algorithms like mesh adaptivity with"
+% "hanging nodes require a fundamental rewrite of the code base because it usually"
+% "violates a number of assumptions about what the underlying data looks like..."
+
+% i.e. solving PDEs with FEM is characterised by irregular data access patterns
+% and complex data structures. Assumptions about data structures inhibit the implementation
+% of certain numerical methods.
+
+% 2. Why is it a hard problem to solve?
+
+% other considerations?
+% - MPI?
+% - portable?
+
+% n. What problems exist with current implementations?
+% by hand
+% - portability
+% automatic
+% - like libceed - think this is wrong
+
+% * portability
+% * to address limitations in PyOP2's abstraction
+% * parallel is hard
+%    - pyop3 provides a transparent parallel abstraction
+%    - libCEED requires user input
+
+% Data layout choices are "baked-in" at the start of a simulation and implementation must follow suit
+% e.g. raggedness or constant inner shape? dual implementation?
+
+% -----------------
+
+% WHAT ARE THE CONCEPTS THAT ARE INTEGRAL TO MY WORK?
+
+% * Praise DSLs!
+% Code generation and DSLs provide a separation of concerns.
+% Domain specialists can focus
+% on the things they do best. Crucially it lowers the barrier to entry for scientists
+% to do novel work.
+
+% with codegen, i.e. compilers, one can do some really amazing optimisations not available
+% to library interfaces and traditional compilers. In particular cross-loop optimisations?
+% Also data layout/memory bandwidth minimising optimisations.
+
+% this is because DSLs provide a high-level representation of the problem where complicated problems may be straightforwardly expressed.
+
+% It is an example of an inspector-executor application.
+
+% key principle: optimisations are easy, synthesis is hard. Level of abstraction
+% facilitates memory optimisations.
+
+% -----------------
+
+% "IN THIS THESIS..."
+
+The remainder of this paper is laid out as follows\dots
+
+
+% ===== NOTES =====
+
+% See M. Homolya's thesis for a nice example of a good introduction. It is basically
+% a longer form abstract which also describes the rest of the thesis.
