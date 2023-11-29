@@ -75,6 +75,7 @@
 % - we target loopy because it is a convenient abstraction for expressing the types
 %   of optimisations relevant to our use case. From loopy it is more natural to lower to
 %   C/CUDA than something like Julia or numba.
+% We target loopy because that is the level of abstraction that we care about. We could then generate julia or numba code from there but there would be zero point. The julia JIT would make practically the same machine code (I think) and things like PETSc callbacks would get vastly slower as they would have to go via the Julia runtime.
 
 % ----------------
 
