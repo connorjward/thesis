@@ -208,7 +208,7 @@
   urldate = {2022-03-18},
   abstract = {Finite element exterior calculus is an approach to the design and understanding of finite element discretizations for a wide variety of systems of partial differential equations. This approach brings to bear tools from differential geometry, algebraic topology, and homological algebra to develop discretizations which are compatible with the geometric, topological, and algebraic structures which underlie well-posedness of the PDE problem being solved. In the finite element exterior calculus, many finite element spaces are revealed as spaces of piecewise polynomial differential forms. These connect to each other in discrete subcomplexes of elliptic differential complexes, and are also related to the continuous elliptic complex through projections which commute with the complex differential. Applications are made to the finite element discretization of a variety of problems, including the Hodge Laplacian, Maxwell’s equations, the equations of elasticity, and elliptic eigenvalue problems, and also to preconditioners.},
   langid = {english},
-  keywords = {\_tablet},
+  keywords = {\_tablet\_modified},
   file = {/home/connor/.local/share/zotero/storage/P6FPZHGC/Arnold et al_2006_Finite element exterior calculus, homological techniques, and applications.pdf}
 }
 
@@ -534,6 +534,22 @@
   file = {/home/connor/.local/share/zotero/storage/QHMIBTND/Bienz et al. - 2021 - Modeling Data Movement Performance on Heterogeneou.pdf}
 }
 
+@online{bisbasAutomatedMPICode2023,
+  title = {Automated {{MPI}} Code Generation for Scalable Finite-Difference Solvers},
+  author = {Bisbas, George and Nelson, Rhodri and Louboutin, Mathias and Kelly, Paul H. J. and Luporini, Fabio and Gorman, Gerard},
+  date = {2023-12-20},
+  eprint = {2312.13094},
+  eprinttype = {arxiv},
+  eprintclass = {cs},
+  url = {http://arxiv.org/abs/2312.13094},
+  urldate = {2024-01-03},
+  abstract = {Partial differential equations (PDEs) are crucial in modelling diverse phenomena across scientific disciplines, including seismic and medical imaging, computational fluid dynamics, image processing, and neural networks. Solving these PDEs on a large scale is an intricate and time-intensive process that demands careful tuning. This paper introduces automated code-generation techniques specifically tailored for distributed memory parallelism (DMP) to solve explicit finite-difference (FD) stencils at scale, a fundamental challenge in numerous scientific applications. These techniques are implemented and integrated into the Devito DSL and compiler framework, a well-established solution for automating the generation of FD solvers based on a high-level symbolic math input. Users benefit from modelling simulations at a high-level symbolic abstraction and effortlessly harnessing HPC-ready distributed-memory parallelism without altering their source code. This results in drastic reductions both in execution time and developer effort. While the contributions of this work are implemented and integrated within the Devito framework, the DMP concepts and the techniques applied are generally applicable to any FD solvers. A comprehensive performance evaluation of Devito’s DMP via MPI demonstrates highly competitive weak and strong scaling on the Archer2 supercomputer, demonstrating the effectiveness of the proposed approach in meeting the demands of large-scale scientific simulations.},
+  langid = {english},
+  pubstate = {preprint},
+  keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Mathematical Software,Computer Science - Performance},
+  file = {/home/connor/.local/share/zotero/storage/MBKUP7AW/Bisbas et al. - 2023 - Automated MPI code generation for scalable finite-.pdf}
+}
+
 @article{bittencourtNonnestedMultigridMethods2001,
   title = {Nonnested Multigrid Methods for Linear Problems: {{Nonnested Multigrid Methods}} for {{Linear Problems}}},
   shorttitle = {Nonnested Multigrid Methods for Linear Problems},
@@ -568,6 +584,15 @@
   abstract = {SPIRAL is an autotuning, program generation and code synthesis system that offers a fully automatic generation of highly optimized target codes, customized for the specific execution platform at hand. Initially, SPIRAL was targeted at problem domains in digital signal processing, later also at basic linear algebra. We open SPIRAL up to a new, practically relevant and challenging domain: multigrid solvers. SPIRAL is driven by algebraic transformation rules. We specify a set of such rules for a simple multigrid solver with a Richardson smoother for a discretized square 2D Poisson equation with Dirichlet boundary conditions. We present the target code that SPIRAL generates in static single-assignment form and discuss its performance. While this example required no changes of or extensions to the SPIRAL system, more complex multigrid solvers may require small adaptations.},
   langid = {english},
   file = {/home/connor/.local/share/zotero/storage/FKZPGIQ5/Bolten et al. - 2017 - Algebraic description and automatic generation of .pdf}
+}
+
+@thesis{bouzianiDifferentiableProgrammingPDE2023,
+  title = {Differentiable Programming across the {{PDE}} and {{Machine Learning}} Barrier},
+  author = {Bouziani, Nacime},
+  date = {2023},
+  langid = {english},
+  keywords = {\_tablet},
+  file = {/home/connor/.local/share/zotero/storage/97D2MRT4/Bouziani_Differentiable programming across the PDE and Machine Learning barrier.pdf}
 }
 
 @online{bouzianiEscapingAbstractionForeign2021,
@@ -769,6 +794,25 @@
   abstract = {We present scalable algorithms for parallel adaptive mesh refinement and coarsening (AMR), partitioning, and 2:1 balancing on computational domains composed of multiple connected two-dimensional quadtrees or three-dimensional octrees, referred to as a forest of octrees. By distributing the union of octants from all octrees in parallel, we combine the high scalability proven previously for adaptive single-octree algorithms with the geometric flexibility that can be achieved by arbitrarily connected hexahedral macromeshes, in which each macroelement is the root of an adapted octree. A key concept of our approach is an encoding scheme of the interoctree connectivity that permits arbitrary relative orientations between octrees. Based on this encoding we develop interoctree transformations of octants. These form the basis for high-level parallel octree algorithms, which are designed to interact with an application code such as a numerical solver for partial differential equations. We have implemented and tested these algorithms in the p4est software library. We demonstrate the parallel scalability of p4est on its own and in combination with two geophysics codes. Using p4est we generate and adapt multioctree meshes with up to 5.13 × 1011 octants on as many as 220,320 CPU cores and execute the 2:1 balance algorithm in less than 10 seconds per million octants per process.},
   langid = {english},
   file = {/home/connor/.local/share/zotero/storage/8ZWLZ679/Burstedde et al_2011_p4est.pdf}
+}
+
+@article{chanCollectiveCommunicationTheory2007,
+  title = {Collective Communication: Theory, Practice, and Experience},
+  shorttitle = {Collective Communication},
+  author = {Chan, Ernie and Heimlich, Marcel and Purkayastha, Avi and Van De Geijn, Robert},
+  date = {2007-09-10},
+  journaltitle = {Concurrency and Computation: Practice and Experience},
+  shortjournal = {Concurrency and Computation},
+  volume = {19},
+  number = {13},
+  pages = {1749--1783},
+  issn = {1532-0626, 1532-0634},
+  doi = {10.1002/cpe.1206},
+  url = {https://onlinelibrary.wiley.com/doi/10.1002/cpe.1206},
+  urldate = {2023-12-08},
+  abstract = {We discuss the design and high-performance implementation of collective communications operations on distributed-memory computer architectures. Using a combination of known techniques (many of which were first proposed in the 1980s and early 1990s) along with careful exploitation of communication modes supported by MPI, we have developed implementations that have improved performance in most situations compared to those currently supported by public domain implementations of MPI such as MPICH. Performance results from a large Intel Xeon/Pentium 4 (R) processor cluster are included. Copyright © 2007 John Wiley \& Sons, Ltd.},
+  langid = {english},
+  file = {/home/connor/.local/share/zotero/storage/SWP2KU6M/Chan et al. - 2007 - Collective communication theory, practice, and ex.pdf}
 }
 
 @article{changComparativeStudyFinite2018,
@@ -1595,6 +1639,22 @@
   abstract = {We discuss automating the calculation of weak shape derivatives in the Unified Form Language (ACM TOMS 40(2):9:1–9:37 2014) by introducing an appropriate additional step in the pullback from physical to reference space that computes Gaˆteaux derivatives with respect to the coordinate field. We illustrate the ease of use with several examples.},
   langid = {english},
   file = {/home/connor/.local/share/zotero/storage/ZH8P7DLP/Ham et al_2019_Automated shape differentiation in the Unified Form Language.pdf}
+}
+
+@online{hamEfficientNtoMCheckpointing2024,
+  title = {Efficient {{N-to-M Checkpointing Algorithm}} for {{Finite Element Simulations}}},
+  author = {Ham, David A. and Hapla, Vaclav and Knepley, Matthew G. and Mitchell, Lawrence and Sagiyama, Koki},
+  date = {2024-01-11},
+  eprint = {2401.05868},
+  eprinttype = {arxiv},
+  eprintclass = {cs},
+  url = {http://arxiv.org/abs/2401.05868},
+  urldate = {2024-01-17},
+  abstract = {In this work, we introduce a new algorithm for N-to-M checkpointing in finite element simulations. This new algorithm allows efficient saving/loading of functions representing physical quantities associated with the mesh representing the physical domain. Specifically, the algorithm allows for using different numbers of parallel processes for saving and loading, allowing for restarting and post-processing on the process count appropriate to the given phase of the simulation and other conditions. For demonstration, we implemented this algorithm in PETSc, the Portable, Extensible Toolkit for Scientific Computation, and added a convenient high-level interface into Firedrake, a system for solving partial differential equations using finite element methods. We evaluated our new implementation by saving and loading data involving 8.2 billion finite element degrees of freedom using 8,192 parallel processes on ARCHER2, the UK National Supercomputing Service.},
+  langid = {english},
+  pubstate = {preprint},
+  keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Mathematical Software},
+  file = {/home/connor/.local/share/zotero/storage/5T33UASW/Ham et al. - 2024 - Efficient N-to-M Checkpointing Algorithm for Finit.pdf}
 }
 
 @inproceedings{hammondMPIApplicationBinary2023,
@@ -3596,7 +3656,7 @@
   abstract = {Numerical methods such as the Finite Element Method (FEM) have been successfully adapted to utilize the computational power of GPU accelerators. However, much of the effort around applying FEM to GPU’s has been focused on high-order FEM due to higher arithmetic intensity and order of accuracy. For applications such as the simulation of subsurface processes, high levels of heterogeneity results in high-resolution grids characterized by highly discontinuous (cell-wise) material property fields. Moreover, due to the significant uncertainties in the characterization of the domain of interest, e.g. geologic reservoirs, the benefits of high order accuracy are reduced, and low-order methods are typically employed. In this study, we present a strategy for implementing highly performant low-order matrix-free FEM operator kernels in the context of the conjugate gradient (CG) method. Performance results of matrix-free Laplace and isotropic elasticity operator kernels are presented and are shown to compare favorably to matrix-based SpMV operators on V100, A100, and MI250X GPUs.},
   langid = {english},
   pubstate = {preprint},
-  keywords = {\_tablet,Computer Science - Mathematical Software,Mathematics - Numerical Analysis},
+  keywords = {Computer Science - Mathematical Software,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/DWJVFQR8/Settgast et al_2023_Performant low-order matrix-free finite element kernels on GPU architectures.pdf}
 }
 
