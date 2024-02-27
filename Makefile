@@ -70,7 +70,7 @@ $(CHAPTERS): %.pdf: $(FIGURES) %.clean %.tex
 	$(TEX_CHAPTERS) $*
 
 $(FIGURES): %.pdf: %.clean %.tex
-	$(TEX_FIGURES) $*
+	lualatex --output-directory=$(FIGURES_DIR) $*
 
 # Target always gets executed
 ALWAYS:
