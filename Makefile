@@ -1,7 +1,3 @@
-########################################
-# Makefile for thesis                  #
-########################################
-
 # Compilers
 TEX = xelatex -shell-escape
 BIB = bibtex
@@ -10,68 +6,71 @@ GLOS = makeglossaries
 PYTHON = python3
 
 # Documents
-FULL = thesis.pdf
-CHAPTERS =  \
-	chapters/1_introduction.pdf \
-	chapters/2_background.pdf \
-	chapters/3_mesh_data_layouts.pdf \
-	chapters/4_dsl.pdf \
-	chapters/5_parallel.pdf \
-	chapters/6_rest.pdf \
+THESIS = thesis.pdf
 
-# Figures
-FIG_DIR = figures
-FIG_TEX = $(wildcard $(FIG_DIR)/*.tex)
-FIGURES = $(patsubst $(FIG_DIR)/%.tex,$(FIG_DIR)/%.pdf,$(FIG_TEX))
+CHAPTERS_DIR = chapters
+CHAPTERS_SRC = $(wildcard $(CHAPTERS_DIR)/*.tex)
+CHAPTERS = $(patsubst $(CHAPTERS_DIR)/%.tex,$(CHAPTERS_DIR)/%.pdf,$(CHAPTERS_SRC))
+TEX_CHAPTERS = $(TEX) --output-directory=$(CHAPTERS_DIR)
+
+FIGURES_DIR = figures
+FIGURES_SRC = $(wildcard $(FIGURES_DIR)/*.tex)
+FIGURES = $(patsubst $(FIGURES_DIR)/%.tex,$(FIGURES_DIR)/%.pdf,$(FIGURES_SRC))
+TEX_FIGURES = $(TEX) --output-directory=$(FIGURES_DIR)
 
 # Make everything
-all: $(CHAPTERS) $(FULL)
-	sed -i 's/{Contents}{v}/{Contents}{vii}/' thesis.toc
-	$(TEX) thesis
-	make tidy
-
-# Make full document (DOES NOT CHECK FOR CHAPTERS)
-full: $(FULL)
+.PHONY: all
+all: $(THESIS)
 
 # Make all individual chapters
-chapters: $(CHAPTERS)
+# .PHONY: chapters
+chapters: ALWAYS $(CHAPTERS)
+	@echo $(CHAPTERS)
 
-# LaTeX file recipe
-# %.pdf: $(FIGURES) %.clean %.tex
-%.pdf: %.clean %.tex
-	$(TEX) $*
-	-$(BIB) $*
-	# -$(PY) $*
-	# $(GLOS) $*
-	$(TEX) $*
-	#-$(GLOS) $*
-	$(TEX) $*
-
-# Specific recipe for pdf figures
-# $(FIGURES): %.pdf: %.tex
-# 	$(PYTHON) figures/pstricks2pdf.py -o $@ $<
-
-# Figures recipe
+# Make figures
 .PHONY: figures
 figures: $(FIGURES)
-	#@echo FIG_DIR = $(FIG_DIR)
-	#@echo FIGTEX = $(FIG_TEX)
-	#@echo FIGURES = $(FIGURES)
 
-# Remove all auxilliary files
+# Remove build artefacts
 .PHONY: tidy
 tidy:
-	-rm ./*.aux ./*.ac? ./*.alg ./*.gl? ./*ist ./*.toc ./*.lo? ./*.out ./*.pytxcode ./*.bbl ./*.blg ./.*.swp 2>/dev/null || true
-	-rm -r pythontex-files-* 2>/dev/null || true
+	-rm ./*.aux ./**/*.aux \
+	./*.bbl ./**/*.bbl \
+	./*.bcf ./**/*.bcf \
+	./*.blg ./**/*.blg \
+	./*.log ./**/*.log \
+	./*.pyg ./**/*.pyg \
+	./*.run.xml ./**/*.run.xml \
+	./*.toc 2>/dev/null || true
 	
-# Remove pdfs
+# Remove PDFs
 .PHONY: clean
 clean: tidy
 	-rm ./*.pdf 2>/dev/null || true
 
-# Remove specific pdf
+# Remove specific PDF
 %.clean: ALWAYS
 	-rm ./$*.pdf 2>/dev/null || true
+
+$(THESIS): %.pdf: $(CHAPTERS) %.clean %.tex
+	$(TEX) $*
+	-$(BIB) $*
+	# $(GLOS) $*  # TODO
+	$(TEX) $*
+	# -$(GLOS) $*  # TODO
+	$(TEX) $*
+
+# "%" is a wildcard that evaluates to the suffix-less filename
+$(CHAPTERS): %.pdf: $(FIGURES) %.clean %.tex
+	$(TEX_CHAPTERS) $*
+	-$(BIB) $*
+	# $(GLOS) $*  # TODO
+	$(TEX_CHAPTERS) $*
+	# -$(GLOS) $*  # TODO
+	$(TEX_CHAPTERS) $*
+
+$(FIGURES): %.pdf: %.clean %.tex
+	$(TEX_FIGURES) $*
 
 # Target always gets executed
 ALWAYS:
