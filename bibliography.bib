@@ -1412,7 +1412,7 @@
   urldate = {2022-02-04},
   abstract = {Performance tests and analyses are critical to effective HPC software development and are central components in the design and implementation of computational algorithms for achieving faster simulations on existing and future computing architectures for large-scale application problems. In this paper, we explore performance and space-time trade-offs for important compute-intensive kernels of large-scale numerical solvers for PDEs that govern a wide range of physical applications. We consider a sequence of PDEmotivated bake-off problems designed to establish best practices for efficient high-order simulations across a variety of codes and platforms. We measure peak performance (degrees of freedom per second) on a fixed number of nodes and identify effective code optimization strategies for each architecture. In addition to peak performance, we identify the minimum time to solution at 80\% parallel efficiency. The performance analysis is based on spectral and p-type finite elements but is equally applicable to a broad spectrum of numerical PDE discretizations, including finite difference, finite volume, and h-type finite elements.},
   langid = {english},
-  keywords = {35-04,{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Performance,D.0,F.2,G.2,G.4,I.6},
+  keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},35-04,Computer Science - Performance,D.0,F.2,G.2,G.4,I.6},
   file = {/home/connor/.local/share/zotero/storage/RVAVCUKN/Fischer et al_2020_Scalability of High-Performance PDE Solvers.pdf}
 }
 
@@ -2966,7 +2966,7 @@
   abstract = {In this humorous and thought provoking article, we discuss certain myths and legends that are folklore among members of the high-performance computing community. We collected those myths from conversations at conferences and meetings, product advertisements, papers, and other communications such as tweets, blogs, and news articles within (and beyond) our community. We believe they represent the zeitgeist of the current era of massive change, driven by the end of many scaling laws such as Dennard scaling and Moore’s law. While some laws end, new directions open up, such as algorithmic scaling or novel architecture research. However, these myths are rarely based on scientific facts but often on some evidence or argumentation. In fact, we believe that this is the very reason for the existence of many myths and why they cannot be answered clearly. While it feels like there should be clear answers for each, some may remain endless philosophical debates such as the question whether Beethoven was better than Mozart. We would like to see our collection of myths as a discussion of possible new directions for research and industry investment.},
   langid = {english},
   pubstate = {preprint},
-  keywords = {Computer Science - Computers and Society,{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Hardware Architecture,Computer Science - Machine Learning,Computer Science - Social and Information Networks},
+  keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Computers and Society,Computer Science - Hardware Architecture,Computer Science - Machine Learning,Computer Science - Social and Information Networks},
   file = {/home/connor/.local/share/zotero/storage/XR9AD9IC/Matsuoka et al. - 2023 - Myths and Legends in High-Performance Computing.pdf}
 }
 
@@ -3692,7 +3692,7 @@
   eprintclass = {cs, math},
   url = {http://arxiv.org/abs/2107.00820},
   urldate = {2021-09-17},
-  abstract = {We present augmented Lagrangian Schur complement preconditioners and robust multigrid methods for incompressible Stokes problems with extreme viscosity variations. Such Stokes systems arise, for instance, upon linearization of nonlinear viscous flow problems, and they can have severely inhomogeneous and anisotropic coefficients. Using an augmented Lagrangian formulation for the incompressibility constraint makes the Schur complement easier to approximate, but results in a nearly singular (1,1)-block in the Stokes system. We present eigenvalue estimates for the quality of the Schur complement approximation. To cope with the near-singularity of the (1,1)-block, we extend a multigrid scheme with a discretization-dependent smoother and transfer operators from triangular/tetrahedral to the quadrilateral/hexahedral finite element discretizations \$[\textbackslash mathbb\{Q\}\_k]\^d\textbackslash times \textbackslash mathbb\{P\}\_\{k-1\}\^\{\textbackslash text\{disc\}\}\$, \$k\textbackslash geq 2\$, \$d=2,3\$. Using numerical examples with scalar and with anisotropic fourth-order tensor viscosity arising from linearization of a viscoplastic constitutive relation, we confirm the robustness of the multigrid scheme and the overall efficiency of the solver. We present scalability results using up to 28,672 parallel tasks for problems with up to 1.6 billion unknowns and a viscosity contrast up to ten orders of magnitude.},
+  abstract = {We present augmented Lagrangian Schur complement preconditioners and robust multigrid methods for incompressible Stokes problems with extreme viscosity variations. Such Stokes systems arise, for instance, upon linearization of nonlinear viscous flow problems, and they can have severely inhomogeneous and anisotropic coefficients. Using an augmented Lagrangian formulation for the incompressibility constraint makes the Schur complement easier to approximate, but results in a nearly singular (1,1)-block in the Stokes system. We present eigenvalue estimates for the quality of the Schur complement approximation. To cope with the near-singularity of the (1,1)-block, we extend a multigrid scheme with a discretization-dependent smoother and transfer operators from triangular/tetrahedral to the quadrilateral/hexahedral finite element discretizations \$[\textbackslash mathbb\{Q\}\_k]\^{}d\textbackslash times \textbackslash mathbb\{P\}\_\{k-1\}\^{}\{\textbackslash text\{disc\}\}\$, \$k\textbackslash geq 2\$, \$d=2,3\$. Using numerical examples with scalar and with anisotropic fourth-order tensor viscosity arising from linearization of a viscoplastic constitutive relation, we confirm the robustness of the multigrid scheme and the overall efficiency of the solver. We present scalability results using up to 28,672 parallel tasks for problems with up to 1.6 billion unknowns and a viscosity contrast up to ten orders of magnitude.},
   keywords = {{65F08, 65F10, 65N55, 65Y05, 76D07},{Computer Science - Computational Engineering, Finance, and Science},Mathematics - Numerical Analysis},
   file = {/home/connor/OneDrive/AppData/Zotero/Shih et al_2021_Robust multigrid techniques for augmented Lagrangian preconditioning of.pdf;/home/connor/.local/share/zotero/storage/ZC76CQMG/2107.html}
 }
@@ -4067,7 +4067,7 @@
   url = {http://arxiv.org/abs/2102.13018},
   urldate = {2021-11-11},
   abstract = {PetscSF, the communication component of the Portable, Extensible Toolkit for Scientific Computation (PETSc), is designed to provide PETSc's communication infrastructure suitable for exascale computers that utilize GPUs and other accelerators. PetscSF provides a simple application programming interface (API) for managing common communication patterns in scientific computations by using a star-forest graph representation. PetscSF supports several implementations based on MPI and NVSHMEM, whose selection is based on the characteristics of the application or the target architecture. An efficient and portable model for network and intra-node communication is essential for implementing large-scale applications. The Message Passing Interface, which has been the de facto standard for distributed memory systems, has developed into a large complex API that does not yet provide high performance on the emerging heterogeneous CPU-GPU-based exascale systems. In this paper, we discuss the design of PetscSF, how it can overcome some difficulties of working directly with MPI on GPUs, and we demonstrate its performance, scalability, and novel features.},
-  keywords = {{65F10, 65F50, 68N99, 68W10},C.2,{Computer Science - Distributed, Parallel, and Cluster Computing},G.4},
+  keywords = {{65F10, 65F50, 68N99, 68W10},{Computer Science - Distributed, Parallel, and Cluster Computing},C.2,G.4},
   file = {/home/connor/OneDrive/AppData/Zotero/Zhang et al_2021_The PetscSF Scalable Communication Layer.pdf;/home/connor/.local/share/zotero/storage/AFYNCH9U/2102.html}
 }
 
@@ -4085,4 +4085,23 @@
   pubstate = {preprint},
   keywords = {Computer Science - Performance,Computer Science - Programming Languages},
   file = {/home/connor/.local/share/zotero/storage/2W4HESQL/Zhao et al. - 2022 - Polyhedral Specification and Code Generation of Sp.pdf}
+}
+
+@inproceedings{zhouFrustratedMPIThreads2023,
+  title = {Frustrated with {{MPI}}+{{Threads}}? {{Try MPIxThreads}}!},
+  shorttitle = {Frustrated with {{MPI}}+{{Threads}}?},
+  booktitle = {Proceedings of the 30th {{European MPI Users}}' {{Group Meeting}}},
+  author = {Zhou, Hui and Raffenetti, Ken and Zhang, Junchao and Guo, Yanfei and Thakur, Rajeev},
+  date = {2023-09-11},
+  eprint = {2401.16551},
+  eprinttype = {arxiv},
+  eprintclass = {cs},
+  pages = {1--10},
+  doi = {10.1145/3615318.3615320},
+  url = {http://arxiv.org/abs/2401.16551},
+  urldate = {2024-02-21},
+  abstract = {MPI+Threads, embodied by the MPI/OpenMP hybrid programming model, is a parallel programming paradigm where threads are used for on-node shared-memory parallelization and MPI is used for multi-node distributed-memory parallelization. OpenMP provides an incremental approach to parallelize code, while MPI, with its isolated address space and explicit messaging API, affords straightforward paths to obtain good parallel performance. However, MPI+Threads is not an ideal solution. Since MPI is unaware of the thread context, it cannot be used for interthread communication. This results in duplicated efforts to create separate and sometimes nested solutions for similar parallel tasks. In addition, because the MPI library is required to obey message-ordering semantics, mixing threads and MPI via MPI\_THREAD\_MULTIPLE can easily result in miserable performance due to accidental serializations. We propose a new MPI extension, MPIX Thread Communicator (threadcomm), that allows threads to be assigned distinct MPI ranks within thread parallel regions. The threadcomm extension combines both MPI processes and OpenMP threads to form a unified parallel environment. We show that this MPI×Threads (MPI Multiply Threads) paradigm allows OpenMP and MPI to work together in a complementary way to achieve both cleaner codes and better performance.},
+  langid = {english},
+  keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing}},
+  file = {/home/connor/.local/share/zotero/storage/2G9UPMSY/Zhou et al. - 2023 - Frustrated with MPI+Threads Try MPIxThreads!.pdf}
 }

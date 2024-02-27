@@ -1,5 +1,24 @@
 \ProvidesPackage{mymacros}
 
+\usepackage{minted}
+
+% ============================== MATHS ==============================
+
+% DMPlex
+\newcommand{\closure}{\mathbb{cl}}
+\newcommand{\support}{\mathbb{supp}}
+\newcommand{\plexstar}{\mathbb{st}}
+\newcommand{\cone}{\mathbb{cone}}
+
+% FEM
+\newcommand{\hdiv}{$H(\mathrm{div})$ }
+\newcommand{\hcurl}{$H(\mathrm{curl})$ }
+
+% ============================== SOFTWARE ==============================
+
 % hacky way to get \pyop2 and \pyop3 as valid macros
 % source: https://tex.stackexchange.com/questions/13290/how-to-define-macros-with-numbers-in-them
 \def\pyop#1{\ifnum#1=2 {PyOP2}\else \ifnum#1=3 {\texttt{pyop3}}\fi \fi}
+
+\newcommand{\pycode}{\mintinline{python}}
+\newcommand{\ccode}{\mintinline{c}}

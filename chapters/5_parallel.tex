@@ -1,12 +1,17 @@
+\documentclass[thesis]{subfiles}
+
+\begin{document}
+
 \chapter{Parallelism}
+\label{chapter:parallel}
 
 Just like Firedrake (e.g.~\cite{betteridgeCodeGenerationProductive2021}) and PETSc (e.g.~???), \pyop3 is designed to be run efficiently on even the world's largest supercomputers.
 Accordingly, \pyop3 is designed to work SPMD with MPI/distributed memory.
-As with Firedrake and PETSc, MPI is chosen as the sole parallel abstraction; hybrid models also using shared memory libraries like OpenMP (cite) are not used because the posited performance advantages are contentious \pcite{knepleyExascaleComputingThreads2015} and would increase the complexity of the code.
+As with Firedrake and PETSc, MPI is chosen as the sole parallel abstraction; hybrid models also using shared memory libraries like OpenMP (cite) are not used because the posited performance advantages are contentious \parencite{knepleyExascaleComputingThreads2015} and would increase the complexity of the code.
 
 \section{Message passing with star forests}
 
-Almost all message passing in \pyop3 is handled by star forests, specifically by PETSc star forests (\ccode{PetscSF}) \pcite{zhangPetscSFScalableCommunication2021}.
+Almost all message passing in \pyop3 is handled by star forests, specifically by PETSc star forests (\ccode{PetscSF}) \parencite{zhangPetscSFScalableCommunication2021}.
 
 A star forest is defined as a collection of stars, where a star is defined as a tree with a single root and potentially many leaves.
 Star forests are effective for describing point-to-point MPI operations because they naturally encode the source and destination nodes as roots and leaves of the stars.
@@ -76,20 +81,20 @@ With \pyop3 we have only implemented the non-blocking approach for now, though a
 \subsection{Lazy communication}
 
 Coupled with the goal of ``don't wait for data you don't need", \pyop3 also obeys the principle of ``don't send data if you don't have to".
-\pyop3 associates with each parallel data structure two attributes: \py{leaves_valid} and \py{pending_reduction}.
+\pyop3 associates with each parallel data structure two attributes: \pycode{leaves_valid} and \pycode{pending_reduction}.
 The former tracks whether or not leaves (ghost points) contain up-to-date values.
 The latter tracks, in a manner of speaking, the validity of the roots of the star forest.
-If the leaves of the forest were modified, \py{pending_reduction} stores the reduction operation that needs to be executed for the roots of the star forest to contain correct values.
-As an example, were values to be incremented into the leaves\footnote{For this to be valid the leaves need to be zeroed beforehand.}, a \clang{SUM} reduction would be required for owned values to be synchronised.
+If the leaves of the forest were modified, \pycode{pending_reduction} stores the reduction operation that needs to be executed for the roots of the star forest to contain correct values.
+As an example, were values to be incremented into the leaves\footnote{For this to be valid the leaves need to be zeroed beforehand.}, a \ccode{SUM} reduction would be required for owned values to be synchronised.
 If there is no pending reduction, the roots are considered to be valid.
 
 The advantage to having these attributes is that they allow \pyop3 to only perform halo exchanges when absolutely necessary.
 Some pertinent cases include:
 
 \begin{itemize}
-  \item If the array is being written to \py{op3.WRITE}, all prior writes may be discarded.
-  \item If the array is being read from (\py{op3.READ}) and all values are already up-to-date, no exchange is necessary.
-  \item If the array is being incremented into (\py{op3.INC}) multiple times in a row, no exchange is needed as the reductions commute.
+  \item If the array is being written to \pycode{op3.WRITE}, all prior writes may be discarded.
+  \item If the array is being read from (\pycode{op3.READ}) and all values are already up-to-date, no exchange is necessary.
+  \item If the array is being incremented into (\pycode{op3.INC}) multiple times in a row, no exchange is needed as the reductions commute.
 \end{itemize}
 
 One can further extend this by considering the access patterns of the arrays involved.
@@ -184,3 +189,5 @@ This is shown, alongside the rest in Algorithm~\ref{alg:???}.
 \section{Performance results}
 
 % show some simple scaling data
+
+\end{document}

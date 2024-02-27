@@ -1,4 +1,9 @@
+\documentclass[thesis]{subfiles}
+
+\begin{document}
+
 \chapter{Background}
+\label{chapter:background}
 
 % ====== NOTES ======
 
@@ -57,7 +62,7 @@
 % express using a high-level representation.
 
 % -----------------
-\section{Domain-specific languages}
+\section{Domain-specific languages}  % compiler design???
 
 % UFL paper has a lot to say on this.
 % special note: we use an embedded DSL for simpler interop with other libraries.
@@ -81,7 +86,7 @@
 
 \subsection{An example of a complicated stencil function: solving the Stokes equations using the finite element method}
 
-For a moderately complex stencil operation that we will refer to throughout this thesis we consider solving the Stokes equations using the finite element method (FEM)~\citep{larsonFiniteElementMethod2013}.
+For a moderately complex stencil operation that we will refer to throughout this thesis we consider solving the Stokes equations using the finite element method (FEM)~\parencite{larsonFiniteElementMethod2013}.
 The Stokes equations are a linearisation of the Navier-Stokes equations and are used to describe fluid flow for laminar (slow and calm) media.
 For domain $\Omega$ they are given by
 
@@ -164,3 +169,5 @@ In order for these equations to be well-posed we require that the functions $u$,
 % * DistArray (distributed)
 % * libCEED - batches kernel launches, specifically one-form assembly at high-order
   % exploit vectorisation opportunities at different levels? like "unified residual assembly"
+
+\end{document}

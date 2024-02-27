@@ -1,0 +1,25 @@
+\documentclass[a4,10pt]{report}
+
+\usepackage{mymacros}
+\usepackage{subfiles}
+\usepackage{biblatex}
+
+\usepackage{amsmath}
+
+\title{\pyop3: A Domain-Specific Language for Expressing Iterations over Mesh-like Data Structures}
+\author{Connor J. Ward and David A. Ham}
+\date{\today}
+
+\begin{document}
+  \maketitle
+
+  \tableofcontents
+
+  % \subfile{chapters/0_abstract}
+  \subfile{chapters/1_introduction}
+  \subfile{chapters/2_background}
+  \subfile{chapters/3_mesh_data_layouts}
+  \subfile{chapters/4_dsl}
+  \subfile{chapters/5_parallel}
+  \subfile{chapters/6_rest}
+\end{document}
