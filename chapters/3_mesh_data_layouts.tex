@@ -12,41 +12,78 @@ This lays the groundwork for a much more expressive DSL since more of the semant
 
 \section{Data layouts for the finite element method}
 
-% show a P3 example that can be referred to later
+The semantics for data kept on a mesh are not accurately captured by existing array abstractions.
 
-\subsection{Conflicting DMPlex and \pyop2 abstractions}
+% TODO does this go here? background?
+Classic existing abstractions include N-dimensional array, ragged arrays and struct-of-arrays.
 
-\subsubsection{Representing data layouts with DMPlex}
+To provide a motivating example, consider the mesh shown in \cref{fig:XXX}. % P3 quad would look good
+Degree 3 Lagrange elements have been used and these have 1 DoF per vertex, 2 per edge and 4 per cell.
+DoFs are always stored contiguously per mesh point, and so the data layout for this mesh would look something like that shown in \cref{fig:YYY}.  % data layout of the mesh
+It is clear that, due to the variable step size for each mesh point, an N-dimensional array (with N > 1) is a poor fit for describing the layout.
+One could also view the data as just a flat array (figure ZZZ), but this loses the information about the mesh points.  % just show a diagram where nodes are indistinguishable
+We can therefore conclude that mesh data layouts require a new abstraction for comprehensively describing their semantics: \textit{axis trees}.
 
-DMPlex represents a mesh as a set of points where the points are divided into \textit{strata} (cells, edges, vertices, etc).
-These points are connected in a graph (Hasse diagram) and a rich set of queries can be used to determine the right adjacencies needed for things like the finite element method.
+\subsection{Axis trees}
 
-In order to associated data with these mesh points, a typical PETSc application will construct a PETSc \ccode{Section}.
-These are simple CSR-like (?) data structures that encode a data layout by associating a particular number of DoFs with each mesh point.
-Sections are a powerful tool for describing data layouts but they have a number of limitations:
+TODO
 
-\begin{itemize}
-  \item
-    Sections are fully ragged.
-    They only store DoF information per point in a completely unstructured way and are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
-    This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) that it would have been able to do were it to know of a constant loop extent.
-    Additionally, this variable size increases memory pressure as redundant arrays of constant sizes need to be streamed through memory.
+% axis, axis component
+% labelled
+% examples!
+% mixed
 
-  \item
-    DoFs per point are treated as a flat array.
-    This means that shape information is lost for, say, vector-valued functions.
-\end{itemize}
+\subsubsection{Computing offsets}
 
-With PETSc/DMPlex, the P3 DoF layout would be represented as shown in Figure~\ref{???}.
-% figure showing PetscSection info
+% layout algorithm
 
-\subsubsection{Data layouts in \pyop2}
+% we use pymbolic for describing the expressions
 
-\pyop2 takes a very different approach to describing data layouts to DMPlex.
-Firstly, it has no conception of what a mesh is and it deals solely with \textit{sets} and \textit{mappings between sets}.
-The rich query language provided by DMPlex is therefore unavailable and the task of determining the right adjacency maps is passed to the user.
+\subsection{Interleaving axis components}
 
-\subsection{What \pyop3 does}
+% renumbering
+
+\subsection{Ragged arrays}
+
+% ---
+
+% actually storing data in matrices and arrays
+
+% ---
+
+
+% OLD
+% \subsubsection{Representing data layouts with DMPlex}
+%
+% DMPlex represents a mesh as a set of points where the points are divided into \textit{strata} (cells, edges, vertices, etc).
+% These points are connected in a graph (Hasse diagram) and a rich set of queries can be used to determine the right adjacencies needed for things like the finite element method.
+%
+% In order to associated data with these mesh points, a typical PETSc application will construct a PETSc \ccode{Section}.
+% These are simple CSR-like (?) data structures that encode a data layout by associating a particular number of DoFs with each mesh point.
+% Sections are a powerful tool for describing data layouts but they have a number of limitations:
+%
+% \begin{itemize}
+%   \item
+%     Sections are fully ragged.
+%     They only store DoF information per point in a completely unstructured way and are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
+%     This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) that it would have been able to do were it to know of a constant loop extent.
+%     Additionally, this variable size increases memory pressure as redundant arrays of constant sizes need to be streamed through memory.
+%
+%   \item
+%     DoFs per point are treated as a flat array.
+%     This means that shape information is lost for, say, vector-valued functions.
+% \end{itemize}
+%
+% With PETSc/DMPlex, the P3 DoF layout would be represented as shown in Figure~\ref{???}.
+% % figure showing PetscSection info
+%
+% \subsubsection{Data layouts in \pyop2}
+%
+% \pyop2 takes a very different approach to describing data layouts to DMPlex.
+% Firstly, it has no conception of what a mesh is and it deals solely with \textit{sets} and \textit{mappings between sets}.
+% The rich query language provided by DMPlex is therefore unavailable and the task of determining the right adjacency maps is passed to the user.
+%
+% \subsection{What \pyop3 does}
 
   % start with P3?
 

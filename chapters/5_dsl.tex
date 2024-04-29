@@ -1,0 +1,43 @@
+\documentclass[thesis]{subfiles}
+
+\begin{document}
+
+\chapter{\pyop3}
+
+the top level API:
+loop expressions, made of statements
+also kernels, access descriptors
+
+
+% not sure where this goes, bit too specific to go here, but it probably is a
+% language/DSL thing not an indexing thing since it affects how many loops we have
+\subsection{Context-sensitive ...}
+
+context-sensitive things: maps and loops
+
+% this sort of feels like it should be its own chapter...
+\section{Code generation}
+% compilation pipeline, transformations then lowering then more transformations
+
+\subsection{\pyop3 transformations}
+
+expand loop contexts
+
+pack unpack transforms
+
+\subsection{Lowering to loopy}
+% inames etc
+
+\subsection{Loopy transformations}
+
+don't think we actually do any of these currently...
+
+\section{PETSc integration}
+
+also not sure that this is the right place for this section, maybe put inside an "other features" section?
+
+Arguably this could even go after where we discuss parallel. Most of the content is focused on axis tree arrays so this is arguably a confusing distraction. Should probably have a section per chapter on PETsc matrices as there are relevant bits per chapter that apply.
+
+Need to discuss raxes, caxes, and tabulating the rmap and cmap, they are materialised indexed things (like we have for temporaries).
+
+\end{document}
