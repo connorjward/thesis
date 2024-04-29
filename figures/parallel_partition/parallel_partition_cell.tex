@@ -1,0 +1,84 @@
+\documentclass[tikz]{standalone}
+
+\usepackage{tkz-euclide}
+\usetikzlibrary{
+  arrows,
+  calc,
+  graphs,
+  graphdrawing,
+  positioning,
+  tikzmark,
+  shapes.geometric,
+  patterns.meta,
+  decorations.pathreplacing
+}
+
+\begin{document}
+
+\begin{tikzpicture}
+
+\input{./common.tikz}
+
+% rank 0
+\begin{scope}
+  \defmesh
+
+  % edges
+  \tkzDrawSegments[edge_core](v00,v01 v01,v02 v02,v03)
+  \tkzDrawSegments[edge_core](v10,v11 v11,v12 v12,v13)
+  \tkzDrawSegments[edge_core](v20,v21 v21,v22 v22,v23)
+  \tkzDrawSegments[edge_root](v30,v31 v31,v32 v32,v33)
+  \tkzDrawSegments[edge_core](v00,v10 v10,v20)
+  \tkzDrawSegments[edge_core](v01,v11 v11,v21)
+  \tkzDrawSegments[edge_core](v02,v12 v12,v22)
+  \tkzDrawSegments[edge_core](v03,v13 v13,v23)
+  \tkzDrawSegments[edge_core](v20,v30 v21,v31 v22,v32 v23,v33)
+
+  % vertices
+  \tkzDrawPoints[vert_core](v00,v01,v02,v03)
+  \tkzDrawPoints[vert_core](v10,v11,v12,v13)
+  \tkzDrawPoints[vert_core](v20,v21,v22,v23)
+  \tkzDrawPoints[vert_root](v30,v31,v32,v33)
+
+  % stencils
+  \drawstencil{v12}{v22}{v23}{v13}{C};  % core
+  \drawstencil{v21}{v31}{v32}{v22}{R};  % root
+\end{scope}
+
+% rank 1
+\begin{scope}[xshift=3cm,yshift=-3.5cm]
+  \defmesh
+
+  % edges
+  \tkzDrawSegments[edge_leaf](v00,v01 v01,v02 v02,v03)
+  \tkzDrawSegments[edge_core](v10,v11 v11,v12 v12,v13)
+  \tkzDrawSegments[edge_core](v20,v21 v21,v22 v22,v23)
+  \tkzDrawSegments[edge_core](v30,v31 v31,v32 v32,v33)
+  \tkzDrawSegments[edge_core](v40,v41 v41,v42 v42,v43)
+  \tkzDrawSegments[edge_core](v20,v30 v30,v40)
+  \tkzDrawSegments[edge_core](v21,v31 v31,v41)
+  \tkzDrawSegments[edge_core](v22,v32 v32,v42)
+  \tkzDrawSegments[edge_core](v23,v33 v33,v43)
+  \tkzDrawSegments[edge_core](v00,v10 v01,v11 v02,v12 v03,v13)
+  \tkzDrawSegments[edge_core](v10,v20 v11,v21 v12,v22 v13,v23)
+
+  % vertices
+  \tkzDrawPoints[vert_leaf](v00,v01,v02,v03)
+  \tkzDrawPoints[vert_core](v10,v11,v12,v13)
+  \tkzDrawPoints[vert_core](v20,v21,v22,v23)
+  \tkzDrawPoints[vert_core](v30,v31,v32,v33)
+  \tkzDrawPoints[vert_core](v40,v41,v42,v43)
+
+  % stencils
+  \drawstencil{v22}{v32}{v33}{v23}{C};  % core
+  \drawstencil{v00}{v10}{v11}{v01}{L};  % leaf
+\end{scope}
+
+% divider
+\tkzDefPoint(3.15, 3.3){top}
+\tkzDefPoint(3.15, -3.8){bottom}
+\tkzDrawSegment[dashed,line width=.4pt](top,bottom)
+
+\end{tikzpicture}
+
+\end{document}

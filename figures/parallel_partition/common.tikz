@@ -1,0 +1,50 @@
+\tikzstyle {vert} = [minimum size=3pt,line width=0.5pt];
+\tikzstyle {vert_core} = [vert,draw=gray!70,fill=gray!70];
+\tikzstyle {vert_root} = [vert,draw=black,fill=black];
+\tikzstyle {vert_leaf} = [vert,draw=black,fill=white];
+
+\tikzstyle {edge} = [line width=.6pt];
+\tikzstyle {edge_core} = [edge,draw=gray!70];
+\tikzstyle {edge_root} = [edge,draw=black];
+\tikzstyle {edge_leaf} = [edge,dotted,draw=black];
+
+\newcommand{\defmesh}{%
+  \tkzDefPoint(0,0){v00}
+  \tkzDefPoint(0,1){v01}
+  \tkzDefPoint(0,2){v02}
+  \tkzDefPoint(0,3){v03}
+  \tkzDefPoint(1,0){v10}
+  \tkzDefPoint(1,1){v11}
+  \tkzDefPoint(1,2){v12}
+  \tkzDefPoint(1,3){v13}
+  \tkzDefPoint(2,0){v20}
+  \tkzDefPoint(2,1){v21}
+  \tkzDefPoint(2,2){v22}
+  \tkzDefPoint(2,3){v23}
+  \tkzDefPoint(3,0){v30}
+  \tkzDefPoint(3,1){v31}
+  \tkzDefPoint(3,2){v32}
+  \tkzDefPoint(3,3){v33}
+  \tkzDefPoint(4,0){v40}
+  \tkzDefPoint(4,1){v41}
+  \tkzDefPoint(4,2){v42}
+  \tkzDefPoint(4,3){v43}
+}
+
+\newcommand{\defmidpoint}[5]{
+  \tkzDefBarycentricPoint(#1=1,#2=1,#3=1,#4=1) \tkzGetPoint{#5}
+}
+
+% anti-clockwise
+% \newcommand{\drawstencil}[4]{
+\newcommand{\drawstencil}[5]{
+  \tkzDefShiftPoint[#1](-0.15,-0.15){stencil0}
+  \tkzDefShiftPoint[#2]( 0.15,-0.15){stencil1}
+  \tkzDefShiftPoint[#3]( 0.15, 0.15){stencil2}
+  \tkzDefShiftPoint[#4](-0.15, 0.15){stencil3}
+  \filldraw[draw=none,fill=blue!70,fill opacity=0.15,rounded corners=5]
+    (stencil0) -- (stencil1) -- (stencil2) -- (stencil3) -- cycle;
+
+  \defmidpoint{#1}{#2}{#3}{#4}{mid};
+  \node [circle,draw=black,fill=white,font=\tiny] at (mid) {#5};
+}
