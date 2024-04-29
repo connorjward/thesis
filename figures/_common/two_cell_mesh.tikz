@@ -1,3 +1,5 @@
+\tikzstyle {edge} = [draw=black,line width=1pt];
+
 \newcommand{\defTwoCellMesh}{%
   \tkzDefPoint(0,2){v0}
   \tkzDefPoint(3,4){v1}
@@ -12,19 +14,6 @@
   \tkzDefBarycentricPoint(v1=1,v2=1,v3=1)\tkzGetPoint{c1}
 }
 
-% P3 elements
-\newcommand{\defTwoCellMeshLagrange}{%
-  \defTwoCellMesh
-
-  % edge DoFs
-  \tkzDefBarycentricPoint(v0=2,v1=1)\tkzGetPoint{e0d0}
-  \tkzDefBarycentricPoint(v0=1,v1=2)\tkzGetPoint{e0d1}
-  \tkzDefBarycentricPoint(v0=2,v2=1)\tkzGetPoint{e1d0}
-  \tkzDefBarycentricPoint(v0=1,v2=2)\tkzGetPoint{e1d1}
-  \tkzDefBarycentricPoint(v1=2,v2=1)\tkzGetPoint{e2d0}
-  \tkzDefBarycentricPoint(v1=1,v2=2)\tkzGetPoint{e2d1}
-  \tkzDefBarycentricPoint(v1=2,v3=1)\tkzGetPoint{e3d0}
-  \tkzDefBarycentricPoint(v1=1,v3=2)\tkzGetPoint{e3d1}
-  \tkzDefBarycentricPoint(v2=2,v3=1)\tkzGetPoint{e4d0}
-  \tkzDefBarycentricPoint(v2=1,v3=2)\tkzGetPoint{e4d1}
+\newcommand{\drawTwoCellMesh}{%
+  \tkzDrawSegments[edge](v0,v1 v0,v2 v1,v2 v1,v3 v2,v3)
 }

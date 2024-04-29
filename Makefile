@@ -61,12 +61,8 @@ $(THESIS): %.pdf: $(CHAPTERS) %.clean %.tex
 	$(TEX) $*
 
 # "%" is a wildcard that evaluates to the suffix-less filename
+# skip biblatex for chapters as the bibliography is only for the full thesis
 $(CHAPTERS): %.pdf: $(FIGURES) %.clean %.tex
-	$(TEX_CHAPTERS) $*
-	-$(BIB) $*
-	# $(GLOS) $*  # TODO
-	$(TEX_CHAPTERS) $*
-	# -$(GLOS) $*  # TODO
 	$(TEX_CHAPTERS) $*
 
 $(FIGURES): %.pdf: %.clean %.tex

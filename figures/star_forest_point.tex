@@ -9,7 +9,6 @@
 
 \input{_common/star_forest.tikz}
 
-\tikzstyle {edge} = [draw=black,line width=1pt];
 \tikzstyle {eghost} = [edge,dashed];
 \tikzstyle {divider} = [dashed];
 
@@ -22,12 +21,15 @@
 
 % point star forest
 \begin{scope}
-  \drawMesh
+  \defTwoCellMesh
+  \drawTwoCellMesh
+  \drawTwoCellMeshDivider
   \tkzDrawPoints[powned](v0,v1,v2,v3,e0,e1,e2,e3,e4,c0,c1)
 \end{scope}
 
 % unified
 \begin{scope}[xshift=7.8cm,yshift=0.4cm]
+  \defSplitMesh
   \drawSplitMesh
 
   % arrows

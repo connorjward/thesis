@@ -13,7 +13,10 @@ This lays the groundwork for a much more expressive DSL since more of the semant
 \section{Data layouts for the finite element method}
 
 \begin{figure}
-  \label{fig:XXX}
+  \centering
+  \includegraphics[width=\textwidth]{two_cell_mesh_lagrange.pdf}
+  \caption{TODO}
+  \label{fig:two_cell_mesh_lagrange}
 \end{figure}
 
 \begin{figure}
@@ -29,8 +32,8 @@ The semantics for data kept on a mesh are not accurately captured by existing ar
 % TODO does this go here? background?
 Classic existing abstractions include N-dimensional array, ragged arrays and struct-of-arrays.
 
-To provide a motivating example, consider the mesh shown in \cref{fig:XXX}. % P3 quad would look good
-Degree 3 Lagrange elements have been used and these have 1 DoF per vertex, 2 per edge and 4 per cell.
+To provide a motivating example, consider the mesh shown in \cref{fig:two_cell_mesh_lagrange}. % P3 quad would look good
+Degree 3 Lagrange elements have been used and these have 1 DoF per vertex, 2 per edge and 1 per cell.
 DoFs are always stored contiguously per mesh point, and so the data layout for this mesh would look something like that shown in \cref{fig:YYY}.  % data layout of the mesh
 It is clear that, due to the variable step size for each mesh point, an N-dimensional array (with N > 1) is a poor fit for describing the layout.
 One could also view the data as just a flat array (figure ZZZ), but this loses the information about the mesh points.  % just show a diagram where nodes are indistinguishable

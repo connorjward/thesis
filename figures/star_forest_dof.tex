@@ -11,21 +11,14 @@
 
 \tikzstyle {arrow} = [line width=.8pt,-{Stealth[sep=4pt]}];
 
-\tikzstyle {dof} = [minimum size=7pt,line width=1pt];
-
-\tikzstyle {celldof} = [dof,draw=blue!60,fill=blue!60];
-\tikzstyle {edgedof} = [dof,draw=red!70,fill=red!70];
-\tikzstyle {vertdof} = [dof,draw=green!80,fill=green!80];
-
 \tikzstyle {eghostdof} = [edgedof,fill=white];
 \tikzstyle {vghostdof} = [vertdof,fill=white];
 
 % unified
 \begin{scope}
-  \drawMesh
-  \tkzDrawPoints[celldof](c0,c1)
-  \tkzDrawPoints[edgedof](e0d0,e0d1,e1d0,e1d1,e2d0,e2d1,e3d0,e3d1,e4d0,e4d1)
-  \tkzDrawPoints[vertdof](v0,v1,v2,v3)
+  \defTwoCellMeshLagrange
+  \drawTwoCellMeshLagrange
+  \drawTwoCellMeshDivider
 \end{scope}
 
 % split
