@@ -1,6 +1,6 @@
 # Compilers
 TEX = xelatex -shell-escape
-BIB = bibtex
+BIB = biber
 # PY = pythontex
 GLOS = makeglossaries
 PYTHON = python3

@@ -1,0 +1,90 @@
+\input{_common/two_cell_mesh.tikz}
+
+\tikzstyle {edge} = [draw=black,line width=1pt];
+\tikzstyle {eghost} = [edge,dashed];
+\tikzstyle {divider} = [dashed];
+
+\newcommand{\drawMesh}{%
+  \defTwoCellMeshLagrange
+
+  \tkzDrawSegments[edge](v0,v1 v0,v2 v1,v2 v1,v3 v2,v3)
+
+  % dividing lines
+  \tkzDefShiftPoint[v2](.3,.6){mid}
+  \tkzDefShiftPoint[mid](90:4){top}
+  \tkzDefShiftPoint[mid](210:2.5){left}
+  \tkzDefShiftPoint[mid](330:1.8){right}
+  \tkzDrawSegments[divider](mid,top mid,left mid,right)
+
+  % label processes
+  \tikzstyle {node} = [font=\bfseries\large];
+  \node [node,at={(1.6,.4)}] {0};
+  \node [node,at={(4.7,.4)}] {1};
+  \node [node,at={(3.7,-.4)}] {2};
+}
+
+\newcommand{\defSplitMesh}{%
+  % process 0
+  \tkzDefPoint(0,2){p0v0}
+  \tkzDefPoint(3,4){p0v1}
+  \tkzDefPoint(3,0){p0v2}
+  \tkzDefBarycentricPoint(p0v0=1,p0v1=1)\tkzGetPoint{p0e0}
+  \tkzDefBarycentricPoint(p0v0=1,p0v2=1)\tkzGetPoint{p0e1}
+  \tkzDefBarycentricPoint(p0v1=1,p0v2=1)\tkzGetPoint{p0e2}
+  \tkzDefBarycentricPoint(p0v0=1,p0v1=1,p0v2=1)\tkzGetPoint{p0c0}
+
+  % process 1
+  \tkzDefShiftPoint[p0v1](1.5,0){p1v0}
+  \tkzDefShiftPoint[p0v2](1.5,0){p1v1}
+  \tkzDefShiftPoint[p1v1](3,2){p1v2}
+  \tkzDefBarycentricPoint(p1v0=1,p1v1=1)\tkzGetPoint{p1e0}
+  \tkzDefBarycentricPoint(p1v0=1,p1v2=1)\tkzGetPoint{p1e1}
+  \tkzDefBarycentricPoint(p1v1=1,p1v2=1)\tkzGetPoint{p1e2}
+  \tkzDefBarycentricPoint(p1v0=1,p1v1=1,p1v2=1)\tkzGetPoint{p1c0}
+
+  % process 2
+  % do some Pythagoras (sqrt(3) * .75)
+  \tkzDefPoint(3.75,-1.299){p2v0}
+}
+
+\newcommand{\drawSplitMesh}{%
+  \defSplitMesh
+
+  % edges
+  \tkzDrawSegments[edge](p0v0,p0v1 p0v0,p0v2 p0v1,p0v2)
+  \tkzDrawSegments[edge](p1v0,p1v2 p1v1,p1v2)
+  \tkzDrawSegments[eghost](p1v0,p1v1)
+
+  % dividing lines
+  \tkzDefBarycentricPoint(p0v2=1,p1v1=1,p2v0=1)\tkzGetPoint{mid}
+  \tkzDefShiftPoint[mid](90:5){top}
+  \tkzDefShiftPoint[mid](210:2){left}
+  \tkzDefShiftPoint[mid](330:2){right}
+  \tkzDrawSegments[divider](mid,top mid,left mid,right)
+
+  % label processes
+  \tikzstyle {node} = [font=\bfseries\large];
+  \node [node,at={(2.5, -.4)}] {0};
+  \node [node,at={(5,-.4)}] {1};
+  \node [node,at={(4.5,-1.5)}] {2};
+}
+
+\newcommand{\defSplitMeshLagrange}{%
+  \defSplitMesh
+
+  % rank 0
+  \tkzDefBarycentricPoint(p0v0=2,p0v1=1)\tkzGetPoint{p0e0d0}
+  \tkzDefBarycentricPoint(p0v0=1,p0v1=2)\tkzGetPoint{p0e0d1}
+  \tkzDefBarycentricPoint(p0v0=2,p0v2=1)\tkzGetPoint{p0e1d0}
+  \tkzDefBarycentricPoint(p0v0=1,p0v2=2)\tkzGetPoint{p0e1d1}
+  \tkzDefBarycentricPoint(p0v1=2,p0v2=1)\tkzGetPoint{p0e2d0}
+  \tkzDefBarycentricPoint(p0v1=1,p0v2=2)\tkzGetPoint{p0e2d1}
+
+  % rank 1
+  \tkzDefBarycentricPoint(p1v0=2,p1v1=1)\tkzGetPoint{p1e0d0}
+  \tkzDefBarycentricPoint(p1v0=1,p1v1=2)\tkzGetPoint{p1e0d1}
+  \tkzDefBarycentricPoint(p1v0=2,p1v2=1)\tkzGetPoint{p1e1d0}
+  \tkzDefBarycentricPoint(p1v0=1,p1v2=2)\tkzGetPoint{p1e1d1}
+  \tkzDefBarycentricPoint(p1v1=2,p1v2=1)\tkzGetPoint{p1e2d0}
+  \tkzDefBarycentricPoint(p1v1=1,p1v2=2)\tkzGetPoint{p1e2d1}
+}

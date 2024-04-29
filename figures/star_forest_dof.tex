@@ -1,0 +1,59 @@
+\documentclass[tikz]{standalone}
+
+\usepackage{tkz-euclide}
+\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+
+\begin{document}
+
+\begin{tikzpicture}
+
+\input{_common/star_forest.tikz}
+
+\tikzstyle {arrow} = [line width=.8pt,-{Stealth[sep=4pt]}];
+
+\tikzstyle {dof} = [minimum size=7pt,line width=1pt];
+
+\tikzstyle {celldof} = [dof,draw=blue!60,fill=blue!60];
+\tikzstyle {edgedof} = [dof,draw=red!70,fill=red!70];
+\tikzstyle {vertdof} = [dof,draw=green!80,fill=green!80];
+
+\tikzstyle {eghostdof} = [edgedof,fill=white];
+\tikzstyle {vghostdof} = [vertdof,fill=white];
+
+% unified
+\begin{scope}
+  \drawMesh
+  \tkzDrawPoints[celldof](c0,c1)
+  \tkzDrawPoints[edgedof](e0d0,e0d1,e1d0,e1d1,e2d0,e2d1,e3d0,e3d1,e4d0,e4d1)
+  \tkzDrawPoints[vertdof](v0,v1,v2,v3)
+\end{scope}
+
+% split
+\begin{scope}[xshift=7.8cm,yshift=0.4cm]
+  \defSplitMeshLagrange
+  \drawSplitMesh
+
+  % arrows
+  \draw [arrow] (p1v0) -- (p0v1);
+  \draw [arrow] (p0v2) -- (p2v0);
+  \draw [arrow] (p1v1) -- (p2v0);
+  \draw [arrow] (p1e0d0) -- (p0e2d0);
+  \draw [arrow] (p1e0d1) -- (p0e2d1);
+
+  \tkzDrawPoints[celldof](p0c0)
+  \tkzDrawPoints[edgedof](p0e0d0,p0e0d1,p0e1d0,p0e1d1,p0e2d0,p0e2d1)
+  \tkzDrawPoints[vertdof](p0v0,p0v1)
+  \tkzDrawPoints[vghostdof](p0v2)
+
+  \tkzDrawPoints[celldof](p1c0)
+  \tkzDrawPoints[edgedof](p1e1d0,p1e1d1,p1e2d0,p1e2d1)
+  \tkzDrawPoints[eghostdof](p1e0d0,p1e0d1)
+  \tkzDrawPoints[vertdof](p1v2)
+  \tkzDrawPoints[vghostdof](p1v0,p1v1)
+
+  \tkzDrawPoints[vertdof](p2v0)
+\end{scope}
+
+\end{tikzpicture}
+
+\end{document}

@@ -13,6 +13,27 @@ As with Firedrake and PETSc, MPI is chosen as the sole parallel abstraction; hyb
 
 \section{Message passing with star forests}
 
+\begin{figure}
+  \centering
+  %
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{star_forest_point.pdf}
+    \caption{TODO}
+    \label{fig:star_forest_point}
+  \end{subfigure}
+  %
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{star_forest_dof.pdf}
+    \caption{TODO}
+    \label{fig:star_forest_dof}
+  \end{subfigure}
+  %
+  \caption{TODO}
+  \label{fig:star_forest}
+\end{figure}
+
 Almost all message passing in \pyop3 is handled by star forests, specifically by PETSc star forests (\ccode{PetscSF}) \parencite{zhangPetscSFScalableCommunication2021}.
 
 A star forest is defined as a collection of stars, where a star is defined as a tree with a single root and potentially many leaves.
