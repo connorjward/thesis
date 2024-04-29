@@ -1,10 +1,25 @@
 \documentclass[a4,10pt]{report}
 
-\usepackage{mymacros}
-\usepackage{subfiles}
-\usepackage{biblatex}
-
 \usepackage{amsmath}
+
+% FIGURES
+\usepackage{cleveref}
+\usepackage{graphicx}
+  \graphicspath{{./figures}}
+% for subfigures
+\usepackage{caption}
+\usepackage{subcaption}
+
+
+% bibliography
+\usepackage{biblatex}
+  \addbibresource{bibliography.bib}
+
+% custom
+\usepackage{mymacros}
+
+% must be last package used
+\usepackage{subfiles}
 
 \title{\pyop3: A Domain-Specific Language for Expressing Iterations over Mesh-like Data Structures}
 \author{Connor J. Ward and David A. Ham}
@@ -23,4 +38,6 @@
   \subfile{chapters/5_dsl}
   \subfile{chapters/6_parallel}
   \subfile{chapters/7_rest}
+
+  \printbibliography
 \end{document}

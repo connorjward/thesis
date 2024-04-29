@@ -12,6 +12,18 @@ This lays the groundwork for a much more expressive DSL since more of the semant
 
 \section{Data layouts for the finite element method}
 
+\begin{figure}
+  \label{fig:XXX}
+\end{figure}
+
+\begin{figure}
+  \label{fig:YYY}
+\end{figure}
+
+\begin{figure}
+  \label{fig:ZZZ}
+\end{figure}
+
 The semantics for data kept on a mesh are not accurately captured by existing array abstractions.
 
 % TODO does this go here? background?
@@ -26,7 +38,17 @@ We can therefore conclude that mesh data layouts require a new abstraction for c
 
 \subsection{Axis trees}
 
-TODO
+From \cref{fig:YYY} it can be observed that the data layout naturally decomposes into a tree-like structure.
+For every class of topological entity (i.e. vertex, edge or cell) there is a distinct number of DoFs associated with it.
+
+Typically, this structural information is discarded.
+\pyop3, however, is capable of capturing this information through using the concept of an \textit{axis tree}.
+
+And axis tree is composed of a hierarchy of \textit{axes}, and each axis has one or more \textit{axis components}.
+
+The notion of an \textit{axis} has already been well established by numpy.
+If we consider a 3-dimensional numpy array with shape \pycode{(3, 4, 5)}, each dimension of the array is considered to be an axis.
+One can for instance change the order in which the array is traversed by specifying the axes via a \pycode{transpose} call (e.g. \pycode{numpy.transpose(array, (2, 0, 1))}).
 
 % axis, axis component
 % labelled
@@ -34,6 +56,10 @@ TODO
 % mixed
 
 \subsubsection{Computing offsets}
+
+In the same way that the shape of a numpy array decribes how to stride over a flat array, axis trees are simply data layout descriptors that declare how one accesses an ultimately flat array.
+Indeed, in \pyop3 (flat) numpy arrays are used as the underlying data structure.
+It is the job of the axis tree to provide the right expression that can be evaluated giving the correct offset into the flat array.
 
 % layout algorithm
 
