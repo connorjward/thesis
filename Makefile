@@ -11,12 +11,10 @@ THESIS = thesis.pdf
 CHAPTERS_DIR = chapters
 CHAPTERS_SRC = $(wildcard $(CHAPTERS_DIR)/*.tex)
 CHAPTERS = $(patsubst $(CHAPTERS_DIR)/%.tex,$(CHAPTERS_DIR)/%.pdf,$(CHAPTERS_SRC))
-TEX_CHAPTERS = $(TEX) --output-directory=$(CHAPTERS_DIR)
 
 FIGURES_DIR = figures
 FIGURES_SRC = $(wildcard $(FIGURES_DIR)/*.tex)
 FIGURES = $(patsubst $(FIGURES_DIR)/%.tex,$(FIGURES_DIR)/%.pdf,$(FIGURES_SRC))
-TEX_FIGURES = $(TEX) --output-directory=$(FIGURES_DIR)
 
 # Make everything
 .PHONY: all
@@ -63,7 +61,7 @@ $(THESIS): %.pdf: $(CHAPTERS) %.clean %.tex
 # "%" is a wildcard that evaluates to the suffix-less filename
 # skip biblatex for chapters as the bibliography is only for the full thesis
 $(CHAPTERS): %.pdf: $(FIGURES) %.clean %.tex
-	$(TEX_CHAPTERS) $*
+	$(TEX) $*
 
 $(FIGURES): %.pdf: %.clean %.tex
 	lualatex --output-directory=$(FIGURES_DIR) $*

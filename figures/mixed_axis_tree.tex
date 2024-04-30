@@ -1,0 +1,70 @@
+\documentclass[tikz]{standalone}
+
+\usepackage{tkz-euclide}
+\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+
+\begin{document}
+
+\begin{tikzpicture}
+
+\input{_common/axis_tree.tikz}
+
+% Scott-Vogelius element
+\node [axis] (field) at (3,6) {\textit{field}: \{ \textit{0}: 1, \textit{1}: 1 \}};
+\node [axis] (mesh0) at (0,4) {
+  \textit{mesh}: \{ \textit{cell}: 50, \textit{vertex}: 52, \textit{edge}: 86 \}
+};
+\node [axis] (celldof0) at (-2, 2) {\textit{dof}: \{ 1 \}};
+\node [axis] (vertdof0) at (.2, 2) {\textit{dof}: \{ 1 \}};
+\node [axis] (edgedof0) at (2.4, 2) {\textit{dof}: \{ 2 \}};
+\node [axis] (celldim0) at (-2.1, 0) {\textit{dim}: \{ 2 \}};
+\node [axis] (vertdim0) at (.5, 0) {\textit{dim}: \{ 2 \}};
+\node [axis] (edgedim0) at (3.1, 0) {\textit{dim}: \{ 2 \}};
+
+\node [axis] (mesh1) at (7,4) {
+  \textit{mesh}: \{ \textit{cell}: 50, \textit{vertex}: 52, \textit{edge}: 86 \}
+};
+\node [axis] (celldof1) at (5.2, 2) {\textit{dof}: \{ 6 \}};
+\node [axis] (vertdof1) at (7.4, 2) {\textit{dof}: \{ 0 \}};
+\node [axis] (edgedof1) at (9.6, 2) {\textit{dof}: \{ 0 \}};
+
+\tkzDefShiftPoint[field](-.2,-.2){fieldcomponent0}
+\tkzDefShiftPoint[field](.8,-.2){fieldcomponent1}
+\tkzDefShiftPoint[mesh0](0,.3){meshtarget0}
+\tkzDefShiftPoint[mesh1](0,.3){meshtarget1}
+\draw [axisarrow] (fieldcomponent0) -- (meshtarget0);
+\draw [axisarrow] (fieldcomponent1) -- (meshtarget1);
+
+\tkzDefShiftPoint[mesh0](-1.4,-.2){cellcomponent0}
+\tkzDefShiftPoint[mesh0](.1,-.2){vertcomponent0}
+\tkzDefShiftPoint[mesh0](1.7,-.2){edgecomponent0}
+\tkzDefShiftPoint[celldof0](0,.3){celldoftarget0}
+\tkzDefShiftPoint[vertdof0](0,.3){vertdoftarget0}
+\tkzDefShiftPoint[edgedof0](0,.3){edgedoftarget0}
+\draw [axisarrow] (cellcomponent0) -- (celldoftarget0);
+\draw [axisarrow] (vertcomponent0) -- (vertdoftarget0);
+\draw [axisarrow] (edgecomponent0) -- (edgedoftarget0);
+
+\tkzDefShiftPoint[celldof0](.4,-.2){celldofcomponent0}
+\tkzDefShiftPoint[vertdof0](.4,-.2){vertdofcomponent0}
+\tkzDefShiftPoint[edgedof0](.4,-.2){edgedofcomponent0}
+\tkzDefShiftPoint[celldim0](0,.3){celldimtarget0}
+\tkzDefShiftPoint[vertdim0](0,.3){vertdimtarget0}
+\tkzDefShiftPoint[edgedim0](0,.3){edgedimtarget0}
+\draw [axisarrow] (celldofcomponent0) -- (celldimtarget0);
+\draw [axisarrow] (vertdofcomponent0) -- (vertdimtarget0);
+\draw [axisarrow] (edgedofcomponent0) -- (edgedimtarget0);
+
+\tkzDefShiftPoint[mesh1](-1.4,-.2){cellcomponent1}
+\tkzDefShiftPoint[mesh1](.1,-.2){vertcomponent1}
+\tkzDefShiftPoint[mesh1](1.7,-.2){edgecomponent1}
+\tkzDefShiftPoint[celldof1](0,.3){celldoftarget1}
+\tkzDefShiftPoint[vertdof1](0,.3){vertdoftarget1}
+\tkzDefShiftPoint[edgedof1](0,.3){edgedoftarget1}
+\draw [axisarrow] (cellcomponent1) -- (celldoftarget1);
+\draw [axisarrow] (vertcomponent1) -- (vertdoftarget1);
+\draw [axisarrow] (edgecomponent1) -- (edgedoftarget1);
+
+\end{tikzpicture}
+
+\end{document}

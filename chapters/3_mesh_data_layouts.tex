@@ -10,8 +10,6 @@ Most of the innovation in \pyop3 stems from its novel data model.
 Data structures associated with a mesh are created using more information about the mesh topology.
 This lays the groundwork for a much more expressive DSL since more of the semantics are captured/represented.
 
-\section{Data layouts for the finite element method}
-
 \begin{figure}
   \centering
   \includegraphics[width=\textwidth]{two_cell_mesh_lagrange.pdf}
@@ -40,6 +38,13 @@ This lays the groundwork for a much more expressive DSL since more of the semant
   \label{fig:two_cell_mesh_lagrange_data_layout_flat_nodal}
 \end{figure}
 
+\begin{figure}
+  \centering
+  \includegraphics[width=\textwidth]{two_cell_mesh_lagrange_data_layout_nested.pdf}
+  \caption{TODO}
+  \label{fig:two_cell_mesh_lagrange_data_layout_nested}
+\end{figure}
+
 The semantics for data kept on a mesh are not accurately captured by existing array abstractions.
 
 % TODO does this go here? background?
@@ -52,7 +57,44 @@ It is clear that, due to the variable step size for each mesh point, an N-dimens
 One could also view the data as just a flat array (figure ZZZ), but this loses the information about the mesh points.  % just show a diagram where nodes are indistinguishable
 We can therefore conclude that mesh data layouts require a new abstraction for comprehensively describing their semantics: \textit{axis trees}.
 
-\subsection{Axis trees}
+\section{Axis trees}
+
+\begin{figure}
+  \centering
+  %
+  \begin{subfigure}{.6\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{two_cell_mesh_lagrange_axis_tree.pdf}
+    \caption{
+      TODO.
+      For simplicity the component labels for the \textit{dof} subaxes have been omitted.
+    }
+    \label{fig:two_cell_mesh_lagrange_axis_tree}
+  \end{subfigure}
+  %
+  \vspace{1em}
+  %
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{minted}{python}
+axes = AxisTree.from_nest({
+  Axis({"cell": 2, "vertex": 4, "edge": 5}, "mesh"): [
+    Axis(1, "dof"),  # cell DoFs
+    Axis(1, "dof"),  # vertex DoFs
+    Axis(2, "dof"),  # edge DoFs
+  ]
+})
+    \end{minted}
+    \caption{TODO}
+    \label{fig:two_cell_mesh_lagrange_code}
+  \end{subfigure}
+  %
+  \caption{
+    The axis tree representing the data layout for mesh data corresponding to that shown in \cref{fig:two_cell_mesh_lagrange}.
+    Note that the data has not been reordered here (see \cref{sec:renumbering}).
+  }
+  \label{fig:two_cell_mesh_lagrange_pyop3}
+\end{figure}
 
 From \cref{fig:YYY} it can be observed that the data layout naturally decomposes into a tree-like structure.
 For every class of topological entity (i.e. vertex, edge or cell) there is a distinct number of DoFs associated with it.
@@ -61,17 +103,78 @@ Typically, this structural information is discarded.
 \pyop3, however, is capable of capturing this information through using the concept of an \textit{axis tree}.
 
 And axis tree is composed of a hierarchy of \textit{axes}, and each axis has one or more \textit{axis components}.
+Each axis may either be the \textit{root} axis, with no parent, or it has a parent consisting of the 2-tuple $(\textrm{parent axis}, \textrm{parent component})$.
+In other words each subaxis is attached to a particular axis, component pair like, say, the cells of a mesh.
 
+To uniquely identify axes and components, they are both equipped with a \textit{label}.
+With these labels, one can uniquely describe a particular \textit{path} going down the tree from root to leaf.
+To give an example from \cref{fig:two_cell_mesh_lagrange_axis_tree}, one could select the DoFs associated with the edges by passing the path (as a mapping): \pycode{{ "mesh": "edge", "dof": None }}.
+The keys of the mapping are the axis labels and the values are the component labels.
+\pycode{None} is permissible for the \pycode{"dof"} axis because there is only a single component, and hence no ambiguity.
+Axis component labels must be unique within an axis, and axis labels must be unique within each possible path leading from root to leaf.
+
+% not sure where this goes.
 The notion of an \textit{axis} has already been well established by numpy.
 If we consider a 3-dimensional numpy array with shape \pycode{(3, 4, 5)}, each dimension of the array is considered to be an axis.
 One can for instance change the order in which the array is traversed by specifying the axes via a \pycode{transpose} call (e.g. \pycode{numpy.transpose(array, (2, 0, 1))}).
 
-% axis, axis component
-% labelled
-% examples!
-% mixed
+\subsection{Examples}
 
-\subsubsection{Computing offsets}
+\subsubsection{Vector-valued function spaces}
+
+\begin{figure}
+  \centering
+  %
+  \begin{subfigure}{.6\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{vector_axis_tree.pdf}
+    \caption{TODO}
+    \label{fig:vector_axis_tree}
+  \end{subfigure}
+
+\end{figure}
+
+% show tree and dof layout for mesh coordinates (2D) truncated
+% can change dof ordering to make vec outer
+
+This approach naturally extends to tensor-valued function spaces, where the multiple inner axes may be provided to represent, for example, a small $3 \times 3$ matrix stored for every mesh point.
+
+\subsubsection{Mixed function spaces}
+
+% show tree and dof layout (truncated) perhaps use a common finite element pair
+% Scott-Vogelius FE pair, used for Stokes (see defelement for refs)
+\begin{figure}
+  \centering
+  %
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{mixed_axis_tree.pdf}
+    \caption{TODO}
+    \label{fig:mixed_axis_tree}
+  \end{subfigure}
+
+\end{figure}
+
+% nesting mixed things!
+
+In exactly the same way as for vector-/tensor-valued function spaces, the order in which the axes are declared is flexible...
+
+\section{Renumbering for data locality}
+\label{sec:renumbering}
+
+For memory-bound codes, performance is synonymous with data locality.
+In the case of stencil codes like finite element assembly, one should aim to arrange the data such that the data required for a single stencil calculation is contiguous in memory and can be read from memory into cache with only a single instruction.
+
+For simulations involving unstructured meshes, data reorderings that provide perfect streaming access to memory are not possible and so renumbering strategies have been developed to try and maximise locality.
+For example, the data layout shown in \cref{fig:two_cell_mesh_lagrange_data_layout_flat} approximates the strategy taken by \pyop2, cells are traversed according to some RCM ordering and the cell closures are packed next to the cell~\cite{langeEfficientMeshManagement2016}.
+The is effective for finite element codes because finite element assembly (usually) involves iterating over cells and accessing the data in their closures.
+
+In \pyop3, we choose a simple approach and defer to PETSc to provide us with an appropriate RCM numbering for the points.
+This is communicated to the axis tree by giving an axis, in this case the \pycode{"mesh"} one, a \pycode{numbering} argument.
+This numbering consists of the flat indices of the axis and is exactly the object given to us from PETSc.
+This is not quite the case in parallel (see \cref{chapter:parallel}).
+
+\section{Computing offsets}
 
 In the same way that the shape of a numpy array decribes how to stride over a flat array, axis trees are simply data layout descriptors that declare how one accesses an ultimately flat array.
 Indeed, in \pyop3 (flat) numpy arrays are used as the underlying data structure.
@@ -81,20 +184,21 @@ It is the job of the axis tree to provide the right expression that can be evalu
 
 % we use pymbolic for describing the expressions
 
-\subsection{Interleaving axis components}
+\section{Data structures}
+\label{sec:data_structures}
 
-% renumbering
+\subsection{Vectors (\pycode{Dats})}
 
-\subsection{Ragged arrays}
+\subsection{Matrices (\pycode{Mats})}
 
-% ---
+\section{Ragged arrays}
 
-% actually storing data in matrices and arrays
-
-% ---
+% comes after dats because implemented with one!
 
 
-% OLD
+\end{document}
+
+% ====================OLD=======================
 % \subsubsection{Representing data layouts with DMPlex}
 %
 % DMPlex represents a mesh as a set of points where the points are divided into \textit{strata} (cells, edges, vertices, etc).
@@ -134,4 +238,3 @@ It is the job of the axis tree to provide the right expression that can be evalu
 % Explain ragged, sparse data structures and PETSc integration.
 % Present layout algorithm (where I tabulate the offsets).
 
-\end{document}

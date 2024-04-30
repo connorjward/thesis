@@ -10,22 +10,96 @@
 \input{_common/dof_colors.tikz}
 \input{_common/data_layout.tikz}
 
-\drawCellDof{0}{$c_0^0$};
-\drawEdgeDof{1}{$e_0^0$};
-\drawEdgeDof{2}{$e_0^1$};
-\drawEdgeDof{3}{$e_1^0$};
-\drawEdgeDof{4}{$e_1^1$};
-\drawEdgeDof{5}{$e_2^0$};
-\drawEdgeDof{6}{$e_2^1$};
-\drawVertDof{7}{$v_0^0$};
-\drawVertDof{8}{$v_1^0$};
-\drawVertDof{9}{$v_2^0$};
-\drawCellDof{10}{$c_1^0$};
-\drawEdgeDof{11}{$e_3^0$};
-\drawEdgeDof{12}{$e_3^1$};
-\drawEdgeDof{13}{$e_4^0$};
-\drawEdgeDof{14}{$e_4^1$};
-\drawVertDof{15}{$v_3^0$};
+\newcommand{\drawNestedDof}[3]{%
+  \drawDof{#1}{#2}{#3};
+}
+
+\newcommand{\drawNestedCellDofs}{%
+  \drawNestedDof{0}{$d_0$}{celldofcolor};
+}
+
+\newcommand{\drawNestedEdgeDofs}{%
+  \drawNestedDof{0}{$d_0$}{edgedofcolor};
+  \drawNestedDof{1}{$d_1$}{edgedofcolor};
+}
+
+\newcommand{\drawNestedVertDofs}{%
+  \drawNestedDof{0}{$d_0$}{vertdofcolor};
+}
+
+% draw the arrows first so they are underneath
+\tikzstyle {arrow} = [line width=.8pt,-{Stealth[sep=2pt]}];
+\draw [arrow] (4,3) -- (.5,1);     % c0
+\draw [arrow] (5,3) -- (2.2,1);    % e0
+\draw [arrow] (6,3) -- (4.4,1);    % e1
+\draw [arrow] (7,3) -- (6.6,1);    % e2
+\draw [arrow] (8,3) -- (8.3,1);    % v0
+\draw [arrow] (9,3) -- (9.5,1);    % v1
+\draw [arrow] (10,3) -- (10.7,1);  % v2
+\draw [arrow] (11,3) -- (11.9,1);  % c1
+\draw [arrow] (12,3) -- (13.6,1);  % e3
+\draw [arrow] (13,3) -- (15.8,1);  % e4
+\draw [arrow] (14,3) -- (17.5,1);  % v3
+
+\begin{scope}[xshift=3.5cm,yshift=3cm]
+
+\drawCellDof{0}{$c_0$};
+\drawEdgeDof{1}{$e_0$};
+\drawEdgeDof{2}{$e_1$};
+\drawEdgeDof{3}{$e_2$};
+\drawVertDof{4}{$v_0$};
+\drawVertDof{5}{$v_1$};
+\drawVertDof{6}{$v_2$};
+\drawCellDof{7}{$c_1$};
+\drawEdgeDof{8}{$e_3$};
+\drawEdgeDof{9}{$e_4$};
+\drawVertDof{10}{$v_3$};
+
+\end{scope}
+
+\begin{scope}
+  \drawNestedCellDofs;
+\end{scope}
+
+\begin{scope}[xshift=1.2cm]
+  \drawNestedEdgeDofs;
+\end{scope}
+
+\begin{scope}[xshift=3.4cm]
+  \drawNestedEdgeDofs;
+\end{scope}
+
+\begin{scope}[xshift=5.6cm]
+  \drawNestedEdgeDofs;
+\end{scope}
+
+\begin{scope}[xshift=7.8cm]
+  \drawNestedVertDofs;
+\end{scope}
+
+\begin{scope}[xshift=9cm]
+  \drawNestedVertDofs;
+\end{scope}
+
+\begin{scope}[xshift=10.2cm]
+  \drawNestedVertDofs;
+\end{scope}
+
+\begin{scope}[xshift=11.4cm]
+  \drawNestedCellDofs;
+\end{scope}
+
+\begin{scope}[xshift=12.6cm]
+  \drawNestedEdgeDofs;
+\end{scope}
+
+\begin{scope}[xshift=14.8cm]
+  \drawNestedEdgeDofs;
+\end{scope}
+
+\begin{scope}[xshift=17cm]
+  \drawNestedVertDofs;
+\end{scope}
 
 \end{tikzpicture}
 
