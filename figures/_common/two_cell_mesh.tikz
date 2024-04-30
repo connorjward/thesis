@@ -17,3 +17,19 @@
 \newcommand{\drawTwoCellMesh}{%
   \tkzDrawSegments[edge](v0,v1 v0,v2 v1,v2 v1,v3 v2,v3)
 }
+
+\newcommand{\labelTwoCellMesh}{%
+  \tkzLabelPoint[left](c0){$c_0$}
+  \tkzLabelPoint[right](c1){$c_1$}
+
+  \tkzLabelPoint[above left](e0){$e_0$}
+  \tkzLabelPoint[below left](e1){$e_1$}
+  \tkzLabelPoint[left](e2){$e_2$}
+  \tkzLabelPoint[above right](e3){$e_3$}
+  \tkzLabelPoint[below right](e4){$e_4$}
+
+  \tkzLabelPoint[left](v0){$v_0$}
+  \tkzLabelPoint[above](v1){$v_1$}
+  \tkzLabelPoint[below](v2){$v_2$}
+  \tkzLabelPoint[right](v3){$v_3$}
+}

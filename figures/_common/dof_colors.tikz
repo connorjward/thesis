@@ -1,3 +1,5 @@
-\definecolor{celldof}{rgb}{0.0,0.0,0.6}
-\definecolor{edgedof}{rgb}{0.8,0.0,0.0}
-\definecolor{vertdof}{rgb}{0.0,0.6,0.0}
+\definecolor{celldofcolor}{rgb}{0.0,0.0,0.6}
+\definecolor{edgedofcolor}{rgb}{0.8,0.0,0.0}
+\definecolor{vertdofcolor}{RGB}{154,205,50}
+
+\definecolor{nodedofcolor}{rgb}{0.5,0.5,0.5}

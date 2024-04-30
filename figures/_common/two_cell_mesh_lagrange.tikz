@@ -1,9 +1,11 @@
 \input{_common/two_cell_mesh.tikz}
+\input{_common/dof_colors.tikz}
 
 \tikzstyle {dof} = [minimum size=7pt,line width=1pt];
-\tikzstyle {celldof} = [dof,draw=blue!60,fill=blue!60];
-\tikzstyle {edgedof} = [dof,draw=red!70,fill=red!70];
-\tikzstyle {vertdof} = [dof,draw=green!80,fill=green!80];
+\tikzstyle {celldof} = [dof,draw=celldofcolor,fill=celldofcolor];
+\tikzstyle {edgedof} = [dof,draw=edgedofcolor,fill=edgedofcolor];
+\tikzstyle {vertdof} = [dof,draw=vertdofcolor,fill=vertdofcolor];
+\tikzstyle {nodedof} = [dof,draw=nodedofcolor,fill=nodedofcolor];
 
 % P3 elements
 \newcommand{\defTwoCellMeshLagrange}{%
@@ -27,4 +29,51 @@
   \tkzDrawPoints[celldof](c0,c1)
   \tkzDrawPoints[edgedof](e0d0,e0d1,e1d0,e1d1,e2d0,e2d1,e3d0,e3d1,e4d0,e4d1)
   \tkzDrawPoints[vertdof](v0,v1,v2,v3)
+}
+
+\newcommand{\labelTwoCellMeshLagrange}{%
+  \tkzLabelPoint[left](c0){$c_0^0$}
+  \tkzLabelPoint[right](c1){$c_1^0$}
+
+  \tkzLabelPoint[above left](e0d0){$e_0^0$}
+  \tkzLabelPoint[above left](e0d1){$e_0^1$}
+  \tkzLabelPoint[below left](e1d0){$e_1^0$}
+  \tkzLabelPoint[below left](e1d1){$e_1^1$}
+  \tkzLabelPoint[left](e2d0){$e_2^0$}
+  \tkzLabelPoint[left](e2d1){$e_2^1$}
+  \tkzLabelPoint[above right](e3d0){$e_3^0$}
+  \tkzLabelPoint[above right](e3d1){$e_3^1$}
+  \tkzLabelPoint[below right](e4d0){$e_4^0$}
+  \tkzLabelPoint[below right](e4d1){$e_4^1$}
+
+  \tkzLabelPoint[left](v0){$v_0^0$}
+  \tkzLabelPoint[above](v1){$v_1^0$}
+  \tkzLabelPoint[below](v2){$v_2^0$}
+  \tkzLabelPoint[right](v3){$v_3^0$}
+}
+
+\newcommand{\drawTwoCellMeshLagrangeNodal}{%
+  \drawTwoCellMesh
+  \tkzDrawPoints[nodedof](c0,c1,e0d0,e0d1,e1d0,e1d1,e2d0,e2d1,e3d0,e3d1,e4d0,e4d1,v0,v1,v2,v3)
+}
+
+\newcommand{\labelTwoCellMeshLagrangeNodal}{%
+  \tkzLabelPoint[left](c0){$n_0$}
+  \tkzLabelPoint[right](c1){$n_1$}
+
+  \tkzLabelPoint[above left](e0d0){$n_2$}
+  \tkzLabelPoint[above left](e0d1){$n_3$}
+  \tkzLabelPoint[below left](e1d0){$n_4$}
+  \tkzLabelPoint[below left](e1d1){$n_5$}
+  \tkzLabelPoint[left](e2d0){$n_6$}
+  \tkzLabelPoint[left](e2d1){$n_7$}
+  \tkzLabelPoint[above right](e3d0){$n_{11}$}
+  \tkzLabelPoint[above right](e3d1){$n_{12}$}
+  \tkzLabelPoint[below right](e4d0){$n_{13}$}
+  \tkzLabelPoint[below right](e4d1){$n_{14}$}
+
+  \tkzLabelPoint[left](v0){$n_8$}
+  \tkzLabelPoint[above](v1){$n_9$}
+  \tkzLabelPoint[below](v2){$n_{10}$}
+  \tkzLabelPoint[right](v3){$n_{15}$}
 }
