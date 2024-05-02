@@ -174,16 +174,6 @@ This is communicated to the axis tree by giving an axis, in this case the \pycod
 This numbering consists of the flat indices of the axis and is exactly the object given to us from PETSc.
 This is not quite the case in parallel (see \cref{chapter:parallel}).
 
-\section{Computing offsets}
-
-In the same way that the shape of a numpy array decribes how to stride over a flat array, axis trees are simply data layout descriptors that declare how one accesses an ultimately flat array.
-Indeed, in \pyop3 (flat) numpy arrays are used as the underlying data structure.
-It is the job of the axis tree to provide the right expression that can be evaluated giving the correct offset into the flat array.
-
-% layout algorithm
-
-% we use pymbolic for describing the expressions
-
 \section{Data structures}
 \label{sec:data_structures}
 
@@ -195,6 +185,32 @@ It is the job of the axis tree to provide the right expression that can be evalu
 
 % comes after dats because implemented with one!
 
+% comes after ragged arrays since they impact this
+\section{Computing offsets}
+
+In the same way that the shape of a numpy array decribes how to stride over a flat array, axis trees are simply data layout descriptors that declare how one accesses an ultimately flat array.
+Indeed, in \pyop3 (flat) numpy arrays are used as the underlying data structure.
+It is the job of the axis tree to provide the right expression that can be evaluated giving the correct offset into the flat array.
+
+% we use pymbolic for describing the expressions
+
+\subsection{The layout algorithm, step by step}
+
+% Point out that it is more complicated in parallel and point to a later section.
+
+\subsubsection{Linear axis trees}
+
+% like numpy
+
+% \begin{???}
+%   ...
+% \end{???}
+
+\subsubsection{Multi-component axis trees}
+
+\subsubsection{Renumbered axis trees}
+
+\subsubsection{Ragged axis trees}
 
 \end{document}
 

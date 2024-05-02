@@ -18,3 +18,7 @@
 \newcommand{\drawNodeDof}[2]{%
   \drawDof{#1}{#2}{nodedofcolor};
 }
+
+\newcommand{\drawWhiteDof[2]{%
+  \drawDof{#1}{#2}{white};
+}
