@@ -81,6 +81,23 @@ An example of such a distribution is shown in Figure~\ref{???}.
 
 \section{Overlapping computation and communication}
 
+\begin{figure}
+  \begin{subfigure}{\textwidth}
+    \includegraphics{iterset_partition_cell}
+    \caption{TODO}
+    \label{fig:iterset_partition_cell}
+  \end{subfigure}
+  %
+  \begin{subfigure}{\textwidth}
+    \includegraphics{iterset_partition_facet}
+    \caption{TODO}
+    \label{fig:iterset_partition_facet}
+  \end{subfigure}
+  %
+  \caption{TODO}
+  \label{fig:iterset_partition}
+\end{figure}
+
 In order to hide the often expensive latencies associated with halo exchanges, \pyop3 uses non-blocking MPI operations to interleave computation and communication.
 Since distributed meshes only need to communicate data at their boundary, and given the surface-area-to-volume ratio effect, the bulk of the required computation can happen without using any halo data.
 The algorithm for overlapping computation and communication therefore looks like this:
