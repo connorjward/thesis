@@ -1,0 +1,42 @@
+% Data tree for a numpy array with shape (2, 3, 2)
+
+\documentclass[tikz]{standalone}
+
+\usepackage{tkz-euclide}
+\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{_common/data_layout.tikz}
+
+% top
+\coordinate (origin) at (0,0);
+\drawWhiteDof{(origin)}{$a_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$a_1$};
+
+\coordinate (aleft) at (origin);
+\coordinate (aright) at ($(origin)+(1,0)$);
+
+% middle
+\coordinate (origin) at ($(origin)+(-1,-2)$);
+\drawWhiteDof{(origin)}{$b_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$b_2$};
+
+\draw [connector] (aleft) -- ($(origin)+(0,1)$);
+\draw [connector] (aright) -- ($(origin)+(3,1)$);
+
+\coordinate (bleft) at (origin);
+\coordinate (bright) at ($(origin)+(1,0)$);
+
+% bottom
+\coordinate (origin) at ($(origin)+(-.5,-2)$);
+\drawWhiteDof{(origin)}{$c_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$c_1$};
+
+\draw [connector] (bleft) -- ($(origin)+(0,1)$);
+\draw [connector] (bright) -- ($(origin)+(2,1)$);
+
+\end{tikzpicture}
+\end{document}

@@ -8,49 +8,48 @@
 
 \input{_common/data_layout.tikz}
 
-\begin{scope}[yshift=0cm]
-  \fill[lightgray] (0,0) rectangle(6,1);
-  \drawWhiteDof{0.5}{$c_5$};
-  \drawWhiteDof{1.5}{$v_1$};
-  \filldraw[draw=black, fill=white] (0.5,0) rectangle ++ (1,1);
-  \filldraw[draw=black, fill=white] (1.5,0) rectangle ++ (1,1);
-  \filldraw[draw=black, fill=white] (2.5,0) rectangle ++ (1,1);
-  \filldraw[draw=black, fill=white] (3.5,0) rectangle ++ (1,1);
-  \filldraw[draw=black, fill=white] (4.5,0) rectangle ++ (1,1);
-  \node[at={(1,.5)}, ptlabel] {$c_5$};
-  \node[at={(2,.5)}, ptlabel] {$v_1$};
-  \node[at={(3,.5)}, ptlabel] {$e_4$};
-  \node[at={(4,.5)}, ptlabel] {$e_5$};
-  \node[at={(5,.5)}, ptlabel] {$c_9$};
-  \draw (0,0) -- (6,0);
-  \draw (0,1) -- (6,1);
-\end{scope}
+% top
+\coordinate (origin) at (0,4);
+\fill[background] (origin) rectangle ++ (6,1);
+\drawCellDof{($(origin)+(.5,0)$)}{$c_5$};
+\drawEdgeDof{($(origin)+(1.5,0)$)}{$e_8$};
+\drawVertDof{($(origin)+(2.5,0)$)}{$v_1$};
+\drawVertDof{($(origin)+(3.5,0)$)}{$v_4$};
+\drawEdgeDof{($(origin)+(4.5,0)$)}{$e_4$};
+\draw (origin) -- ++ (6,0);
+\draw ($(origin)+(0,1)$) -- ++ (6,0);
 
-\begin{scope}[xshift=2cm,yshift=-2cm]
-  \filldraw[draw=black, fill=white] (0,0) rectangle ++ (1,1);
-  \filldraw[draw=black, fill=white] (1,0) rectangle ++ (1,1);
-  \node[at={(0.5,.5)}, ptlabel] {$i_0$};
-  \node[at={(1.5,.5)}, ptlabel] {$i_1$};
+\coordinate (cell) at ($(origin)+(1,0)$);
+\coordinate (vert) at ($(origin)+(3,0)$);
+\coordinate (edge) at ($(origin)+(5,0)$);
 
-  \draw (.5,-1) -- (0,0);
-  \draw (1.5,-1) -- (2,0);
-\end{scope}
+% cell (non) DoFs
+\coordinate (celldof) at ($(cell)+(0,-1.5)$);
+\draw (celldof) node[cross] {};
+\draw (cell) -- (celldof);
 
-\begin{scope}[xshift=1cm,yshift=-4cm]
-  \filldraw[draw=black, fill=white] (0,0) rectangle ++ (1,1);
-  \filldraw[draw=black, fill=white] (1,0) rectangle ++ (1,1);
-  \filldraw[draw=black, fill=white] (2,0) rectangle ++ (1,1);
-  \node[at={(0.5,.5)}, ptlabel] {$d_0$};
-  \node[at={(1.5,.5)}, ptlabel] {$d_1$};
-  \node[at={(2.5,.5)}, ptlabel] {$d_2$};
+% edge (non) DoFs
+\coordinate (edgedof) at ($(edge)+(0,-1.5)$);
+\draw (edgedof) node[cross] {};
+\draw (edge) -- (edgedof);
 
-  \draw (1,-1) -- (0,0);
-  \draw (2,-1) -- (3,0);
-\end{scope}
+% vertex DoFs
+\coordinate (vertorigin) at ($(vert)+(-.5,-2)$);
+\drawWhiteDof{(vertorigin)}{$d_0$};
+\draw ($(vert)+(-.5,0)$) -- ($(vertorigin)+(0,1)$);
+\draw ($(vert)+(.5,0)$) -- ($(vertorigin)+(1,1)$);
+\coordinate (vertdof) at ($(vertorigin)+(.5,0)$);
 
-\node (pointslabel) [ptlabel] at (7,.5) {Points};
+% vertex dim
+\coordinate (vertdimorigin) at ($(vertdof)+(-1,-2)$);
+\drawWhiteDof{(vertdimorigin)}{$e_0$};
+\drawWhiteDof{($(vertdimorigin)+(1,0)$)}{$e_1$};
+\draw ($(vertdof)+(-.5,0)$) -- ($(vertdimorigin)+(0,1)$);
+\draw ($(vertdof)+(.5,0)$) -- ($(vertdimorigin)+(2,1)$);
+
+\node (pointslabel) [ptlabel] at (7,4.5) {Points};
 \node (nodeslabel) [ptlabel] at (7,2.5) {Nodes};
-\node (dofslabel) [ptlabel] at (7,4.5) {\py{dim}};
+\node (dofslabel) [ptlabel] at (7,.5) {Shape};
 
 \end{tikzpicture}
 \end{document}

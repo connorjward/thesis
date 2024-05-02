@@ -60,10 +60,12 @@ $(THESIS): %.pdf: $(CHAPTERS) %.clean %.tex
 
 # "%" is a wildcard that evaluates to the suffix-less filename
 # skip biblatex for chapters as the bibliography is only for the full thesis
-$(CHAPTERS): %.pdf: $(FIGURES) %.clean %.tex
+# $(CHAPTERS): %.pdf: $(FIGURES) %.clean %.tex
+$(CHAPTERS): %.pdf: $(FIGURES) %.tex
 	$(TEX) $*
 
-$(FIGURES): %.pdf: %.clean %.tex
+# $(FIGURES): %.pdf: %.clean %.tex
+$(FIGURES): %.pdf: %.tex
 	lualatex --output-directory=$(FIGURES_DIR) $*
 
 # Target always gets executed

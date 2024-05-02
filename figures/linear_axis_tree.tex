@@ -1,0 +1,27 @@
+% Axis tree for a linear numpy-style array with shape (2, 3, 2)
+
+\documentclass[tikz]{standalone}
+
+\usepackage{tkz-euclide}
+\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+
+\begin{document}
+
+\begin{tikzpicture}
+
+\input{_common/axis_tree.tikz}
+
+\node [axis] (a) at (0,3) {\textit{a}: \{ 2 \}};
+\node [axis] (b) at (0.2,1.5) {\textit{b}: \{ 3 \}};
+\node [axis] (c) at (0.4,0) {\textit{c}: \{ 2 \}};
+
+\tkzDefShiftPoint[a](.2,-.2){acpt}
+\tkzDefShiftPoint[b](.2,-.2){bcpt}
+\tkzDefShiftPoint[b](0,.3){btarget}
+\tkzDefShiftPoint[c](0,.3){ctarget}
+\draw [axisarrow] (acpt) -- (btarget);
+\draw [axisarrow] (bcpt) -- (ctarget);
+
+\end{tikzpicture}
+
+\end{document}

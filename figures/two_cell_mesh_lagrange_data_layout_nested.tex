@@ -15,16 +15,16 @@
 }
 
 \newcommand{\drawNestedCellDofs}{%
-  \drawNestedDof{0}{$d_0$}{celldofcolor};
+  \drawNestedDof{(0,0)}{$d_0$}{celldofcolor};
 }
 
 \newcommand{\drawNestedEdgeDofs}{%
-  \drawNestedDof{0}{$d_0$}{edgedofcolor};
-  \drawNestedDof{1}{$d_1$}{edgedofcolor};
+  \drawNestedDof{(0,0)}{$d_0$}{edgedofcolor};
+  \drawNestedDof{(1,0)}{$d_1$}{edgedofcolor};
 }
 
 \newcommand{\drawNestedVertDofs}{%
-  \drawNestedDof{0}{$d_0$}{vertdofcolor};
+  \drawNestedDof{(0,0)}{$d_0$}{vertdofcolor};
 }
 
 % draw the arrows first so they are underneath
@@ -43,17 +43,17 @@
 
 \begin{scope}[xshift=3.5cm,yshift=3cm]
 
-\drawCellDof{0}{$c_0$};
-\drawEdgeDof{1}{$e_0$};
-\drawEdgeDof{2}{$e_1$};
-\drawEdgeDof{3}{$e_2$};
-\drawVertDof{4}{$v_0$};
-\drawVertDof{5}{$v_1$};
-\drawVertDof{6}{$v_2$};
-\drawCellDof{7}{$c_1$};
-\drawEdgeDof{8}{$e_3$};
-\drawEdgeDof{9}{$e_4$};
-\drawVertDof{10}{$v_3$};
+\drawCellDof{(0,0)}{$c_0$};
+\drawEdgeDof{(1,0)}{$e_0$};
+\drawEdgeDof{(2,0)}{$e_1$};
+\drawEdgeDof{(3,0)}{$e_2$};
+\drawVertDof{(4,0)}{$v_0$};
+\drawVertDof{(5,0)}{$v_1$};
+\drawVertDof{(6,0)}{$v_2$};
+\drawCellDof{(7,0)}{$c_1$};
+\drawEdgeDof{(8,0)}{$e_3$};
+\drawEdgeDof{(9,0)}{$e_4$};
+\drawVertDof{(10,0)}{$v_3$};
 
 \end{scope}
 

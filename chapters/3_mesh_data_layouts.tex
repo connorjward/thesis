@@ -125,13 +125,22 @@ One can for instance change the order in which the array is traversed by specify
 \begin{figure}
   \centering
   %
-  \begin{subfigure}{.6\textwidth}
+  \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{vector_axis_tree.pdf}
+    \includegraphics{vector_axis_tree.pdf}
     \caption{TODO}
     \label{fig:vector_axis_tree}
   \end{subfigure}
-
+  %
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{vector_data_tree.pdf}
+    \caption{TODO}
+    \label{fig:vector_data_tree}
+  \end{subfigure}
+  %
+  \caption{TODO}
+  \label{fig:vector_axis_data_tree}
 \end{figure}
 
 % show tree and dof layout for mesh coordinates (2D) truncated
@@ -188,25 +197,127 @@ This is not quite the case in parallel (see \cref{chapter:parallel}).
 % comes after ragged arrays since they impact this
 \section{Computing offsets}
 
+\begin{figure}
+  \centering
+  %
+  \begin{subfigure}{.3\textwidth}
+    \centering
+    \includegraphics{linear_axis_tree.pdf}
+    \caption{TODO}
+    \label{fig:linear_axis_tree}
+  \end{subfigure}
+  %
+  \begin{subfigure}{.58\textwidth}
+    \centering
+    \includegraphics{linear_data_tree.pdf}
+    \caption{TODO}
+    \label{fig:linear_data_tree}
+  \end{subfigure}
+  %
+  \caption{TODO}
+  \label{fig:linear_axis_data_tree}
+\end{figure}
+
 In the same way that the shape of a numpy array decribes how to stride over a flat array, axis trees are simply data layout descriptors that declare how one accesses an ultimately flat array.
 Indeed, in \pyop3 (flat) numpy arrays are used as the underlying data structure.
 It is the job of the axis tree to provide the right expression that can be evaluated giving the correct offset into the flat array.
 
-% we use pymbolic for describing the expressions
+In \pyop3, axis trees are traversed to produce \textit{layout functions}.
+These are symbolic expressions of zero or more indices that can be evaluated to give the correct offset into the underlying array.
+Layout functions, expressed in the symbolic maths package \textit{pymbolic}\footnote{https://documen.tician.de/pymbolic/index.html}, may either be evaluated given a set of indices or used during code generation.
+
+To give a simple example, consider the axis tree and corresponding data layout shown in \cref{fig:linear_axis_data_tree}.
+The tree shown here is equivalent to a numpy array with shape \pycode{(2, 3, 2)} with the numpy axes 0, 1 and 2 given the labels \textit{a}, \textit{b} and \textit{c} respectively.
+Given a multi-index of the form $(i_a, i_b, i_c)$ the correct offset into the array may be calculated with the layout function $6 i_a + 2 i_b + i_c$.
 
 \subsection{The layout algorithm, step by step}
 
-% Point out that it is more complicated in parallel and point to a later section.
+% not a useful thing to write really
+In the following we will incrementally describe the algorithm for determining the right layout function for a given axis tree.
+There are additional considerations in parallel that are discussed later in \cref{chapter:parallel}.
 
 \subsubsection{Linear axis trees}
 
-% like numpy
+\begin{algorithm}
+  \begin{minted}[linenos]{python}
+def tabulate_layouts_linear(axis: Axis):
+  layouts = {}
 
-% \begin{???}
-%   ...
-% \end{???}
+  # pre-order traversal
+  if has_subaxis(axis): 
+    subaxis = get_subaxis(axis)
+    layouts |= tabulate_layouts_linear(subaxis)
+
+  # layout expression for this axis
+  if has_subaxis(axis):
+    step = get_subaxis_size(axis)
+  else:
+    step = 1
+  layouts[axis] = AxisVar(axis) * step
+
+  return layouts
+  \end{minted}
+  %
+  \caption{
+    Algorithm for computing the layout functions of a linear (single component) axis tree such as that shown in \cref{fig:linear_axis_tree}.
+    The function is initially invoked by passing the root axis of the tree.
+  }
+  \label{alg:tabulate_layouts_linear}
+\end{algorithm}
 
 \subsubsection{Multi-component axis trees}
+
+\begin{algorithm}
+  \begin{minted}[linenos,highlightlines={4,6-7,11-12,17-18},highlightcolor=red!30,escapeinside=??]{python}
+def tabulate_layouts_multi_component(axis: Axis):
+  layouts = {}
+
+?\tikzmark{a}?  for component in axis.components:
+    # pre-order traversal
+?\tikzmark{b}?    if has_subaxis(axis, component): 
+      subaxis = get_subaxis(axis, component)
+      layouts |= tabulate_layouts_multi_component(subaxis)
+
+  # layout expressions for this axis
+?\tikzmark{c}?  start = 0
+  for component in axis.components:
+    if has_subaxis(axis, component):
+      step = get_subaxis_size(axis, component)
+    else:
+      step = 1
+?\tikzmark{d}?    layouts[(axis, component)] = AxisVar(axis) * step + start
+    start += step
+
+  return layouts
+  \end{minted}
+
+  % https://tex.stackexchange.com/questions/287549/is-it-possible-to-use-tikzmark-inside-minted
+  \begin{tikzpicture}[remember picture]
+    \node [circle,overlay,fill=white,draw=black,minimum width=18pt] (alabel) at ($(pic cs:a)+(\textwidth+16,.1)$) {A};
+    \node [circle,overlay,fill=white,draw=black,minimum width=18pt] (blabel) at ($(pic cs:b)+(\textwidth+16,-.1)$) {B};
+    \node [circle,overlay,fill=white,draw=black,minimum width=18pt] (clabel) at ($(pic cs:c)+(\textwidth+16,-.1)$) {C};
+    \node [circle,overlay,fill=white,draw=black,minimum width=18pt] (dlabel) at ($(pic cs:d)+(\textwidth+16,-.1)$) {D};
+
+    % alternative with braces, unsure which is better
+    % \coordinate (alabelbottom) at ($(pic cs:a)+(\textwidth,-4pt)$);
+    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (alabelbottom) -- node [right=10pt] {A} ++ (0,13pt);
+    %
+    % \coordinate (blabelbottom) at ($(pic cs:b)+(\textwidth,-16pt)$);
+    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (blabelbottom) -- node [right=10pt] {B} ++ (0,25pt);
+    %
+    % \coordinate (clabelbottom) at ($(pic cs:c)+(\textwidth,-16pt)$);
+    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (clabelbottom) -- node [right=10pt] {C} ++ (0,25pt);
+    %
+    % \coordinate (dlabelbottom) at ($(pic cs:d)+(\textwidth,-16pt)$);
+    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (dlabelbottom) -- node [right=10pt] {D} ++ (0,25pt);
+  \end{tikzpicture}
+
+  \caption{
+    Algorithm for computing the layout functions of an axis tree where any of the contained axes may have multiple components.
+    None of the axes may be renumbered.
+  }
+  \label{alg:tabulate_layouts_linear}
+\end{algorithm}
 
 \subsubsection{Renumbered axis trees}
 

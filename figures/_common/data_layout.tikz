@@ -1,6 +1,12 @@
+\input{_common/dof_colors.tikz}
+
+\tikzstyle {background} = [lightgray];
+\tikzstyle{ptlabel} = [anchor=center,color=black,opacity=1]
+\tikzstyle{connector} = [densely dashed]
+
 \newcommand{\drawDof}[3]{%
-  \filldraw[draw=black, fill=#3!60] (#1,0) rectangle ++ (1,1);
-  \node [at={(#1.5, .5)}] {#2};
+  \filldraw[draw=black, fill=#3!60] #1 rectangle ++ (1,1);
+  \node [at={($#1+(.5,.5)$)}] {#2};
 }
 
 \newcommand{\drawCellDof}[2]{%
@@ -19,6 +25,9 @@
   \drawDof{#1}{#2}{nodedofcolor};
 }
 
-\newcommand{\drawWhiteDof[2]{%
+\newcommand{\drawWhiteDof}[2]{%
   \drawDof{#1}{#2}{white};
 }
+
+% https://tex.stackexchange.com/questions/123760/draw-crosses-in-tikz
+\tikzset{cross/.style={cross out,draw=black,minimum size=8pt,inner sep=0pt,outer sep=0pt,line width=1.5pt}};
