@@ -18,7 +18,11 @@ In \pyop3, this extraction operation is referred to as \textit{indexing}.
   \begin{subfigure}{\textwidth}
     \centering
     \includegraphics{index_linear_tree_data_layout}
-    \caption{TODO}
+    \caption{
+      Diagram of the data layout transformation.
+      The original axis tree (left) is composed with an index tree (see \cref{sec:index_trees}) (middle) to produce a new axis tree (right).
+      The bracketed values in the resultant tree show the original indices that they map to.
+    }
     \label{fig:index_linear_tree_data_layout}
   \end{subfigure}
 
@@ -27,15 +31,20 @@ In \pyop3, this extraction operation is referred to as \textit{indexing}.
   \begin{subfigure}{\textwidth}
     \centering
     \begin{tabular}{c|c|c}
-      \textbf{Source path} & \textbf{Target path} & \textbf{Index expression} \\
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
       \hline
       \{$c$, $d$\} & \{$a$, $b$\} & \{$a$: $2 i_c$, $b$: $i_d+1$\} \\
     \end{tabular}
-    \caption{TODO}
+    \caption{
+      The indexing information carried by the transformed axis tree that allows it to map back to the original unindexed tree.
+    }
     \label{fig:index_linear_tree_exprs}
   \end{subfigure}
 
-  \caption{TODO}
+  \caption{
+    The axis tree transformation resulting from indexing a linear axis tree with shape $(5, 3)$ with the slices (\pycode{::2}) and (\pycode{1::}) on axes $a$ and $b$ respectively.
+    The resulting axis tree has shape $(3, 2)$ and different labels: $c$ and $d$.
+  }
   \label{fig:index_linear_tree_all}
 \end{figure}
 
@@ -97,9 +106,6 @@ An equivalent axis tree can be created... (needs diagram)
   \caption{TODO}
   \label{fig:index_composition_linear_tree_all}
 \end{figure}
-
-% Note that when we index we keep the layouts and index expressions separate
-% ie justify the "inner" replacement
 
 \section{Loop expressions}
 

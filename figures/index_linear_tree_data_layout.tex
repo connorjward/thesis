@@ -1,11 +1,14 @@
 \documentclass[tikz]{standalone}
 
-\usepackage{tkz-euclide}
-\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{mymacros}
 
 \begin{document}
-\begin{tikzpicture}
+\begin{tikzpicture}[remember picture]
 
+\input{figures/common/axis_tree.tikz}
 \input{figures/common/data_layout.tikz}
 
 % --- UNINDEXED ---
@@ -31,13 +34,26 @@
 \draw [connector] (aleft) -- ($(origin)+(0,1)$);
 \draw [connector] (aright) -- ($(origin)+(3,1)$);
 
+% --- TIMES ---
+
+\node [font=\huge] (times) at (5.5, -.5) {$\otimes$};
+
+% --- INDEX TREE ---
+
+\coordinate (origin) at (6,0);
+
+\node [axis] (top) at (origin) {slice($a$: \{ \subnode{top0}{(\pycode{::2})} \})};
+\node [axis] (bottom) at ($(origin)+(.75,-2)$) {slice($b$: \{ (\pycode{1::}) \})};
+\draw [underline] ($(top0.south west)+(.4,.1)$) -- ($(top0.south east)+(-.4,.1)$);
+\draw [axisarrow] ($(top0.south)+(0,.1)$) -- (bottom);
+
 % --- ARROW ---
 
-\draw [line width=.8pt,-{Stealth}] (5.2,-.5) -- (6.8,-.5);
+\draw [line width=.8pt,-{Stealth}] (9.5,-.5) -- (10.5,-.5);
 
 % --- INDEXED ---
 
-\coordinate (origin) at (7,0);
+\coordinate (origin) at (10.5,0);
 
 % top
 \drawWhiteDofSmall{(origin)}{$c_0$\,($a_0$)};
