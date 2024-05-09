@@ -1,6 +1,15 @@
-\documentclass[a4,10pt]{report}
+% useful template:
+% https://www.overleaf.com/latex/templates/imperial-college-london-phd-thesis-latex-template/zfybynnyczhb
+
+\documentclass[a4,12pt,twoside]{report}
+
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=3cm]{geometry}
 
 \usepackage{amsmath}
+
+\usepackage{setspace}
+  \onehalfspacing
+
 
 % FIGURES
 \usepackage{cleveref}
@@ -22,6 +31,9 @@
 \usepackage{biblatex}
   \addbibresource{bibliography.bib}
 
+% TODO
+\usepackage{todonotes}
+
 % CUSTOM
 \usepackage{mymacros}
 
@@ -35,9 +47,10 @@
 \begin{document}
   \maketitle
 
+  % \subfile{chapters/0_abstract}
+
   \tableofcontents
 
-  % \subfile{chapters/0_abstract}
   \subfile{chapters/1_introduction}
   \subfile{chapters/2_background}
   \subfile{chapters/3_mesh_data_layouts}

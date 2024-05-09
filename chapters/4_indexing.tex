@@ -13,6 +13,7 @@ In \pyop3, this extraction operation is referred to as \textit{indexing}.
 
 \section{Fundamentals}
 
+\todo{Increase table spacing}
 \begin{figure}
   \centering
   \begin{subfigure}{\textwidth}
@@ -109,15 +110,57 @@ An equivalent axis tree can be created... (needs diagram)
 
 \section{Loop expressions}
 
-% needs to be discussed here because maps dont make sense otherwise, can talk about how
-% we just wrap index exprs in loop index vars so they can be differentiated.
+\begin{figure}[h]
+  \centering
+  %
+  \begin{subfigure}{.48\textwidth}
+    \centering
+    \begin{minted}{python}
+loop(
+  i := dat.axes.index(),
+  dat[i].assign(666, eager=False),
+)
+    \end{minted}
+    \caption{TODO}
+    \label{fig:simple_loop_pyop3}
+  \end{subfigure}
+  %
+  \begin{subfigure}{.48\textwidth}
+    \centering
+    \begin{minted}{python}
+for i in range(len(numpy_dat)):
+  numpy_dat[i] = 666
+    \end{minted}
+    \caption{TODO}
+    \label{fig:simple_loop_python}
+  \end{subfigure}
 
-A loop index is constructed by doing axis[???].index().
-This loop index can then be used inside an index tree like a slice or map.
+  \caption{TODO}
+  \label{fig:simple_loop}
+\end{figure}
 
-A loop index has no shape. e.g. axes[p] where p is a loop index is scalar.
+The indexing routines demonstrated so far are not sufficient for \pyop3's purposes.
+If we consider the prototypical finite element assembly loop (\cref{alg:fem_todo}) we see that there is an outer loop over cells, and that the data is packed, or indexed, \textit{relative} to the current cell.
 
-Perhaps provide a motivating example where we have array[p, :], or something, show that the layout expression contains p and hence we can substitute in an iname or index value.
+In \pyop3, these outer loops are described by the \pycode{loop(...)} construct.
+Calling \pycode{loop} creates a \textit{loop expression}, which is a symbolic object representing the loop to be performed.
+The loop expression expects a \textit{loop index}, and a collection of \textit{statements}.
+The loop index represents the domain to be iterated over and it has an associated axis tree where each element of the axis tree will be visited.
+The statements may be further loops or arbitrary operations (see \cref{ch:dsl} for a more in-depth description).
+
+To give an example, one of the simplest possible loops that one can write in \pyop3 is shown in \cref{fig:simple_loop_pyop3}.
+Here the loop index (\pycode{i}) is simply ``all elements of \pycode{dat}`` and there is a single statement that sets each entry in \pycode{dat} to the arbitrary value of 666.
+Note that the syntax of the loop expression is deliberately similar to that of Python (or other imperative programming languages).
+
+% does this mean that we should introduce dats before this? probably
+The challenge here is how to represent the indexing operation \pycode{dat[i]}...
+
+% scalar shape
+
+Furthermore, the indexed object is dependent upon the loop index: the target expressions of the axis tree must reference the loop index.
+In \pyop3 we say that it is \textit{context-dependent}.
+
+% A loop index has no shape. e.g. axes[p] where p is a loop index is scalar.
 
 % subsection on context-sensitivity?
 
