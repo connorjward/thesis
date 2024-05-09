@@ -212,7 +212,7 @@ This is not quite the case in parallel (see \cref{chapter:parallel}).
     \begin{tabular}{c|c}
       \textbf{Path} & \textbf{Layout function} \\
       \hline
-      \{$a$, $b$, $c$\} & \pycode{6*ia + 2*ib + ic} \\
+      \{$a$, $b$, $c$\} & $6 i_a + 2 i_b + i_c$ \\
     \end{tabular}
     \caption{TODO}
     \label{fig:multi_component_layouts}
@@ -313,8 +313,8 @@ At each axis, since we only require affine expressions, the layout function is s
     \begin{tabular}{c|c}
       \textbf{Path} & \textbf{Layout function} \\
       \hline
-      \{$(a, x)$, $b$\} & \pycode{3*ia + ib} \\
-      \{$(a, y)$, $c$\} & \pycode{2*i_a + 6 + ic} \\
+      \{$(a, x)$, $b$\} & $3 i_a + i_b$ \\
+      \{$(a, y)$, $c$\} & $2 i_a + i_c + 6$ \\
     \end{tabular}
     \caption{TODO}
     \label{fig:multi_component_layouts}
@@ -430,8 +430,8 @@ These core changes are:
       \begin{tabular}{c|c}
         \textbf{Path} & \textbf{Layout function} \\
         \hline
-        % \{$a$, $b$, $c$\} & \pycode{[[0, 1], [1, 3]][ia, ib] + ic} \\
         \{$a$, $b$, $c$\} & $\pycode{[[0, 1], [1, 3]]}_{i_a,i_b} + i_c$ \\
+        % \{$a$, $b$, $c$\} & \pycode{[[0, 1], [1, 3]][ia, ib] + ic} \\
         % \{$a$, $b$, $c$\} & $\lbrac \lbrac 0, 1 \rbrac, \lbrac 1, 3 \rbrac \rbrac \lbrac i_a, i_b \rbrac + i_c$ \\
         % \{$a$, $b$, $c$\} & $\lbrac \lbrac 0, 1 \rbrac, \lbrac 1, 3 \rbrac \rbrac_{i_a, i_b} + i_c$ \\
       \end{tabular}

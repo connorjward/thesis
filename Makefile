@@ -22,7 +22,7 @@ FIGURES = $(patsubst $(FIGURES_DIR)/%.tex,$(FIGURES_DIR)/%.pdf,$(FIGURES_SRC))
 all: $(THESIS)
 
 # Make all individual chapters
-# .PHONY: chapters
+.PHONY: chapters
 chapters: ALWAYS $(CHAPTERS)
 	@echo $(CHAPTERS)
 
@@ -31,44 +31,37 @@ chapters: ALWAYS $(CHAPTERS)
 figures: $(FIGURES)
 
 # Remove build artefacts
-.PHONY: tidy
-tidy:
-	-rm ./*.aux ./**/*.aux \
-	./*.bbl ./**/*.bbl \
-	./*.bcf ./**/*.bcf \
-	./*.blg ./**/*.blg \
-	./*.log ./**/*.log \
-	./*.pyg ./**/*.pyg \
-	./*.run.xml ./**/*.run.xml \
-	./*.toc 2>/dev/null || true
-	
+# .PHONY: tidy
+# tidy:
+# 	-rm ./*.aux ./**/*.aux \
+# 	./*.bbl ./**/*.bbl \
+# 	./*.bcf ./**/*.bcf \
+# 	./*.blg ./**/*.blg \
+# 	./*.log ./**/*.log \
+# 	./*.pyg ./**/*.pyg \
+# 	./*.run.xml ./**/*.run.xml \
+# 	./*.toc 2>/dev/null || true
+
 # Remove PDFs
 .PHONY: clean
-clean: tidy
+# clean: tidy
+clean:
 	-rm ./*.pdf 2>/dev/null || true
 
 # Remove specific PDF
-%.clean: ALWAYS
-	-rm ./$*.pdf 2>/dev/null || true
+# %.clean: ALWAYS
+# 	-rm ./$*.pdf 2>/dev/null || true
 
-$(THESIS): %.pdf: $(CHAPTERS) %.clean %.tex
-	$(TEX) $*
-	-$(BIB) $*
-	# $(GLOS) $*  # TODO
-	$(TEX) $*
-	# -$(GLOS) $*  # TODO
-	$(TEX) $*
+# $(THESIS): %.pdf: $(CHAPTERS) %.clean %.tex
+# 	$(TEX) $*
+# 	-$(BIB) $*
+# 	# $(GLOS) $*  # TODO
+# 	$(TEX) $*
+# 	# -$(GLOS) $*  # TODO
+# 	$(TEX) $*
 
-# "%" is a wildcard that evaluates to the suffix-less filename
-# skip biblatex for chapters as the bibliography is only for the full thesis
-# $(CHAPTERS): %.pdf: $(FIGURES) %.clean %.tex
 $(CHAPTERS): %.pdf: $(FIGURES) %.tex
-	$(TEX) $*
+	latexmk -aux-directory=build -output-directory=chapters -lualatex="lualatex -shell-escape" -lualatex $*
 
-# $(FIGURES): %.pdf: %.clean %.tex
 $(FIGURES): %.pdf: %.tex
-	# lualatex --output-directory=$(FIGURES_DIR) $*
-	$(TEX) $*
-
-# Target always gets executed
-ALWAYS:
+	latexmk -aux-directory=build -output-directory=figures -lualatex="lualatex -shell-escape" -lualatex $*

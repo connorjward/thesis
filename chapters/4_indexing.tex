@@ -22,12 +22,14 @@ In \pyop3, this extraction operation is referred to as \textit{indexing}.
     \label{fig:index_linear_tree_data_layout}
   \end{subfigure}
 
+  \vspace{1em}
+
   \begin{subfigure}{\textwidth}
     \centering
     \begin{tabular}{c|c|c}
       \textbf{Source path} & \textbf{Target path} & \textbf{Index expression} \\
       \hline
-      \{$x$, $y$\} & \{$a$, $b$\} & \{$a$: \pycode{2*ix}, $b$: \pycode{iy+1}\} \\
+      \{$c$, $d$\} & \{$a$, $b$\} & \{$a$: $2 i_c$, $b$: $i_d+1$\} \\
     \end{tabular}
     \caption{TODO}
     \label{fig:index_linear_tree_exprs}
@@ -48,9 +50,26 @@ Since \pyop3 uses code generation, any indexing transformations are necessarily 
 We will use the numpy operation above as an initial example.
 An equivalent axis tree can be created... (needs diagram)
 
+% source and target axes (transformation)
+% index_exprs, target_path
+% compose with layout functions to get the right offset
+
+% subsets are also supported in the same way, they can be used to reorder inside axes (give example)
+
+\subsection{Index trees}
+\label{sec:index_trees}
+
+% Describe the process of indexing an array or axis tree: parse index tree, traverse index tree and generate new axes and collect index expressions, produce a new set of axes with the same layout as before but new axes and index expressions.
+%Explain why we need to use index *trees* here: to build a wider variety of axes.
+%If we want to build a new tree like set of axes (e.g. for closure packing) then we need to be able to pack different axis components together.
 
 
-\section{Index composition}
+\subsubsection{Data layout transformations}
+
+% treating index trees like axis-trees-in-waiting means we can specify the data layout of the packed object.
+% give an example
+
+\subsection{Index composition}
 \label{sec:index_composition}
 
 \begin{figure}
@@ -62,12 +81,14 @@ An equivalent axis tree can be created... (needs diagram)
     \label{fig:index_composition_linear_tree_data_layout}
   \end{subfigure}
 
+  \vspace{1em}
+
   \begin{subfigure}{\textwidth}
     \centering
     \begin{tabular}{c|c|c}
       \textbf{Source path} & \textbf{Target path} & \textbf{Index expression} \\
       \hline
-      \{$e$, $f$\} & \{$a$, $b$\} & \{$a$: \pycode{2*ix}, $b$: \pycode{iy+1}\} \\
+      \{$e$, $d$\} & \{$a$, $b$\} & \{$a$: $2 (i_e+1)$, $b$: $i_d+1$\} \\
     \end{tabular}
     \caption{TODO}
     \label{fig:index_composition_linear_tree_exprs}
@@ -77,31 +98,10 @@ An equivalent axis tree can be created... (needs diagram)
   \label{fig:index_composition_linear_tree_all}
 \end{figure}
 
+% Note that when we index we keep the layouts and index expressions separate
+% ie justify the "inner" replacement
 
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-% basic intro
-Begin by giving an example of indexing a linear axis tree (10, 3)[::2, 1:] (and explain this terminology).
-Explain/show that the axis tree needs to necessarily shrink but the expressions needed to index it go from a*3+b to (2*x)*3+(y+1).
-Show the (relabelled) axis tree to demonstrate shrinkage.
-
-Describe the process of indexing an array or axis tree: parse index tree, traverse index tree and generate new axes and collect index expressions, produce a new set of axes with the same layout as before but new axes and index expressions.
-(note that both axis trees and arrays are indexable, since we can loop over slices of axes)
-Demonstrate this using the same example as above.
-Use the ASCII view of the trees to demonstrate?
-Note that when we index we keep the layouts and index expressions separate, see index composition section for the reason.
-
-% maybe slightly higher up
-Explain why we need to use index *trees* here: to build a wider variety of axes.
-If we want to build a new tree like set of axes (e.g. for closure packing) then we need to be able to pack different axis components together.
-
-\section{Loops}
+\section{Loop expressions}
 
 % needs to be discussed here because maps dont make sense otherwise, can talk about how
 % we just wrap index exprs in loop index vars so they can be differentiated.
@@ -128,14 +128,5 @@ Ragged maps are also supported. e.g. support, star
 \subsection{Map composition}
 
 e.g. g(f(p))
-
-\section{Index composition}
-
-i.e. indexing an indexed thing
-
-%Give an example indexing Axis(10, "a")[::2][1:].
-%The required subst layout targets [2, 4, 6, 8], which is 2*(i+1), not (2*i)+1
-
-cannot directly insert as it breaks composition, need to store index\_exprs separately
 
 \end{document}
