@@ -424,11 +424,18 @@ These core changes are:
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{c|c}
-      \textbf{Path} & \textbf{Layout function} \\
-      \hline
-      \{$a$, $b$, $c$\} & \pycode{[[0, 1], [1, 3]][ia, ib] + ic} \\
-    \end{tabular}
+    \begingroup  % used to isolate settings changes
+      % see: https://www.overleaf.com/learn/latex/Questions/How_do_I_change_column_or_row_separation_in_LaTeX_tables
+      \renewcommand{\arraystretch}{1.2}
+      \begin{tabular}{c|c}
+        \textbf{Path} & \textbf{Layout function} \\
+        \hline
+        % \{$a$, $b$, $c$\} & \pycode{[[0, 1], [1, 3]][ia, ib] + ic} \\
+        \{$a$, $b$, $c$\} & $\pycode{[[0, 1], [1, 3]]}_{i_a,i_b} + i_c$ \\
+        % \{$a$, $b$, $c$\} & $\lbrac \lbrac 0, 1 \rbrac, \lbrac 1, 3 \rbrac \rbrac \lbrac i_a, i_b \rbrac + i_c$ \\
+        % \{$a$, $b$, $c$\} & $\lbrac \lbrac 0, 1 \rbrac, \lbrac 1, 3 \rbrac \rbrac_{i_a, i_b} + i_c$ \\
+      \end{tabular}
+    \endgroup
     \caption{TODO}
     \label{fig:ragged_layouts}
   \end{subfigure}

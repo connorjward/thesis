@@ -1,4 +1,4 @@
-\input{common/two_cell_mesh_lagrange.tikz}
+\input{figures/common/two_cell_mesh_lagrange.tikz}
 
 \tikzstyle {edge} = [draw=black,line width=1pt];
 \tikzstyle {eghost} = [edge,dashed];

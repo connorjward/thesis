@@ -1,5 +1,6 @@
 # Compilers
-TEX = xelatex -shell-escape
+# TEX = xelatex -shell-escape
+TEX = lualatex -shell-escape
 BIB = biber
 # PY = pythontex
 GLOS = makeglossaries
@@ -66,7 +67,8 @@ $(CHAPTERS): %.pdf: $(FIGURES) %.tex
 
 # $(FIGURES): %.pdf: %.clean %.tex
 $(FIGURES): %.pdf: %.tex
-	lualatex --output-directory=$(FIGURES_DIR) $*
+	# lualatex --output-directory=$(FIGURES_DIR) $*
+	$(TEX) $*
 
 # Target always gets executed
 ALWAYS:

@@ -4,15 +4,18 @@
 \usepackage{tkz-euclide}
 \usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
 
+\usepackage{minted}
+\usepackage{mymacros}
+
 \begin{document}
 
 \begin{tikzpicture}
 
-\input{common/axis_tree.tikz}
+\input{figures/common/axis_tree.tikz}
 
 \node [axis] (a) at (0,4) {\textit{a}: \{ 2 \}};
 \node [axis] (b) at (0.2,2) {\textit{b}: \{ 2 \}};
-\node [axis] (c) at (0.4,0) {\textit{c}: \{ [ [1, 0], [2, 1] ] \}};
+\node [axis] (c) at (0.4,0) {\textit{c}: \{ \pycode{[[1, 0], [2, 1]]} \}};
 
 \tkzDefShiftPoint[a](.2,-.2){acpt}
 \tkzDefShiftPoint[b](.2,-.2){bcpt}
