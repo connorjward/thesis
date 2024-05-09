@@ -1,2 +1,3 @@
+% NOTE: This is also used for index trees now
 \tikzstyle{axis} = [minimum width=1.5cm,text centered,align=center,draw=black];
 \tikzstyle{axisarrow} = [-{Stealth[sep=2pt]}];
