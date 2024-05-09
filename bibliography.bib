@@ -87,6 +87,23 @@
   file = {/home/connor/.local/share/zotero/storage/SN89RIMP/Agelek et al_2017_On Orienting Edges of Unstructured Two- and Three-Dimensional Meshes.pdf}
 }
 
+@online{ahrensFinchSparseStructured2024,
+  title = {Finch: {{Sparse}} and {{Structured Array Programming}} with {{Control Flow}}},
+  shorttitle = {Finch},
+  author = {Ahrens, Willow and Collin, Teodoro Fields and Patel, Radha and Deeds, Kyle and Hong, Changwan and Amarasinghe, Saman},
+  date = {2024-04-25},
+  eprint = {2404.16730},
+  eprinttype = {arxiv},
+  eprintclass = {cs},
+  url = {http://arxiv.org/abs/2404.16730},
+  urldate = {2024-05-03},
+  abstract = {WILLOW AHRENS, MIT CSAIL, USA TEODORO FIELDS COLLIN, MIT CSAIL, USA RADHA PATEL, MIT CSAIL, USA KYLE DEEDS, University of Washington, USA CHANGWAN HONG, MIT CSAIL, USA SAMAN AMARASINGHE, MIT CSAIL, USA From FORTRAN to NumPy, arrays have revolutionized how we express computation. However, arrays in these, and almost all prominent systems, can only handle dense rectilinear integer grids. Real world arrays often contain underlying structure, such as sparsity, runs of repeated values, or symmetry. Support for structured data is fragmented and incomplete. Existing frameworks limit the array structures and program control flow they support to better simplify the problem. In this work, we propose a new programming language, Finch, which supports both flexible control flow and diverse data structures. Finch facilitates a programming model which resolves the challenges of computing over structured arrays by combining control flow and data structures into a common representation where they can be co-optimized. Finch automatically specializes control flow to data so that performance engineers can focus on experimenting with many algorithms. Finch supports a familiar programming language of loops, statements, ifs, breaks, etc., over a wide variety of array structures, such as sparsity, run-length-encoding, symmetry, triangles, padding, or blocks. Finch reliably utilizes the key properties of structure, such as structural zeros, repeated values, or clustered non-zeros. We show that this leads to dramatic speedups in operations such as SpMV and SpGEMM, image processing, graph analytics, and a high-level tensor operator fusion interface. CCS Concepts: • Software and its engineering → Control structures; Data types and structures; Imperative languages; • Mathematics of computing → Mathematical software.},
+  langid = {english},
+  pubstate = {preprint},
+  keywords = {Computer Science - Mathematical Software},
+  file = {/home/connor/.local/share/zotero/storage/KVQ7BURW/Ahrens et al. - 2024 - Finch Sparse and Structured Array Programming wit.pdf}
+}
+
 @incollection{Alnaes2012a,
   title = {{{UFL}}: A Finite Element Form Language},
   booktitle = {Automated Solution of Differential Equations by the Finite Element Method, Volume 84 of Lecture Notes in Computational Science and Engineering},
@@ -3694,6 +3711,24 @@
   langid = {english},
   keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Mathematical Software},
   file = {/home/connor/.local/share/zotero/storage/I8JKIF5R/Schulz et al. - 2021 - Task inefficiency patterns for a wave equation sol.pdf}
+}
+
+@article{scottDimensionsExactlyDivergenceFree2024,
+  title = {Dimensions of {{Exactly Divergence-Free Finite Element Spaces}} in {{3D}}},
+  author = {Scott, L. Ridgway and Tscherpel, Tabea},
+  date = {2024-04-30},
+  journaltitle = {SIAM Journal on Scientific Computing},
+  shortjournal = {SIAM J. Sci. Comput.},
+  volume = {46},
+  number = {2},
+  pages = {A1102-A1131},
+  issn = {1064-8275, 1095-7197},
+  doi = {10.1137/22M1544579},
+  url = {https://epubs.siam.org/doi/10.1137/22M1544579},
+  urldate = {2024-05-03},
+  abstract = {We examine the dimensions of various inf-sup stable mixed finite element spaces on tetrahedral meshes in three dimensions with exact divergence constraints. More precisely, we compare the standard Scott--Vogelius elements of higher polynomial degree and low-order methods on split meshes, the Alfeld and the Worsey--Farin split. The main tool is a counting strategy to express the degrees of freedom for given polynomial degree and given split in terms of only a few mesh quantities, for which bounds and asymptotic behavior under mesh refinement is investigated. Furthermore, this is used to obtain insights on potential precursor spaces in the Stokes complex for finite element methods on the Worsey--Farin split.},
+  langid = {english},
+  file = {/home/connor/.local/share/zotero/storage/PSZFRIXP/Scott and Tscherpel - 2024 - Dimensions of Exactly Divergence-Free Finite Eleme.pdf}
 }
 
 @article{scroggsBasixRuntimeFinite2022,

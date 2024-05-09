@@ -1,0 +1,70 @@
+% Data tree for a ragged array
+\documentclass[tikz]{standalone}
+
+\usepackage{tkz-euclide}
+\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{common/data_layout.tikz}
+
+% top
+\coordinate (origin) at (0,0);
+\drawWhiteDof{(origin)}{$a_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$a_1$};
+
+\coordinate (aleft) at (origin);
+\coordinate (amid) at ($(origin)+(1,0)$);
+\coordinate (aright) at ($(origin)+(2,0)$);
+
+% middle left
+\coordinate (origin) at ($(amid)+(-2.5,-2)$);
+\drawWhiteDof{(origin)}{$b_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
+
+\draw [connector] (aleft) -- ($(origin)+(0,1)$);
+\draw [connector] (amid) -- ($(origin)+(2,1)$);
+
+\coordinate (b00) at (origin);
+\coordinate (b01) at ($(origin)+(1,0)$);
+\coordinate (b02) at ($(origin)+(2,0)$);
+
+% middle right
+\coordinate (origin) at ($(amid)+(.5,-2)$);
+\drawWhiteDof{(origin)}{$b_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
+
+\draw [connector] (amid) -- ($(origin)+(0,1)$);
+\draw [connector] (aright) -- ($(origin)+(2,1)$);
+
+\coordinate (b10) at (origin);
+\coordinate (b11) at ($(origin)+(1,0)$);
+\coordinate (b12) at ($(origin)+(2,0)$);
+
+% bottom p0 (1)
+\coordinate (origin) at ($(b00)+(-.25,-2)$);
+\drawWhiteDof{(origin)}{$c_0$};
+\draw [connector] (b00) -- ($(origin)+(0,1)$);
+\draw [connector] (b01) -- ($(origin)+(1,1)$);
+
+% bottom p1 (0)
+\coordinate (origin) at ($(b01)+(-.25,-2)$);
+\draw ($(origin)+(.5,.5)$) node[cross] {};
+\draw [connector] ($(b01)+(.5,0)$) -- ($(origin)+(.5,.5)$);
+
+% bottom p2 (2)
+\coordinate (origin) at ($(b10)+(-1.25,-2)$);
+\drawWhiteDof{(origin)}{$c_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$c_1$};
+\draw [connector] (b10) -- ($(origin)+(0,1)$);
+\draw [connector] (b11) -- ($(origin)+(2,1)$);
+
+% bottom p3 (1)
+\coordinate (origin) at ($(b11)+(.25,-2)$);
+\drawWhiteDof{(origin)}{$c_0$};
+\draw [connector] (b11) -- ($(origin)+(0,1)$);
+\draw [connector] (b12) -- ($(origin)+(1,1)$);
+
+\end{tikzpicture}
+\end{document}

@@ -26,26 +26,26 @@
 % cell (non) DoFs
 \coordinate (celldof) at ($(cell)+(0,-1.5)$);
 \draw (celldof) node[cross] {};
-\draw (cell) -- (celldof);
+\draw [connector] (cell) -- (celldof);
 
 % edge (non) DoFs
 \coordinate (edgedof) at ($(edge)+(0,-1.5)$);
 \draw (edgedof) node[cross] {};
-\draw (edge) -- (edgedof);
+\draw [connector] (edge) -- (edgedof);
 
 % vertex DoFs
 \coordinate (vertorigin) at ($(vert)+(-.5,-2)$);
 \drawWhiteDof{(vertorigin)}{$d_0$};
-\draw ($(vert)+(-.5,0)$) -- ($(vertorigin)+(0,1)$);
-\draw ($(vert)+(.5,0)$) -- ($(vertorigin)+(1,1)$);
+\draw [connector] ($(vert)+(-.5,0)$) -- ($(vertorigin)+(0,1)$);
+\draw [connector] ($(vert)+(.5,0)$) -- ($(vertorigin)+(1,1)$);
 \coordinate (vertdof) at ($(vertorigin)+(.5,0)$);
 
 % vertex dim
 \coordinate (vertdimorigin) at ($(vertdof)+(-1,-2)$);
 \drawWhiteDof{(vertdimorigin)}{$e_0$};
 \drawWhiteDof{($(vertdimorigin)+(1,0)$)}{$e_1$};
-\draw ($(vertdof)+(-.5,0)$) -- ($(vertdimorigin)+(0,1)$);
-\draw ($(vertdof)+(.5,0)$) -- ($(vertdimorigin)+(2,1)$);
+\draw [connector] ($(vertdof)+(-.5,0)$) -- ($(vertdimorigin)+(0,1)$);
+\draw [connector] ($(vertdof)+(.5,0)$) -- ($(vertdimorigin)+(2,1)$);
 
 \node (pointslabel) [ptlabel] at (7,4.5) {Points};
 \node (nodeslabel) [ptlabel] at (7,2.5) {Nodes};

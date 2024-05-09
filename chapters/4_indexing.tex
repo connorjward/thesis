@@ -6,10 +6,60 @@
 
 \chapter{Indexing}
 
-% motivation
-Why do we want to index arrays? Why do we need a flexible system?
+Axis trees provide us with a method for describing the data layout of global objects.
+In order to be able to execute compact stencils this is insufficient.
+We need a way to extract portions of the array such that they may be operated on independently.
+In \pyop3, this extraction operation is referred to as \textit{indexing}.
 
-\section{Indexing axis trees}
+\section{Fundamentals}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{index_linear_tree_data_layout}
+    \caption{TODO}
+    \label{fig:index_linear_tree_data_layout}
+  \end{subfigure}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{c|c|c}
+      \textbf{Source path} & \textbf{Target path} & \textbf{Index expression} \\
+      \hline
+      \{$x$, $y$\} & \{$a$, $b$\} & \{$a$: \pycode{2*ix}, $b$: \pycode{iy+1}\} \\
+    \end{tabular}
+    \caption{TODO}
+    \label{fig:index_linear_tree_exprs}
+  \end{subfigure}
+
+  \caption{TODO}
+  \label{fig:index_linear_tree_all}
+\end{figure}
+
+To begin with, consider indexing a linear array with shape \pycode{(10, 3)} (a matrix with 10 rows and 3 columns) with the slice \pycode{[::2, 1:]}.
+This is Python syntax for requesting access to every other row of the first axis, and all but the first entry of the second axis.
+If this code were to be executed using a numpy array of those dimensions, a new array would be returned with shape \pycode{(5, 2)} containing only those elements.
+numpy is capable of reasoning about slices and so this new array would merely be a \textit{view} of the same data; modifying the returned array would also modify the data in the original array.
+
+\pyop3 takes inspiration from numpy to provide similar indexing routines for its arrays, though with support for many more indexing operations.
+Since \pyop3 uses code generation, any indexing transformations are necessarily lazy and symbolic, allowing for their insertion into the generated code.
+
+We will use the numpy operation above as an initial example.
+An equivalent axis tree can be created... (needs diagram)
+
+
+
+\section{Index composition}
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 % basic intro
 Begin by giving an example of indexing a linear axis tree (10, 3)[::2, 1:] (and explain this terminology).

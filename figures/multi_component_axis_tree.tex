@@ -1,4 +1,4 @@
-% Axis tree for a linear numpy-style array with shape (2, 3, 2)
+% Axis tree for a multi-component array
 \documentclass[tikz]{standalone}
 
 \usepackage{tkz-euclide}
@@ -10,16 +10,18 @@
 
 \input{common/axis_tree.tikz}
 
-\node [axis] (a) at (0,4) {\textit{a}: \{ 2 \}};
-\node [axis] (b) at (0.2,2) {\textit{b}: \{ 3 \}};
-\node [axis] (c) at (0.4,0) {\textit{c}: \{ 2 \}};
+\node [axis] (a) at (.5,2) {
+  \textit{a}: \{ \textit{x}: 2, \textit{y}: 2 \}
+};
+\node [axis] (b) at (0,0) {\textit{b}: \{ 3 \}};
+\node [axis] (c) at (2,0) {\textit{c}: \{ 2 \}};
 
-\tkzDefShiftPoint[a](.2,-.2){acpt}
-\tkzDefShiftPoint[b](.2,-.2){bcpt}
+\tkzDefShiftPoint[a](-.2,-.2){ax}
+\tkzDefShiftPoint[a](.8,-.2){ay}
 \tkzDefShiftPoint[b](0,.3){btarget}
 \tkzDefShiftPoint[c](0,.3){ctarget}
-\draw [axisarrow] (acpt) -- (btarget);
-\draw [axisarrow] (bcpt) -- (ctarget);
+\draw [axisarrow] (ax) -- (btarget);
+\draw [axisarrow] (ay) -- (ctarget);
 
 \end{tikzpicture}
 

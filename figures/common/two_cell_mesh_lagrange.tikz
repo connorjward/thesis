@@ -1,5 +1,5 @@
-\input{_common/two_cell_mesh.tikz}
-\input{_common/dof_colors.tikz}
+\input{common/two_cell_mesh.tikz}
+\input{common/dof_colors.tikz}
 
 \tikzstyle {dof} = [minimum size=7pt,line width=1pt];
 \tikzstyle {celldof} = [dof,draw=celldofcolor,fill=celldofcolor];

@@ -1,28 +1,28 @@
-\input{_common/dof_colors.tikz}
+\input{common/dof_colors.tikz}
 
 \tikzstyle {background} = [lightgray];
 \tikzstyle{ptlabel} = [anchor=center,color=black,opacity=1]
 \tikzstyle{connector} = [densely dashed]
 
 \newcommand{\drawDof}[3]{%
-  \filldraw[draw=black, fill=#3!60] #1 rectangle ++ (1,1);
+  \filldraw[draw=black, fill=#3] #1 rectangle ++ (1,1);
   \node [at={($#1+(.5,.5)$)}] {#2};
 }
 
 \newcommand{\drawCellDof}[2]{%
-  \drawDof{#1}{#2}{celldofcolor};
+  \drawDof{#1}{#2}{bgcelldofcolor};
 }
 
 \newcommand{\drawEdgeDof}[2]{%
-  \drawDof{#1}{#2}{edgedofcolor};
+  \drawDof{#1}{#2}{bgedgedofcolor};
 }
 
 \newcommand{\drawVertDof}[2]{%
-  \drawDof{#1}{#2}{vertdofcolor};
+  \drawDof{#1}{#2}{bgvertdofcolor};
 }
 
 \newcommand{\drawNodeDof}[2]{%
-  \drawDof{#1}{#2}{nodedofcolor};
+  \drawDof{#1}{#2}{bgnodedofcolor};
 }
 
 \newcommand{\drawWhiteDof}[2]{%
