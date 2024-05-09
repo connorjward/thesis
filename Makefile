@@ -1,10 +1,5 @@
 # Compilers
-# TEX = xelatex -shell-escape
-TEX = lualatex -shell-escape
-BIB = biber
-# PY = pythontex
-GLOS = makeglossaries
-PYTHON = python3
+TEX = latexmk -aux-directory=build -lualatex="lualatex -shell-escape" -lualatex
 
 # Documents
 THESIS = thesis.pdf
@@ -30,38 +25,29 @@ chapters: ALWAYS $(CHAPTERS)
 .PHONY: figures
 figures: $(FIGURES)
 
-# Remove build artefacts
-# .PHONY: tidy
-# tidy:
-# 	-rm ./*.aux ./**/*.aux \
-# 	./*.bbl ./**/*.bbl \
-# 	./*.bcf ./**/*.bcf \
-# 	./*.blg ./**/*.blg \
-# 	./*.log ./**/*.log \
-# 	./*.pyg ./**/*.pyg \
-# 	./*.run.xml ./**/*.run.xml \
-# 	./*.toc 2>/dev/null || true
+# Remove temporary files
+.PHONY: tidy
+tidy:
+	-rm -rf ./build/
 
 # Remove PDFs
 .PHONY: clean
-# clean: tidy
-clean:
-	-rm ./*.pdf 2>/dev/null || true
+clean: tidy
+	-rm ./*.pdf ./chapters/*.pdf ./figures/*.pdf 2>/dev/null || true
 
 # Remove specific PDF
-# %.clean: ALWAYS
-# 	-rm ./$*.pdf 2>/dev/null || true
+%.clean: ALWAYS
+	-rm ./$*.pdf 2>/dev/null || true
 
-# $(THESIS): %.pdf: $(CHAPTERS) %.clean %.tex
-# 	$(TEX) $*
-# 	-$(BIB) $*
-# 	# $(GLOS) $*  # TODO
-# 	$(TEX) $*
-# 	# -$(GLOS) $*  # TODO
-# 	$(TEX) $*
+$(THESIS): %.pdf: $(CHAPTERS) %.clean %.tex
+	$(TEX) $*
 
 $(CHAPTERS): %.pdf: $(FIGURES) %.tex
-	latexmk -aux-directory=build -output-directory=chapters -lualatex="lualatex -shell-escape" -lualatex $*
+	$(TEX) -output-directory=chapters $*
 
 $(FIGURES): %.pdf: %.tex
-	latexmk -aux-directory=build -output-directory=figures -lualatex="lualatex -shell-escape" -lualatex $*
+	$(TEX) -output-directory=figures $*
+
+# Use to always run a command even if the files are unchanged
+.PHONY: ALWAYS
+ALWAYS:

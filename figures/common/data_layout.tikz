@@ -29,5 +29,9 @@
   \drawDof{#1}{#2}{white};
 }
 
+\newcommand{\drawWhiteDofSmall}[2]{%
+  \drawDof{#1}{\footnotesize{#2}}{white};
+}
+
 % https://tex.stackexchange.com/questions/123760/draw-crosses-in-tikz
 \tikzset{cross/.style={cross out,draw=black,minimum size=8pt,inner sep=0pt,outer sep=0pt,line width=1.5pt}};
