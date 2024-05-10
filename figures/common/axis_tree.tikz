@@ -1,4 +1,0 @@
-% NOTE: This is also used for index trees now
-\tikzstyle{axis} = [minimum width=1.5cm,minimum height=.7cm,yshift=.15cm,text centered,draw=black,line width=.7pt,anchor=south west];
-\tikzstyle{axisarrow} = [-{Stealth[sep=2pt]},draw=red,line width=.7pt];
-\tikzstyle{underline} = [draw=red,line width=.7pt];

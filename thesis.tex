@@ -22,10 +22,18 @@
 % for code
 \usepackage{algorithm}
 \usepackage{minted}
+  % center code listings
+  % https://tex.stackexchange.com/questions/161124/how-to-make-a-minted-code-listing-centered-on-a-page
+  \RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
 
 % code overlay: https://tex.stackexchange.com/questions/287549/is-it-possible-to-use-tikzmark-inside-minted
 \usepackage{tikz}
   \usetikzlibrary{calc,decorations.pathreplacing,tikzmark}
+
+% ------ TABLES -------
+
+% increase table spacing (https://www.overleaf.com/learn/latex/Questions/How_do_I_change_column_or_row_separation_in_LaTeX_tables)
+\renewcommand{\arraystretch}{1.2}
 
 % BIBLIOGRAPHY
 \usepackage{biblatex}
@@ -40,8 +48,8 @@
 % must be last package used
 \usepackage{subfiles}
 
-\title{\pyop3: A Domain-Specific Language for Expressing Iterations over Mesh-like Data Structures}
-\author{Connor J. Ward and David A. Ham}
+\title{An Execution Abstraction for Compact Computational Kernels on Unstructured Meshes}
+\author{Connor J. Ward}
 \date{\today}
 
 \begin{document}

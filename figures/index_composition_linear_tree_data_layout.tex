@@ -1,12 +1,14 @@
 \documentclass[tikz]{standalone}
 
-\usepackage{tkz-euclide}
-\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{mymacros}
 
 \begin{document}
-\begin{tikzpicture}
+\begin{tikzpicture}[remember picture]
 
 \input{figures/common/data_layout.tikz}
+\input{figures/common/tree.tikz}
 
 % --- PARTIALLY INDEXED ---
 
@@ -28,13 +30,27 @@
 \draw [connector] (aleft) -- ($(origin)+(0,1)$);
 \draw [connector] (aright) -- ($(origin)+(2,1)$);
 
+% --- TIMES ---
+
+\bigOTimes{(3.5,-.5)};
+
+% --- INDEX TREE ---
+
+\coordinate (origin) at (4,0);
+
+\drawTreeNode{(top)}{(origin)}{slice($c$: \{ \subnode{top0}{(\pycode{1::})} \})};
+\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{slice($d$: \{ (\pycode{::}) \})};
+\underlineComponent{top}{top0};
+\drawTreeConnector{top}{top0}{(bottom)};
+
+
 % --- ARROW ---
 
-\draw [line width=.8pt,-{Stealth}] (3.2,-.5) -- (4.8,-.5);
+\bigArrow{(7.4,-.5)};
 
 % --- FULLY INDEXED ---
 
-\coordinate (origin) at (5,0);
+\coordinate (origin) at (8.5,0);
 
 % top
 \drawWhiteDofSmall{(origin)}{$e_0$\,($a_2$)};

@@ -12,35 +12,35 @@ This lays the groundwork for a much more expressive DSL since more of the semant
 
 \begin{figure}
   \centering
-  \includegraphics[width=\textwidth]{two_cell_mesh_lagrange.pdf}
+  \includegraphics{two_cell_mesh_lagrange.pdf}
   \caption{TODO}
   \label{fig:two_cell_mesh_lagrange}
 \end{figure}
 
 \begin{figure}
   \centering
-  \includegraphics[width=\textwidth]{two_cell_mesh_lagrange_nodal.pdf}
+  \includegraphics{two_cell_mesh_lagrange_nodal.pdf}
   \caption{TODO}
   \label{fig:two_cell_mesh_lagrange_nodal}
 \end{figure}
 
 \begin{figure}
   \centering
-  \includegraphics[width=\textwidth]{two_cell_mesh_lagrange_data_layout_flat.pdf}
+  \includegraphics{two_cell_mesh_lagrange_data_layout_flat.pdf}
   \caption{TODO}
   \label{fig:two_cell_mesh_lagrange_data_layout_flat}
 \end{figure}
 
 \begin{figure}
   \centering
-  \includegraphics[width=\textwidth]{two_cell_mesh_lagrange_data_layout_flat_nodal.pdf}
+  \includegraphics{two_cell_mesh_lagrange_data_layout_flat_nodal.pdf}
   \caption{TODO}
   \label{fig:two_cell_mesh_lagrange_data_layout_flat_nodal}
 \end{figure}
 
 \begin{figure}
   \centering
-  \includegraphics[width=\textwidth]{two_cell_mesh_lagrange_data_layout_nested.pdf}
+  \includegraphics{two_cell_mesh_lagrange_data_layout_nested.pdf}
   \caption{TODO}
   \label{fig:two_cell_mesh_lagrange_data_layout_nested}
 \end{figure}
@@ -64,7 +64,7 @@ We can therefore conclude that mesh data layouts require a new abstraction for c
   %
   \begin{subfigure}{.6\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{two_cell_mesh_lagrange_axis_tree.pdf}
+    \includegraphics{two_cell_mesh_lagrange_axis_tree.pdf}
     \caption{
       TODO.
       For simplicity the component labels for the \textit{dof} subaxes have been omitted.
@@ -209,10 +209,12 @@ This is not quite the case in parallel (see \cref{chapter:parallel}).
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{c|c}
+    \begin{tabular}{|c|c|}
+      \hline
       \textbf{Path} & \textbf{Layout function} \\
       \hline
       \{$a$, $b$, $c$\} & $6 i_a + 2 i_b + i_c$ \\
+      \hline
     \end{tabular}
     \caption{TODO}
     \label{fig:multi_component_layouts}
@@ -310,11 +312,14 @@ At each axis, since we only require affine expressions, the layout function is s
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{c|c}
+    \begin{tabular}{|c|c|}
+      \hline
       \textbf{Path} & \textbf{Layout function} \\
       \hline
       \{$(a, x)$, $b$\} & $3 i_a + i_b$ \\
+      \hline
       \{$(a, y)$, $c$\} & $2 i_a + i_c + 6$ \\
+      \hline
     \end{tabular}
     \caption{TODO}
     \label{fig:multi_component_layouts}
@@ -424,18 +429,14 @@ These core changes are:
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begingroup  % used to isolate settings changes
-      % see: https://www.overleaf.com/learn/latex/Questions/How_do_I_change_column_or_row_separation_in_LaTeX_tables
-      \renewcommand{\arraystretch}{1.2}
-      \begin{tabular}{c|c}
-        \textbf{Path} & \textbf{Layout function} \\
-        \hline
-        \{$a$, $b$, $c$\} & $\pycode{[[0, 1], [1, 3]]}_{i_a,i_b} + i_c$ \\
-        % \{$a$, $b$, $c$\} & \pycode{[[0, 1], [1, 3]][ia, ib] + ic} \\
-        % \{$a$, $b$, $c$\} & $\lbrac \lbrac 0, 1 \rbrac, \lbrac 1, 3 \rbrac \rbrac \lbrac i_a, i_b \rbrac + i_c$ \\
-        % \{$a$, $b$, $c$\} & $\lbrac \lbrac 0, 1 \rbrac, \lbrac 1, 3 \rbrac \rbrac_{i_a, i_b} + i_c$ \\
-      \end{tabular}
-    \endgroup
+    %
+    \begin{tabular}{|c|c|}
+      \hline
+      \textbf{Path} & \textbf{Layout function} \\
+      \hline
+      \{$a$, $b$, $c$\} & $\pycode{[[0, 1], [1, 3]]}_{i_a,i_b} + i_c$ \\
+      \hline
+    \end{tabular}
     \caption{TODO}
     \label{fig:ragged_layouts}
   \end{subfigure}
@@ -478,49 +479,33 @@ def tabulate_layouts_ragged(axis: Axis):
 
 \section{Data structures}
 
+Thus far we have only discussed the \textit{specification} of how data is stored in \pyop3 and not the actual implementation.
+For continuum mechanics problems one typically needs to have representations for scalars, vectors and matrices.
+In \pyop3, recycling the terminology from \pyop2, we call scalars \pycode{Globals}, vectors \pycode{Dats} and matrices \pycode{Mats}.
+All of these data structures work in parallel, and their parallel implementation is deferred to \cref{chapter:parallel}.
+
+% I reckon that any indexing information should be deferred to the start of the indexing section.
+
+\subsection{Scalars (\pycode{Globals})}
+
+\pycode{Globals} are the simplest of \pyop3's data structures.
+They wrap a single scalar value, which may be of any data type (e.g. \pycode{int32}, \pycode{float64}, \pycode{complex128}) and thus have a trivial data layout, hence they have no need for axis trees.
+It is not valid to index into a \pycode{Global} (\cref{chapter:indexing}).
+
 \subsection{Vectors (\pycode{Dats})}
+
+Thus far, all of the data structures that we have encountered would be stored as \pycode{Dats}.
+\pycode{Dats} are constructed with a single axis tree that provides the information necessary to address the underlying flat array that carries the data.
+Having a single axis tree, \pycode{Dats} may be indexed using a single index (\cref{chapter:indexing}).
+
+Currently \pycode{Dats} use numpy arrays as the underlying data storage mechanism, but we intend to permit further array types to enable targeting accelerator architectures like CUDA GPUs.
 
 \subsection{Matrices (\pycode{Mats})}
 
+\pycode{Mats} require 2 axis trees: one for the rows of the matrix and one for the columns.
+They rely on PETSc \ccode{Mat} objects for the underlying data storage.
+To improve performance one should preallocate the matrix by constructing a \pycode{Sparsity} object and doing a simulated run of all the loop expressions so that non-zeros are put in the right places.
+
+Since \pycode{Mats} have two axis trees, two indices are needed when indexing.
+
 \end{document}
-
-% ====================OLD=======================
-% \subsubsection{Representing data layouts with DMPlex}
-%
-% DMPlex represents a mesh as a set of points where the points are divided into \textit{strata} (cells, edges, vertices, etc).
-% These points are connected in a graph (Hasse diagram) and a rich set of queries can be used to determine the right adjacencies needed for things like the finite element method.
-%
-% In order to associated data with these mesh points, a typical PETSc application will construct a PETSc \ccode{Section}.
-% These are simple CSR-like (?) data structures that encode a data layout by associating a particular number of DoFs with each mesh point.
-% Sections are a powerful tool for describing data layouts but they have a number of limitations:
-%
-% \begin{itemize}
-%   \item
-%     Sections are fully ragged.
-%     They only store DoF information per point in a completely unstructured way and are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
-%     This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) that it would have been able to do were it to know of a constant loop extent.
-%     Additionally, this variable size increases memory pressure as redundant arrays of constant sizes need to be streamed through memory.
-%
-%   \item
-%     DoFs per point are treated as a flat array.
-%     This means that shape information is lost for, say, vector-valued functions.
-% \end{itemize}
-%
-% With PETSc/DMPlex, the P3 DoF layout would be represented as shown in Figure~\ref{???}.
-% % figure showing PetscSection info
-%
-% \subsubsection{Data layouts in \pyop2}
-%
-% \pyop2 takes a very different approach to describing data layouts to DMPlex.
-% Firstly, it has no conception of what a mesh is and it deals solely with \textit{sets} and \textit{mappings between sets}.
-% The rich query language provided by DMPlex is therefore unavailable and the task of determining the right adjacency maps is passed to the user.
-%
-% \subsection{What \pyop3 does}
-
-  % start with P3?
-
-
-% Introduce hierarchical data layout abstraction.
-% Explain ragged, sparse data structures and PETSc integration.
-% Present layout algorithm (where I tabulate the offsets).
-

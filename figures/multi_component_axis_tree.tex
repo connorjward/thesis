@@ -1,28 +1,21 @@
-% Axis tree for a multi-component array
 \documentclass[tikz]{standalone}
-
-\usepackage{tkz-euclide}
-\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+\include{figures/common/preamble}
 
 \begin{document}
+\begin{tikzpicture}[remember picture]
 
-\begin{tikzpicture}
+\input{figures/common/tree.tikz}
 
-\input{figures/common/axis_tree.tikz}
-
-\node [axis] (a) at (.5,2) {
-  \textit{a}: \{ \textit{x}: 2, \textit{y}: 2 \}
+\drawTreeNode{(a)}{(.2,2)}{
+  \textit{a}: \{ \subnode[minimum width=0pt]{a0}{\textit{x}: 2}, \subnode[minimum width=0pt]{a1}{\textit{y}: 2} \}
 };
-\node [axis] (b) at (0,0) {\textit{b}: \{ 3 \}};
-\node [axis] (c) at (2,0) {\textit{c}: \{ 2 \}};
+\drawTreeNode{(b)}{(0,0)}{\textit{b}: \{ 3 \}};
+\drawTreeNode{(c)}{(2,0)}{\textit{c}: \{ 2 \}};
 
-\tkzDefShiftPoint[a](-.2,-.2){ax}
-\tkzDefShiftPoint[a](.8,-.2){ay}
-\tkzDefShiftPoint[b](0,.3){btarget}
-\tkzDefShiftPoint[c](0,.3){ctarget}
-\draw [axisarrow] (ax) -- (btarget);
-\draw [axisarrow] (ay) -- (ctarget);
+\underlineComponent{a}{a0};
+\underlineComponent{a}{a1};
+\drawTreeConnector{a}{a0}{(b)};
+\drawTreeConnector{a}{a1}{(c)};
 
 \end{tikzpicture}
-
 \end{document}

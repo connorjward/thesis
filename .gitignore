@@ -149,6 +149,7 @@ acs-*.bib
 
 # listings
 *.lol
+*.pygstyle
 
 # luatexja-ruby
 *.ltjruby

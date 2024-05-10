@@ -2,6 +2,7 @@
 
 \begin{document}
 
+
 % TODO: Somewhere talk about ragged temporaries?
 
 \chapter{Indexing}
@@ -11,10 +12,12 @@ In order to be able to execute compact stencils this is insufficient.
 We need a way to extract portions of the array such that they may be operated on independently.
 In \pyop3, this extraction operation is referred to as \textit{indexing}.
 
+% TODO: Talk about IndexedAxisTree and how to construct Dats with them.
+%       Talk about indexing *data structures*
+% TODO: Increase table spacing
 \section{Fundamentals}
 
-\todo{Increase table spacing}
-\begin{figure}
+\begin{figure}[h]
   \centering
   \begin{subfigure}{\textwidth}
     \centering
@@ -31,10 +34,12 @@ In \pyop3, this extraction operation is referred to as \textit{indexing}.
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{c|c|c}
+    \begin{tabular}{|c|c|c|}
+      \hline
       \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
       \hline
       \{$c$, $d$\} & \{$a$, $b$\} & \{$a$: $2 i_c$, $b$: $i_d+1$\} \\
+      \hline
     \end{tabular}
     \caption{
       The indexing information carried by the transformed axis tree that allows it to map back to the original unindexed tree.
@@ -95,10 +100,12 @@ An equivalent axis tree can be created... (needs diagram)
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{c|c|c}
+    \begin{tabular}{|c|c|c|}
+      \hline
       \textbf{Source path} & \textbf{Target path} & \textbf{Index expression} \\
       \hline
       \{$e$, $d$\} & \{$a$, $b$\} & \{$a$: $2 (i_e+1)$, $b$: $i_d+1$\} \\
+      \hline
     \end{tabular}
     \caption{TODO}
     \label{fig:index_composition_linear_tree_exprs}
@@ -113,7 +120,7 @@ An equivalent axis tree can be created... (needs diagram)
 \begin{figure}[h]
   \centering
   %
-  \begin{subfigure}{.48\textwidth}
+  \begin{subfigure}[t]{.48\textwidth}
     \centering
     \begin{minted}{python}
 loop(
@@ -121,21 +128,31 @@ loop(
   dat[i].assign(666, eager=False),
 )
     \end{minted}
-    \caption{TODO}
+    \caption{
+      \pyop3 loop expression representing the operation of setting all elements of \pycode{dat} to 666.
+      The keyword argument \pycode{eager=False} is an implementation detail required to enforce that the assignment is a symbolic rather than numeric operation.
+    }
     \label{fig:simple_loop_pyop3}
   \end{subfigure}
   %
-  \begin{subfigure}{.48\textwidth}
+  \hfill
+  %
+  \begin{subfigure}[t]{.48\textwidth}
     \centering
+    % blank line included to improve horizontal alignment with other subfigure
     \begin{minted}{python}
 for i in range(len(numpy_dat)):
   numpy_dat[i] = 666
+
     \end{minted}
-    \caption{TODO}
+    \caption{
+      Python code equivalent to the loop expression shown in \ref{fig:simple_loop_pyop3} where \pycode{dat} has been replaced by a numpy array (\pycode{numpy_dat}).
+      For simplicity we assume that \pycode{numpy_dat} is 1-dimensional.
+    }
     \label{fig:simple_loop_python}
   \end{subfigure}
 
-  \caption{TODO}
+  \caption{A comparison of a simple assignment loop written in \pyop3 and numpy/Python.}
   \label{fig:simple_loop}
 \end{figure}
 

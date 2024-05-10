@@ -8,7 +8,7 @@
 \begin{document}
 \begin{tikzpicture}[remember picture]
 
-\input{figures/common/axis_tree.tikz}
+\input{figures/common/tree.tikz}
 \input{figures/common/data_layout.tikz}
 
 % --- UNINDEXED ---
@@ -42,10 +42,10 @@
 
 \coordinate (origin) at (6,0);
 
-\node [axis] (top) at (origin) {slice($a$: \{ \subnode{top0}{(\pycode{::2})} \})};
-\node [axis] (bottom) at ($(origin)+(.75,-2)$) {slice($b$: \{ (\pycode{1::}) \})};
-\draw [underline] ($(top0.south west)+(.4,.1)$) -- ($(top0.south east)+(-.4,.1)$);
-\draw [axisarrow] ($(top0.south)+(0,.1)$) -- (bottom);
+\drawTreeNode{(top)}{(origin)}{slice($a$: \{ \component{top0}{(\pycode{::2})} \})};
+\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{slice($b$: \{ (\pycode{1::}) \})};
+\underlineComponent{top}{top0};
+\drawTreeConnector{top}{top0}{(bottom)};
 
 % --- ARROW ---
 

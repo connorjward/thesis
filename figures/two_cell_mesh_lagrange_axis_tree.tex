@@ -1,39 +1,24 @@
 \documentclass[tikz]{standalone}
-
-\usepackage{tkz-euclide}
-\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+\input{figures/common/preamble}
 
 \begin{document}
+\begin{tikzpicture}[remember picture]
 
-\begin{tikzpicture}
+\input{figures/common/tree.tikz}
 
-\input{figures/common/axis_tree.tikz}
-
-\node [axis] (mesh) at (1.8,2) {
-  \textit{mesh}: \{ \textit{cell}: 2, \textit{vertex}: 4, \textit{edge}: 5 \}
+\drawTreeNode{(mesh)}{(.1,2)}{
+  \textit{mesh}: \{ \subnode[minimum width=0pt]{mesh0}{\textit{cell}: 2}, \subnode[minimum width=0pt]{mesh1}{\textit{vertex}: 4}, \subnode[minimum width=0pt]{mesh2}{\textit{edge}: 5} \}
 };
-\node [axis] (celldof) at (0, 0) {
-  \textit{dof}: \{ 1 \}
-};
-\node [axis] (vertdof) at (2.2, 0) {
-  \textit{dof}: \{ 1 \}
-};
-\node [axis] (edgedof) at (4.4, 0) {
-  \textit{dof}: \{ 2 \}
-};
+\drawTreeNode{(celldof)}{(.2,0)}{\textit{dof}: \{ 1 \}};
+\drawTreeNode{(vertdof)}{(2.4,0)}{\textit{dof}: \{ 1 \}};
+\drawTreeNode{(edgedof)}{(4.6,0)}{\textit{dof}: \{ 2 \}};
 
-\tkzDefShiftPoint[mesh](-1.2,-.2){cellcomponent}
-\tkzDefShiftPoint[mesh](.1,-.2){vertcomponent}
-\tkzDefShiftPoint[mesh](1.7,-.2){edgecomponent}
-
-\tkzDefShiftPoint[celldof](0,.3){celldoftarget}
-\tkzDefShiftPoint[vertdof](0,.3){vertdoftarget}
-\tkzDefShiftPoint[edgedof](0,.3){edgedoftarget}
-
-\draw [axisarrow] (cellcomponent) -- (celldoftarget);
-\draw [axisarrow] (vertcomponent) -- (vertdoftarget);
-\draw [axisarrow] (edgecomponent) -- (edgedoftarget);
+\underlineComponent{mesh}{mesh0};
+\underlineComponent{mesh}{mesh1};
+\underlineComponent{mesh}{mesh2};
+\drawTreeConnector{mesh}{mesh0}{(celldof)};
+\drawTreeConnector{mesh}{mesh1}{(vertdof)};
+\drawTreeConnector{mesh}{mesh2}{(edgedof)};
 
 \end{tikzpicture}
-
 \end{document}

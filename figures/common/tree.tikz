@@ -1,0 +1,59 @@
+\tikzstyle{treenodecommon} = [minimum width=1.5cm];
+\tikzstyle{treenode} = [treenodecommon,minimum height=.7cm,yshift=.15cm,text centered,draw=black,line width=.7pt,anchor=south west];
+\tikzstyle{treenodebg} = [treenodecommon,minimum height=1cm,draw=none,anchor=south west];
+
+\tikzstyle{treenodearrow} = [-{Stealth[sep=2pt]},draw=red,line width=.7pt];
+\tikzstyle{underline} = [draw=red,line width=.7pt];
+
+\newcommand{\drawTreeNode}[3]{
+  \node [treenodebg] (xxx) at #2 {};
+  \node [treenode] #1 at #2 {#3};
+}
+
+\newcommand{\underlineComponentWithWidth}[3]{
+  % This is basically magic. For nice alignment I want the x values of the
+  % component (\subnode), but the y values from the full node.
+  % https://tikz.dev/library-math
+  \tikzmath{
+    coordinate \p;
+    \p1 = (#2.west);
+    \p2 = (#2.east);
+    \p3 = (#1.south);
+  }
+  \draw [underline] ($(\px1,\py3)+(#3,.15)$) -- ($(\px2,\py3)+(-#3,.15)$);
+}
+
+\newcommand{\underlineComponent}[2]{
+  \underlineComponentWithWidth{#1}{#2}{.15};
+}
+
+\newcommand{\underlineComponentNarrow}[2]{
+  \underlineComponentWithWidth{#1}{#2}{.05};
+}
+
+\newcommand{\drawTreeConnector}[3]{
+  \tikzmath{
+    coordinate \p;
+    \p1 = (#2.center);
+    \p2 = (#1.south);
+  }
+  \draw [treenodearrow] ($(\px1,\py2)+(0,.15)$) -- #3;
+}
+
+\newcommand{\bigOTimes}[1]{
+  \node [font=\huge] (times) at #1 {$\otimes$};
+}
+
+\newcommand{\bigArrow}[1]{
+  \draw [line width=.8pt,-{Stealth}] #1 -- ++ (1,0);
+}
+
+\newcommand{\component}{\subnode[minimum width=0pt]};
+
+% \newcommand{\unpackSubnode}[2]{
+%   \node [fit=#1,inner sep=0pt] #1 {};
+% }
+
+% \newcommand{\debugDrawSubnode}[1]{
+%   \node [fit=#1,draw,inner sep=0pt] {};
+% }

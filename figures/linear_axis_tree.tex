@@ -4,18 +4,17 @@
 \begin{document}
 \begin{tikzpicture}
 
-\input{figures/common/axis_tree.tikz}
+\input{figures/common/tree.tikz}
 
-\node [axis] (a) at (0,4) {\textit{a}: \{ 2 \}};
-\node [axis] (b) at (0.2,2) {\textit{b}: \{ 3 \}};
-\node [axis] (c) at (0.4,0) {\textit{c}: \{ 2 \}};
+\drawTreeNode{(a)}{(0,4)}{\textit{a}: \{ \component{a0}{2} \}};
+\drawTreeNode{(b)}{(0.4,2)}{\textit{b}: \{ \component{b0}{3} \}};
+\drawTreeNode{(c)}{(0.8,0)}{\textit{c}: \{ 2 \}};
 
-\tkzDefShiftPoint[a](.2,-.2){acpt}
-\tkzDefShiftPoint[b](.2,-.2){bcpt}
-\tkzDefShiftPoint[b](0,.3){btarget}
-\tkzDefShiftPoint[c](0,.3){ctarget}
-\draw [axisarrow] (acpt) -- (btarget);
-\draw [axisarrow] (bcpt) -- (ctarget);
+\underlineComponentNarrow{a}{a0};
+\drawTreeConnector{a}{a0}{(b)};
+
+\underlineComponentNarrow{b}{b0};
+\drawTreeConnector{b}{b0}{(c)};
 
 \end{tikzpicture}
 \end{document}

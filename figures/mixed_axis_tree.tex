@@ -1,69 +1,58 @@
 \documentclass[tikz]{standalone}
-
-\usepackage{tkz-euclide}
-\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+\input{figures/common/preamble}
 
 \begin{document}
+\begin{tikzpicture}[remember picture]
 
-\begin{tikzpicture}
-
-\input{figures/common/axis_tree.tikz}
+\input{figures/common/tree.tikz}
 
 % Scott-Vogelius element
-\node [axis] (field) at (3,6) {\textit{field}: \{ \textit{0}: 1, \textit{1}: 1 \}};
-\node [axis] (mesh0) at (0,4) {
-  \textit{mesh}: \{ \textit{cell}: 50, \textit{vertex}: 52, \textit{edge}: 86 \}
+\drawTreeNode{(field)}{(5,6)}{
+  \textit{field}: \{ \component{field0}{\textit{0}: 1}, \component{field1}{\textit{1}: 1} \}
 };
-\node [axis] (celldof0) at (-2, 2) {\textit{dof}: \{ 1 \}};
-\node [axis] (vertdof0) at (.2, 2) {\textit{dof}: \{ 1 \}};
-\node [axis] (edgedof0) at (2.4, 2) {\textit{dof}: \{ 2 \}};
-\node [axis] (celldim0) at (-2.1, 0) {\textit{dim}: \{ 2 \}};
-\node [axis] (vertdim0) at (.5, 0) {\textit{dim}: \{ 2 \}};
-\node [axis] (edgedim0) at (3.1, 0) {\textit{dim}: \{ 2 \}};
 
-\node [axis] (mesh1) at (7,4) {
-  \textit{mesh}: \{ \textit{cell}: 50, \textit{vertex}: 52, \textit{edge}: 86 \}
+\drawTreeNode{(mesh0)}{(0,4)}{
+  \textit{mesh}: \{ \component{mesh00}{\textit{cell}: 50}, \component{mesh01}{\textit{vertex}: 52}, \component{mesh02}{\textit{edge}: 86} \}
 };
-\node [axis] (celldof1) at (5.2, 2) {\textit{dof}: \{ 6 \}};
-\node [axis] (vertdof1) at (7.4, 2) {\textit{dof}: \{ 0 \}};
-\node [axis] (edgedof1) at (9.6, 2) {\textit{dof}: \{ 0 \}};
+\drawTreeNode{(celldof0)}{(-.2,2)}{\textit{dof}: \{ \component{cdof0}{1} \}};
+\drawTreeNode{(vertdof0)}{(2.2,2)}{\textit{dof}: \{ \component{vdof0}{1} \}};
+\drawTreeNode{(edgedof0)}{(4.6,2)}{\textit{dof}: \{ \component{edof0}{2} \}};
+\drawTreeNode{(celldim0)}{(-.4,0)}{\textit{dim}: \{ 2 \}};
+\drawTreeNode{(vertdim0)}{(2.4,0)}{\textit{dim}: \{ 2 \}};
+\drawTreeNode{(edgedim0)}{(5.2,0)}{\textit{dim}: \{ 2 \}};
 
-\tkzDefShiftPoint[field](-.2,-.2){fieldcomponent0}
-\tkzDefShiftPoint[field](.8,-.2){fieldcomponent1}
-\tkzDefShiftPoint[mesh0](0,.3){meshtarget0}
-\tkzDefShiftPoint[mesh1](0,.3){meshtarget1}
-\draw [axisarrow] (fieldcomponent0) -- (meshtarget0);
-\draw [axisarrow] (fieldcomponent1) -- (meshtarget1);
+\drawTreeNode{(mesh1)}{(7,4)}{
+  \textit{mesh}: \{ \component{mesh10}{\textit{cell}: 50}, \component{mesh11}{\textit{vertex}: 52}, \component{mesh12}{\textit{edge}: 86} \}
+};
+\drawTreeNode{(celldof1)}{(7.5, 2)}{\textit{dof}: \{ 6 \}};
+\drawTreeNode{(vertdof1)}{(9.9, 2)}{\textit{dof}: \{ 0 \}};
+\drawTreeNode{(edgedof1)}{(12.3, 2)}{\textit{dof}: \{ 0 \}};
 
-\tkzDefShiftPoint[mesh0](-1.4,-.2){cellcomponent0}
-\tkzDefShiftPoint[mesh0](.1,-.2){vertcomponent0}
-\tkzDefShiftPoint[mesh0](1.7,-.2){edgecomponent0}
-\tkzDefShiftPoint[celldof0](0,.3){celldoftarget0}
-\tkzDefShiftPoint[vertdof0](0,.3){vertdoftarget0}
-\tkzDefShiftPoint[edgedof0](0,.3){edgedoftarget0}
-\draw [axisarrow] (cellcomponent0) -- (celldoftarget0);
-\draw [axisarrow] (vertcomponent0) -- (vertdoftarget0);
-\draw [axisarrow] (edgecomponent0) -- (edgedoftarget0);
+\underlineComponent{field}{field0};
+\underlineComponent{field}{field1};
+\drawTreeConnector{field}{field0}{(mesh0)};
+\drawTreeConnector{field}{field1}{(mesh1)};
 
-\tkzDefShiftPoint[celldof0](.4,-.2){celldofcomponent0}
-\tkzDefShiftPoint[vertdof0](.4,-.2){vertdofcomponent0}
-\tkzDefShiftPoint[edgedof0](.4,-.2){edgedofcomponent0}
-\tkzDefShiftPoint[celldim0](0,.3){celldimtarget0}
-\tkzDefShiftPoint[vertdim0](0,.3){vertdimtarget0}
-\tkzDefShiftPoint[edgedim0](0,.3){edgedimtarget0}
-\draw [axisarrow] (celldofcomponent0) -- (celldimtarget0);
-\draw [axisarrow] (vertdofcomponent0) -- (vertdimtarget0);
-\draw [axisarrow] (edgedofcomponent0) -- (edgedimtarget0);
+\underlineComponent{mesh0}{mesh00};
+\underlineComponent{mesh0}{mesh01};
+\underlineComponent{mesh0}{mesh02};
+\drawTreeConnector{mesh0}{mesh00}{(celldof0)};
+\drawTreeConnector{mesh0}{mesh01}{(vertdof0)};
+\drawTreeConnector{mesh0}{mesh02}{(edgedof0)};
 
-\tkzDefShiftPoint[mesh1](-1.4,-.2){cellcomponent1}
-\tkzDefShiftPoint[mesh1](.1,-.2){vertcomponent1}
-\tkzDefShiftPoint[mesh1](1.7,-.2){edgecomponent1}
-\tkzDefShiftPoint[celldof1](0,.3){celldoftarget1}
-\tkzDefShiftPoint[vertdof1](0,.3){vertdoftarget1}
-\tkzDefShiftPoint[edgedof1](0,.3){edgedoftarget1}
-\draw [axisarrow] (cellcomponent1) -- (celldoftarget1);
-\draw [axisarrow] (vertcomponent1) -- (vertdoftarget1);
-\draw [axisarrow] (edgecomponent1) -- (edgedoftarget1);
+\underlineComponentNarrow{celldof0}{cdof0};
+\underlineComponentNarrow{vertdof0}{vdof0};
+\underlineComponentNarrow{edgedof0}{edof0};
+\drawTreeConnector{celldof0}{cdof0}{(celldim0)};
+\drawTreeConnector{vertdof0}{vdof0}{(vertdim0)};
+\drawTreeConnector{edgedof0}{edof0}{(edgedim0)};
+
+\underlineComponent{mesh1}{mesh10};
+\underlineComponent{mesh1}{mesh11};
+\underlineComponent{mesh1}{mesh12};
+\drawTreeConnector{mesh1}{mesh10}{(celldof1)};
+\drawTreeConnector{mesh1}{mesh11}{(vertdof1)};
+\drawTreeConnector{mesh1}{mesh12}{(edgedof1)};
 
 \end{tikzpicture}
 

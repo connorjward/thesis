@@ -7,37 +7,33 @@
 
 \begin{tikzpicture}
 
-\input{figures/common/axis_tree.tikz}
+\input{figures/common/tree.tikz}
 
-\node [axis] (mesh) at (2,4) {
-  \textit{mesh}: \{ \textit{cell}: 50, \textit{vertex}: 52, \textit{edge}: 86 \}
+\drawTreeNode{(mesh)}{(0,4)}{
+  \textit{mesh}: \{ \component{mesh0}{\textit{cell}: 50}, \component{mesh1}{\textit{vertex}: 52}, \component{mesh2}{\textit{edge}: 86} \}
 };
-\node [axis] (celldof) at (0, 2) {\textit{dof}: \{ 0 \}};
-\node [axis] (vertdof) at (2.2, 2) {\textit{dof}: \{ 1 \}};
-\node [axis] (edgedof) at (4.4, 2) {\textit{dof}: \{ 0 \}};
-\node [axis] (celldim) at (.1, 0) {\textit{dim}: \{ 2 \}};
-\node [axis] (vertdim) at (2.7, 0) {\textit{dim}: \{ 2 \}};
-\node [axis] (edgedim) at (5.1, 0) {\textit{dim}: \{ 2 \}};
 
-\tkzDefShiftPoint[mesh](-1.4,-.2){cellcomponent}
-\tkzDefShiftPoint[mesh](.1,-.2){vertcomponent}
-\tkzDefShiftPoint[mesh](1.7,-.2){edgecomponent}
-\tkzDefShiftPoint[celldof](0,.3){celldoftarget}
-\tkzDefShiftPoint[vertdof](0,.3){vertdoftarget}
-\tkzDefShiftPoint[edgedof](0,.3){edgedoftarget}
-\draw [axisarrow] (cellcomponent) -- (celldoftarget);
-\draw [axisarrow] (vertcomponent) -- (vertdoftarget);
-\draw [axisarrow] (edgecomponent) -- (edgedoftarget);
+\drawTreeNode{(celldof)}{(.3, 2)}{\textit{dof}: \{ \component{cdof}{0} \}};
+\drawTreeNode{(vertdof)}{(2.5, 2)}{\textit{dof}: \{ \component{vdof}{1} \}};
+\drawTreeNode{(edgedof)}{(4.7, 2)}{\textit{dof}: \{ \component{edof}{0} \}};
 
-\tkzDefShiftPoint[celldof](.4,-.2){celldofcomponent}
-\tkzDefShiftPoint[vertdof](.4,-.2){vertdofcomponent}
-\tkzDefShiftPoint[edgedof](.4,-.2){edgedofcomponent}
-\tkzDefShiftPoint[celldim](0,.3){celldimtarget}
-\tkzDefShiftPoint[vertdim](0,.3){vertdimtarget}
-\tkzDefShiftPoint[edgedim](0,.3){edgedimtarget}
-\draw [axisarrow] (celldofcomponent) -- (celldimtarget);
-\draw [axisarrow] (vertdofcomponent) -- (vertdimtarget);
-\draw [axisarrow] (edgedofcomponent) -- (edgedimtarget);
+\drawTreeNode{(celldim)}{(.1, 0)}{\textit{dim}: \{ 2 \}};
+\drawTreeNode{(vertdim)}{(2.7, 0)}{\textit{dim}: \{ 2 \}};
+\drawTreeNode{(edgedim)}{(5.1, 0)}{\textit{dim}: \{ 2 \}};
+
+\underlineComponent{mesh}{mesh0};
+\underlineComponent{mesh}{mesh1};
+\underlineComponent{mesh}{mesh2};
+\drawTreeConnector{mesh}{mesh0}{(celldof)};
+\drawTreeConnector{mesh}{mesh1}{(vertdof)};
+\drawTreeConnector{mesh}{mesh2}{(edgedof)};
+
+\underlineComponentNarrow{celldof}{cdof};
+\underlineComponentNarrow{vertdof}{vdof};
+\underlineComponentNarrow{edgedof}{edof};
+\drawTreeConnector{celldof}{cdof}{(celldim)};
+\drawTreeConnector{vertdof}{vdof}{(vertdim)};
+\drawTreeConnector{edgedof}{edof}{(edgedim)};
 
 \end{tikzpicture}
 \end{document}
