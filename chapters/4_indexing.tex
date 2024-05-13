@@ -136,7 +136,8 @@ All one needs to do is to replace the axis variables in the layout functions wit
   \label{fig:index_composition_linear_tree_all}
 \end{figure}
 
-\section{Loop expressions}
+\section{Outer loops}
+\label{sec:outer_loops}
 
 \begin{figure}[h]
   \centering
@@ -179,6 +180,40 @@ for i in range(len(numpy_dat)):
   \label{fig:simple_loop}
 \end{figure}
 
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{loop_index_linear_tree_data_layout}
+    \caption{
+      TODO
+    }
+    \label{fig:loop_index_linear_tree_data_layout}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{|c|c|c|}
+      \hline
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+      \hline
+      \{$b$\} & \{$a$, $b$\} & \{$i_a$: $i_{p(a)}$, $i_b$: $i_b$\} \\
+      \hline
+    \end{tabular}
+    \caption{
+      TODO
+    }
+    \label{fig:loop_index_linear_tree_data_layout_exprs}
+  \end{subfigure}
+
+  \caption{
+    TODO
+  }
+  \label{fig:loop_index_linear_tree_data_layout_all}
+\end{figure}
+
 The indexing routines demonstrated so far are not sufficient for \pyop3's purposes.
 If we consider the prototypical finite element assembly loop (\cref{alg:fem_todo}) we see that there is an outer loop over cells, and that the data is packed, or indexed, \textit{relative} to the current cell.
 
@@ -204,7 +239,43 @@ In \pyop3 we say that it is \textit{context-dependent}.
 
 % subsection on context-sensitivity? ie. expanding the loop contexts? potentially ick, maybe put as a pass in the codegen section?
 
+% How do I introduce this section? How do I motivate it? Kind of want to thread the "do FEM assembly"
+% story through this whole bit.
+% but try to not explicity use that as an example because I want to save that for the final chapter.
+% TODO: Give an example of how it would look in code, introduce CalledMap vs Map
 \section{Maps}
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{index_map_data_layout}
+    \caption{
+      TODO
+    }
+    \label{fig:index_map_data_layout}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{|c|c|c|}
+      \hline
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+      \hline
+      \{$b$\} & \{$a$, $b$\} & \{$i_a$: ???, $i_b$: $i_b$\} \\
+      \hline
+    \end{tabular}
+    \caption{
+      TODO
+    }
+    \label{fig:index_map_data_layout_exprs}
+  \end{subfigure}
+
+  \caption{TODO}
+  \label{fig:index_map_data_layout_all}
+\end{figure}
 
 Maps differ from slices because they add additional shape. They have a from index
 

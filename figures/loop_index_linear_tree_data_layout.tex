@@ -1,0 +1,62 @@
+\documentclass[tikz]{standalone}
+
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}[remember picture]
+
+\input{figures/common/tree.tikz}
+\input{figures/common/data_layout.tikz}
+
+% --- UNINDEXED ---
+
+\coordinate (origin) at (0,0);
+
+% top
+\drawWhiteDof{(origin)}{$a_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$a_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$a_2$};
+\drawWhiteDof{($(origin)+(3,0)$)}{$a_3$};
+\drawWhiteDof{($(origin)+(4,0)$)}{$a_4$};
+
+\coordinate (aleft) at ($(origin)+(2,0)$);
+\coordinate (aright) at ($(origin)+(3,0)$);
+
+% bottom
+\coordinate (origin) at ($(aleft)+(-1,-2)$);
+\drawWhiteDof{(origin)}{$b_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$b_2$};
+
+\draw [connector] (aleft) -- ($(origin)+(0,1)$);
+\draw [connector] (aright) -- ($(origin)+(3,1)$);
+
+% --- TIMES ---
+
+\node [font=\huge] (times) at (5.5, -.5) {$\otimes$};
+
+% --- INDEX TREE ---
+
+\coordinate (origin) at (6,0);
+
+\drawTreeNode{(top)}{(origin)}{loop index($p$, \component{top0}{$a$})};
+\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{slice($b$, (\pycode{::}))};
+\underlineComponent{top}{top0};
+\drawTreeConnector{top}{top0}{(bottom)};
+
+% --- ARROW ---
+
+\bigArrow{(9,-.5)};
+
+% --- INDEXED ---
+
+\coordinate (origin) at (10.3,-1);
+\drawWhiteDof{(origin)}{$b_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$b_2$};
+
+\end{tikzpicture}
+\end{document}
