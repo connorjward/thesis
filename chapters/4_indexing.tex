@@ -2,7 +2,6 @@
 
 \begin{document}
 
-
 % TODO: Somewhere talk about ragged temporaries?
 
 \chapter{Indexing}
@@ -11,11 +10,10 @@ Axis trees provide us with a method for describing the data layout of global obj
 In order to be able to execute compact stencils this is insufficient.
 We need a way to extract portions of the array such that they may be operated on independently.
 In \pyop3, this extraction operation is referred to as \textit{indexing}.
+In many cases it is directly equivalent to the same terminology/operation as numpy.
 
-% TODO: Talk about IndexedAxisTree and how to construct Dats with them.
-%       Talk about indexing *data structures*
-% TODO: Increase table spacing
-\section{Fundamentals}
+\section{Index trees}
+\label{sec:index_trees}
 
 \begin{figure}[h]
   \centering
@@ -38,7 +36,7 @@ In \pyop3, this extraction operation is referred to as \textit{indexing}.
       \hline
       \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
       \hline
-      \{$c$, $d$\} & \{$a$, $b$\} & \{$a$: $2 i_c$, $b$: $i_d+1$\} \\
+      \{$c$, $b$\} & \{$a$, $b$\} & \{$i_a$: $2 i_c$, $i_b$: $i_d+1$\} \\
       \hline
     \end{tabular}
     \caption{
@@ -54,45 +52,61 @@ In \pyop3, this extraction operation is referred to as \textit{indexing}.
   \label{fig:index_linear_tree_all}
 \end{figure}
 
-To begin with, consider indexing a linear array with shape \pycode{(10, 3)} (a matrix with 10 rows and 3 columns) with the slice \pycode{[::2, 1:]}.
-This is Python syntax for requesting access to every other row of the first axis, and all but the first entry of the second axis.
-If this code were to be executed using a numpy array of those dimensions, a new array would be returned with shape \pycode{(5, 2)} containing only those elements.
-numpy is capable of reasoning about slices and so this new array would merely be a \textit{view} of the same data; modifying the returned array would also modify the data in the original array.
+In \pyop3, indexing is accomplished via the use of \textit{index trees}.
+Analogously to axis trees, index trees consist of multiple \textit{index} objects (equivalent to an axis), each of which has one or more \textit{index components}.
+When an array is indexed, its associated axis tree is \textit{transformed} via composition with an index tree.
+This composition operation yields a new \textit{indexed} axis tree that understand how its entries map back to the original array.
+Finally this new axis tree is used to construct a new array object.
 
-\pyop3 takes inspiration from numpy to provide similar indexing routines for its arrays, though with support for many more indexing operations.
-Since \pyop3 uses code generation, any indexing transformations are necessarily lazy and symbolic, allowing for their insertion into the generated code.
+To illustrate this with a simple example, consider the indexing operation shown in \cref{fig:index_linear_tree_all}.
+It shows a slicing operation applied to a linear axis tree (left) with shape (5, 3) and with axes labelled $a$ and $b$.
+The index tree (middle) is also linear and consists of two \textit{slice} objects over the axes $a$ and $b$ respectively with the former taking every even entry in $a$ (\pycode{::2}) and the latter taking all but the first entry in $b$ (\pycode{1::}).
+The axis tree resulting from the composition of these trees is shown to the right.
+As shown in the figure, only the selected components of the original axis tree are present and the array has additionally received a new label numbering from zero: $c$ and $d$.
+This resulting axis tree is in fact an \textit{indexed} axis tree, which differs from an ordinary axis tree in a number of ways:
+\begin{itemize}
+  \item
+    It does not retabulate any layout functions. These are reused from the original, unindexed, axis tree.
+  \item
+    It knows about the fact that it is indexed and can map back to the original axis tree using \textit{target paths} and \textit{target expressions}.
+\end{itemize}
 
-We will use the numpy operation above as an initial example.
-An equivalent axis tree can be created... (needs diagram)
+\subsection{Target paths and expressions}
+% NOTE: It is arguably confusing that we use "source" and "target" this way around...
 
-% source and target axes (transformation)
-% index_exprs, target_path
-% compose with layout functions to get the right offset
+When an axis is indexed, two pieces of information need to be retained for the indexed tree to be able to map back to the original array:
+(a) which component of the original axis tree is targeted, and
+(b) the correct expression taking index values from the indexed tree and mapping them to index values in the original tree.
+Of these the former is termed the \textit{target paths} and the latter the \textit{target expressions}.
+Due to the notion of mapping \textit{from} the indexed axis tree back \textit{to} the original axis tree, the indexed tree is also called the \textit{source} axis tree and the original tree is the \textit{target}.
+
+For the indexing operation shown in \cref{fig:index_linear_tree_all}, the resulting target paths and target expressions are shown in \cref{fig:index_composition_linear_tree_exprs}.
+Since the tree is linear, only a single pair of path and expressions exist mapping the source axes $c$ and $d$ back to the target axes $a$ and $b$.
+Regarding the target expressions, it can be seen that the index value for target axis $a$ is given by an expression involving the index associated to source axis $c$: $i_a = 2 i_c$.
+This encodes the information that source axis entry $c_0$ maps to $a_0$, $c_1$ maps to $a_2$ etc.
+This is clearly shown by the indexed tree in \cref{fig:index_linear_tree_data_layout}.
+The same principle applies to axes $b$ and $d$, except that the different slicing pattern means that the target expression now includes an offset.
 
 % subsets are also supported in the same way, they can be used to reorder inside axes (give example)
 
-\subsection{Index trees}
-\label{sec:index_trees}
+% Maybe doesn't need to be a section?
+\subsection{Substituting layout functions}
 
-% Describe the process of indexing an array or axis tree: parse index tree, traverse index tree and generate new axes and collect index expressions, produce a new set of axes with the same layout as before but new axes and index expressions.
-%Explain why we need to use index *trees* here: to build a wider variety of axes.
-%If we want to build a new tree like set of axes (e.g. for closure packing) then we need to be able to pack different axis components together.
+With the target expressions mapping from the indexed axis tree back to the unindexed one, and with the unindexed tree having layout functions that map from axis variables to offsets, we possess all of the information necessary for the indexed arrays to ``know" what data they in fact contain.
+All one needs to do is to replace the axis variables in the layout functions with the target expressions from the indexed tree to get the right mapping from the source axis variables to the right offsets.
 
-
-\subsubsection{Data layout transformations}
-
-% treating index trees like axis-trees-in-waiting means we can specify the data layout of the packed object.
-% give an example
-
-\subsection{Index composition}
+\section{Index composition}
 \label{sec:index_composition}
 
-\begin{figure}
+\begin{figure}[h]
   \centering
   \begin{subfigure}{\textwidth}
     \centering
     \includegraphics{index_composition_linear_tree_data_layout}
-    \caption{TODO}
+    \caption{
+      The index composition operation.
+      All but the first (\pycode{1::}) of axis $c$ is selected with only the second entry in axis $d$.
+    }
     \label{fig:index_composition_linear_tree_data_layout}
   \end{subfigure}
 
@@ -102,16 +116,23 @@ An equivalent axis tree can be created... (needs diagram)
     \centering
     \begin{tabular}{|c|c|c|}
       \hline
-      \textbf{Source path} & \textbf{Target path} & \textbf{Index expression} \\
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
       \hline
-      \{$e$, $d$\} & \{$a$, $b$\} & \{$a$: $2 (i_e+1)$, $b$: $i_d+1$\} \\
+      \{$e$\} & \{$a$, $b$\} & \{$i_a$: $2 (i_e+1)$, $i_b$: $2$\} \\
       \hline
     \end{tabular}
-    \caption{TODO}
+    \caption{
+      Index expressions and paths relating the indexed ``source" tree back to the original unindexed tree.
+      Note how the index for axis $d$ ($i_d$) is not present among the target expressions as it has been substituted for a 1.
+    }
     \label{fig:index_composition_linear_tree_exprs}
   \end{subfigure}
 
-  \caption{TODO}
+  \caption{
+    The composition of an already indexed axis tree (from \cref{fig:index_linear_tree_all}) with another index tree.
+    Since a scalar index is used, the axis tree ``loses shape" and is transformed from one with shape (3, 2) to one with shape (2,).
+    The resulting axis tree can still be mapped correctly back to the original unindexed axis tree.
+  }
   \label{fig:index_composition_linear_tree_all}
 \end{figure}
 
@@ -130,6 +151,8 @@ loop(
     \end{minted}
     \caption{
       \pyop3 loop expression representing the operation of setting all elements of \pycode{dat} to 666.
+      The walrus operator (\pycode{:=}) used here is a feature of Python 3.8 and above and is an \textit{assignment expression}.
+      In effect this passes \pycode{dat.axes.index()} as an argument to \pycode{loop} whilst also binding its value to the variable \pycode{i}.
       The keyword argument \pycode{eager=False} is an implementation detail required to enforce that the assignment is a symbolic rather than numeric operation.
     }
     \label{fig:simple_loop_pyop3}
@@ -169,17 +192,17 @@ To give an example, one of the simplest possible loops that one can write in \py
 Here the loop index (\pycode{i}) is simply ``all elements of \pycode{dat}`` and there is a single statement that sets each entry in \pycode{dat} to the arbitrary value of 666.
 Note that the syntax of the loop expression is deliberately similar to that of Python (or other imperative programming languages).
 
-% does this mean that we should introduce dats before this? probably
 The challenge here is how to represent the indexing operation \pycode{dat[i]}...
 
 % scalar shape
 
+% meh, we don't really say this
 Furthermore, the indexed object is dependent upon the loop index: the target expressions of the axis tree must reference the loop index.
 In \pyop3 we say that it is \textit{context-dependent}.
 
 % A loop index has no shape. e.g. axes[p] where p is a loop index is scalar.
 
-% subsection on context-sensitivity?
+% subsection on context-sensitivity? ie. expanding the loop contexts? potentially ick, maybe put as a pass in the codegen section?
 
 \section{Maps}
 
@@ -196,5 +219,14 @@ Ragged maps are also supported. e.g. support, star
 \subsection{Map composition}
 
 e.g. g(f(p))
+
+\section{Data layout transformations}
+
+With \pyop3's axis trees it is straightforward to construct alternative data layouts for the same data.
+This is touched upon in \cref{sec:axis_tree_examples} for the cases of vector and mixed function spaces.
+Such alternative layouts can be very beneficial for improving the data access patterns of the data, but it presents a new problem: the packing and unpacking code must be different for the different data layouts.
+Conveniently, using index trees allows us to ignore the problem completely.
+Since one can think of index trees as being ``proto" axis trees, it is possible to index differently laid out data structures using the same index tree and the resulting temporary will have the same shape as prescribed by the index tree.
+% give an example
 
 \end{document}

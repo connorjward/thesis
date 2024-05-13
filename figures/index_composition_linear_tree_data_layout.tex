@@ -39,14 +39,14 @@
 \coordinate (origin) at (4,0);
 
 \drawTreeNode{(top)}{(origin)}{slice($c$: \{ \subnode{top0}{(\pycode{1::})} \})};
-\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{slice($d$: \{ (\pycode{::}) \})};
+\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{scalar($d$, 1)};
 \underlineComponent{top}{top0};
 \drawTreeConnector{top}{top0}{(bottom)};
 
 
 % --- ARROW ---
 
-\bigArrow{(7.4,-.5)};
+\bigArrow{(7.2,-.5)};
 
 % --- FULLY INDEXED ---
 
@@ -60,13 +60,8 @@
 \coordinate (aright) at ($(origin)+(2,0)$);
 
 % bottom
-\coordinate (origin) at ($(aleft)+(-.5,-2)$);
-\drawWhiteDofSmall{(origin)}{$d_0$\,($b_1$)};
-\drawWhiteDofSmall{($(origin)+(1,0)$)}{$d_1$\,($b_2$)};
-
-\draw [connector] (aleft) -- ($(origin)+(0,1)$);
-\draw [connector] (aright) -- ($(origin)+(2,1)$);
-
+\coordinate (origin) at ($(aleft)+(-1,-1.5)$);
+\node [anchor=west] at (origin) {\footnotesize{($i_d=1, i_b=2)$}};
 
 \end{tikzpicture}
 \end{document}
