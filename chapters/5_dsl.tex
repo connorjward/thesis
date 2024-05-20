@@ -154,12 +154,21 @@ for ia in range(2):
 \subsection{Kernels}
 
 % kernels
-% access descriptors
+% access descriptors (vague)
 
-% but loopy needs to be mentioned here...
+\section{Code generation}
+% compilation pipeline, transformations then lowering then more transformations
 
-% This only really makes sense when generating code.
-\begin{table}[h]
+\begin{figure}[h]
+  \centering
+  \includegraphics{codegen_flowchart.pdf}
+  \caption{TODO}
+  \label{fig:codegen_flowchart}
+\end{figure}
+
+\subsection{Loop expression transformations}
+
+\begin{table}
   \centering
 
   \begin{tabular}{|c|l|l|}
@@ -192,14 +201,16 @@ for ia in range(2):
   \label{tab:intents}
 \end{table}
 
-\section{Code generation}
-% compilation pipeline, transformations then lowering then more transformations
+\begin{enumerate}
+  \item
+    \textbf{Expand multi-component loops} \\
+    Blah blah blah
+  \item
+    \textbf{Expand implicit pack/unpack operations} \\
+    Blah blah blah
+\end{enumerate}
 
-\subsection{Loop expression transformations}
 
-expand loop contexts
-
-pack unpack transforms
 
 \subsection{Lowering to loopy}
 % inames etc

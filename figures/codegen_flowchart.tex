@@ -1,0 +1,54 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\tikzstyle{flowchartnode} = [
+  draw=black,
+  align=center,
+  anchor=center,
+  font=\footnotesize,
+  text centered,
+  minimum height=.8cm,
+];
+\tikzstyle{process} = [
+  flowchartnode,
+  rectangle,
+  rounded corners,
+  fill=red!70,
+];
+\tikzstyle{io} = [
+  flowchartnode,
+  trapezium,
+  trapezium left angle=70,
+  trapezium right angle=110,
+  fill=blue!30,
+  trapezium stretches=true,
+];
+\tikzstyle{arrow} = [-{stealth}];
+
+\coordinate (start) at (0,0);
+\tikzmath{
+  \shift = -1.2;
+}
+
+\node (pyop3) [io] at (start) {Loop expression};
+\node (transform_pyop3) [process] at ($(start)+(0,\shift*1)$) {Transform loop expression};
+\node (lower_pyop3) [process] at ($(start)+(0,\shift*2)$) {Lower loop expression\\to loopy kernel};
+\node (transform_loopy) [process] at ($(start)+(0,\shift*3)$) {Transform loopy kernel};
+\node (lower_loopy) [process] at ($(start)+(0,\shift*4)$) {Lower loopy kernel to C};
+\node (compile_code) [process] at ($(start)+(0,\shift*5)$) {Compile C code};
+\node (compiled_function) [io] at ($(start)+(0,\shift*6)$) {Compiled function};
+
+\draw [arrow] (pyop3) -- (transform_pyop3);
+\draw [arrow] (transform_pyop3) -- (lower_pyop3);
+\draw [arrow] (lower_pyop3) -- (transform_loopy);
+\draw [arrow] (transform_loopy) -- (lower_loopy);
+\draw [arrow] (lower_loopy) -- (compile_code);
+\draw [arrow] (compile_code) -- (compiled_function);
+
+\draw [arrow,densely dashed] (pyop3.east) to [bend left=40] node[midway,right,align=center,font=\footnotesize] {Call with data from\\loop expression} (compiled_function.east);
+
+\end{tikzpicture}
+\end{document}
