@@ -1,0 +1,61 @@
+\documentclass[tikz]{standalone}
+
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}[remember picture]
+
+\input{figures/common/tree.tikz}
+\input{figures/common/data_layout.tikz}
+
+% --- UNINDEXED ---
+
+\coordinate (xshift) at (0,0);
+\coordinate (origin) at (0,0);
+
+% top
+\drawWhiteDof{(origin)}{$a_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$a_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$a_2$};
+\drawWhiteDof{($(origin)+(3,0)$)}{$a_3$};
+
+% --- TIMES ---
+
+\coordinate (xshift) at ($(xshift)+(4.5,0)$);
+\drawCompose{($(xshift)+(0,.5)$)};
+
+% --- INDEX TREE ---
+
+\coordinate (xshift) at ($(xshift)+(.5,0)$);
+\drawTreeNode{(top)}{(xshift)}{map($f(p)$, \{ \component{top0}{$a$} \})};
+
+% --- ARROW ---
+
+\coordinate (xshift) at ($(xshift)+(3,0)$);
+\bigArrow{($(xshift)+(0,.5)$)};
+
+% --- INDEXED 0 ---
+
+\coordinate (xshift) at ($(xshift)+(1.2,0)$);
+\drawWhiteDof{(xshift)}{$c_0$};
+\drawWhiteDof{($(xshift)+(1,0)$)}{$c_1$};
+
+\drawComma{($(xshift)+(2.4,0)$)};
+
+% --- INDEXED 1 (EMPTY) ---
+
+\coordinate (xshift) at ($(xshift)+(3,0)$);
+\drawCross{($(xshift)+(0,.5)$)};
+
+\drawComma{($(xshift)+(.5,0)$)};
+
+% --- INDEXED 2 ---
+
+\coordinate (xshift) at ($(xshift)+(1,0)$);
+\drawWhiteDof{(xshift)}{$c_0$};
+
+\end{tikzpicture}
+\end{document}

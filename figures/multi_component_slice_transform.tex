@@ -1,0 +1,91 @@
+\documentclass[tikz]{standalone}
+
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}[remember picture]
+
+\input{figures/common/tree.tikz}
+\input{figures/common/data_layout.tikz}
+
+% --- UNINDEXED ---
+
+\coordinate (origin) at (0,0);
+
+% top
+\drawWhiteDof{(origin)}{$a_0$};
+\drawDof{(origin)}{$a^x_0$}{red!50};
+\drawDof{($(origin)+(1,0)$)}{$a^x_1$}{red!50};
+\drawDof{($(origin)+(2,0)$)}{$a^x_2$}{red!50};
+\drawDof{($(origin)+(3,0)$)}{$a^y_0$}{blue!50};
+\drawDof{($(origin)+(4,0)$)}{$a^y_1$}{blue!50};
+
+\coordinate (axleft) at ($(origin)+(1,0)$);
+\coordinate (axright) at ($(axleft)+(1,0)$);
+
+\coordinate (ayleft) at ($(origin)+(4,0)$);
+\coordinate (ayright) at ($(ayleft)+(1,0)$);
+
+% b
+\coordinate (origin) at ($(axleft)+(-.5,-2)$);
+\drawWhiteDof{(origin)}{$b_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
+
+\draw [connector] (axleft) -- ($(origin)+(0,1)$);
+\draw [connector] (axright) -- ($(origin)+(2,1)$);
+
+% c
+\coordinate (origin) at ($(ayleft)+(-1,-2)$);
+\drawWhiteDof{(origin)}{$c_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$c_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$c_1$};
+
+\draw [connector] (ayleft) -- ($(origin)+(0,1)$);
+\draw [connector] (ayright) -- ($(origin)+(3,1)$);
+
+% --- TIMES ---
+
+\node [font=\huge] (times) at (6.2, -.5) {$\otimes$};
+
+% --- INDEX TREE ---
+
+\coordinate (origin) at (6.6,0);
+
+\drawTreeNode{(top)}{(origin)}{slice($a$: \{ \component{top0}{$x$: (\pycode{::2})}, \component{top1}{$y$: (\pycode{1::})} \})};
+\drawTreeNode{(bottom0)}{($(origin)+(0,-2)$)}{scalar($b$, 1)};
+\drawTreeNode{(bottom1)}{($(origin)+(2.2,-2)$)}{slice($c$, \{ (\pycode{1::}) \})};
+
+\underlineComponent{top}{top0};
+\drawTreeConnector{top}{top0}{(bottom0)};
+\underlineComponent{top}{top1};
+\drawTreeConnector{top}{top1}{(bottom1)};
+
+% --- ARROW ---
+
+\bigArrow{(11.8,-.5)};
+
+% --- INDEXED ---
+
+\coordinate (origin) at (12.8,0);
+
+% top
+\drawDofSmall{(origin)}{$d^t_0$\,($a^x_0$)}{red!50};
+\drawDofSmall{($(origin)+(1,0)$)}{$d^t_1$\,($a^x_2$)}{red!50};
+\drawDofSmall{($(origin)+(2,0)$)}{$d^u_0$\,($a^y_1$)}{blue!50};
+
+\coordinate (aleft) at ($(origin)+(2,0)$);
+\coordinate (aright) at ($(origin)+(3,0)$);
+
+% bottom
+\coordinate (origin) at ($(aleft)+(-.5,-2)$);
+\drawWhiteDofSmall{(origin)}{$e_0$\,($c_1$)};
+\drawWhiteDofSmall{($(origin)+(1,0)$)}{$e_1$\,($c_2$)};
+
+\draw [connector] (aleft) -- ($(origin)+(0,1)$);
+\draw [connector] (aright) -- ($(origin)+(2,1)$);
+
+\end{tikzpicture}
+\end{document}

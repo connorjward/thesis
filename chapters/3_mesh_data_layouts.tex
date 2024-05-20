@@ -477,36 +477,4 @@ def tabulate_layouts_ragged(axis: Axis):
   }
   \label{alg:tabulate_layouts_ragged}
 \end{algorithm}
-
-\section{Data structures}
-
-Thus far we have only discussed the \textit{specification} of how data is stored in \pyop3 and not the actual implementation.
-For continuum mechanics problems one typically needs to have representations for scalars, vectors and matrices.
-In \pyop3, recycling the terminology from \pyop2, we call scalars \pycode{Globals}, vectors \pycode{Dats} and matrices \pycode{Mats}.
-All of these data structures work in parallel, and their parallel implementation is deferred to \cref{chapter:parallel}.
-
-% I reckon that any indexing information should be deferred to the start of the indexing section.
-
-\subsection{Scalars (\pycode{Globals})}
-
-\pycode{Globals} are the simplest of \pyop3's data structures.
-They wrap a single scalar value, which may be of any data type (e.g. \pycode{int32}, \pycode{float64}, \pycode{complex128}) and thus have a trivial data layout, hence they have no need for axis trees.
-It is not valid to index into a \pycode{Global} (\cref{chapter:indexing}).
-
-\subsection{Vectors (\pycode{Dats})}
-
-Thus far, all of the data structures that we have encountered would be stored as \pycode{Dats}.
-\pycode{Dats} are constructed with a single axis tree that provides the information necessary to address the underlying flat array that carries the data.
-Having a single axis tree, \pycode{Dats} may be indexed using a single index (\cref{chapter:indexing}).
-
-Currently \pycode{Dats} use numpy arrays as the underlying data storage mechanism, but we intend to permit further array types to enable targeting accelerator architectures like CUDA GPUs.
-
-\subsection{Matrices (\pycode{Mats})}
-
-\pycode{Mats} require 2 axis trees: one for the rows of the matrix and one for the columns.
-They rely on PETSc \ccode{Mat} objects for the underlying data storage.
-To improve performance one should preallocate the matrix by constructing a \pycode{Sparsity} object and doing a simulated run of all the loop expressions so that non-zeros are put in the right places.
-
-Since \pycode{Mats} have two axis trees, two indices are needed when indexing.
-
 \end{document}

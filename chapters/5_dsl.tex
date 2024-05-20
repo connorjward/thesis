@@ -2,24 +2,200 @@
 
 \begin{document}
 
-\chapter{\pyop3}
+\chapter{The execution model}
+\label{chapter:execution_model}
 
-the top level API:
-loop expressions, made of statements
-also kernels, access descriptors
+Thus far we have established a new abstraction for mesh-like data structures, and an approach for symbolically representing smaller ``packed" parts of them.
+In order for \pyop3 to be a usable library, rather than just an interesting abstraction to consider, three problems remain:
+
+\begin{itemize}
+  \item How are the actual data structures stored in memory?
+  \item How does one express operations to be executed?
+  \item How are these operations executed?
+\end{itemize}
+
+These questions will be answered in this chapter, giving us a fully capable, serial-only, \pyop3 library.
+
+\section{Data structures}
+\label{sec:data_structures}
+
+Thus far we have only discussed the \textit{specification} of how data is stored in \pyop3 and not the actual implementation.
+For continuum mechanics problems one typically needs to have representations for scalars, vectors and matrices.
+In \pyop3, recycling the terminology from \pyop2, we call scalars \pycode{Globals}, vectors \pycode{Dats} and matrices \pycode{Mats}.
+All of these data structures work in parallel, and their parallel implementation is deferred to \cref{chapter:parallel}.
+
+\subsection{Scalars (\pycode{Globals})}
+
+\pycode{Globals} are the simplest of \pyop3's data structures.
+They wrap a single scalar value, which may be of any data type (e.g. \pycode{int32}, \pycode{float64}, \pycode{complex128}) and thus have a trivial data layout, hence they have no need for axis trees.
+It is not valid to index into a \pycode{Global} (\cref{chapter:indexing}).
+
+\subsection{Vectors (\pycode{Dats})}
+
+Thus far, all of the data structures that we have encountered would be stored as \pycode{Dats}.
+\pycode{Dats} are constructed with a single axis tree that provides the information necessary to address the underlying flat array that carries the data.
+Having a single axis tree, \pycode{Dats} may be indexed using a single index (\cref{chapter:indexing}).
+
+Currently \pycode{Dats} use numpy arrays as the underlying data storage mechanism, but we intend to permit further array types to enable targeting accelerator architectures like CUDA GPUs.
+
+\subsection{Matrices (\pycode{Mats})}
+
+\pycode{Mats} require 2 axis trees: one for the rows of the matrix and one for the columns.
+They rely on PETSc \ccode{Mat} objects for the underlying data storage.
+To improve performance one should preallocate the matrix by constructing a \pycode{Sparsity} object and doing a simulated run of all the loop expressions so that non-zeros are put in the right places.
+
+Since \pycode{Mats} have two axis trees, two indices are needed when indexing.
+
+\section{The domain-specific language}
+\label{sec:dsl}
+
+\subsection{Loop expressions}
+% loop expressions, made of a loop index and statements
+% can be context-sensitive
+
+% how do they manifest? how do we generate code from them?
+% the axes turn into loops - this can be done without mentioning loopy
+% maybe have API alongside generated code? what about the axis trees?
+
+\begin{figure}[h]
+  \centering
+
+  \begin{subfigure}[t]{.32\textwidth}
+    \centering
+    % extra lines to improve position on page
+    \begin{minted}{python}
+loop(
+  p := axes.index(), ...
+)
 
 
-% not sure where this goes, bit too specific to go here, but it probably is a
-% language/DSL thing not an indexing thing since it affects how many loops we have
-\subsection{Context-sensitive ...}
+    \end{minted}
+    %
+    \caption{TODO}
+    \label{fig:loop_expr_init}
+  \end{subfigure}
+  %
+  \begin{subfigure}[t]{.32\textwidth}
+    \centering
+    \includegraphics{loop_expr_axes.pdf}
+    %
+    \caption{TODO}
+    \label{fig:loop_expr_axes}
+  \end{subfigure}
+  %
+  \begin{subfigure}[t]{.32\textwidth}
+    \centering
+    % extra lines to improve position on page
+    \begin{minted}{python}
+for ia in range(5):
+  for ib in range(3):
+    ...
 
-context-sensitive things: maps and loops
 
-% this sort of feels like it should be its own chapter...
+    \end{minted}
+    %
+    \caption{TODO}
+    \label{fig:loop_expr_codegen}
+  \end{subfigure}
+
+  \caption{TODO}
+  \label{fig:loop_expr}
+\end{figure}
+
+\subsubsection{Context-sensitive loops}
+
+\begin{figure}[h]
+  \centering
+
+  \begin{subfigure}[t]{.32\textwidth}
+    \centering
+    % extra lines to improve position on page
+    \begin{minted}{python}
+loop(
+  p := axes.index(), ...
+)
+
+
+    \end{minted}
+    %
+    \caption{TODO}
+    \label{fig:multi_component_loop_expr_init}
+  \end{subfigure}
+  %
+  \begin{subfigure}[t]{.32\textwidth}
+    \centering
+    \includegraphics{multi_component_loop_expr_axes.pdf}
+    %
+    \caption{TODO}
+    \label{fig:multi_component_loop_expr_axes}
+  \end{subfigure}
+  %
+  \begin{subfigure}[t]{.32\textwidth}
+    \centering
+    % extra lines to improve position on page
+    \begin{minted}{python}
+for ia in range(2):
+  for ib in range(3):
+    ...
+
+for ia in range(2):
+  for ic in range(2):
+    ...
+    \end{minted}
+    %
+    \caption{TODO}
+    \label{fig:multi_component_loop_expr_codegen}
+  \end{subfigure}
+
+  \caption{TODO}
+  \label{fig:multi_component_loop_expr}
+\end{figure}
+
+\subsection{Kernels}
+
+% kernels
+% access descriptors
+
+% but loopy needs to be mentioned here...
+
+% This only really makes sense when generating code.
+\begin{table}[h]
+  \centering
+
+  \begin{tabular}{|c|l|l|}
+    \hline
+    \textbf{Intent} & \textbf{Pack instruction} & \textbf{Unpack instruction} \\
+    \hline
+    \pycode{READ} & \pycode{t0[*i] = dat0[f(*i)]} & \tableDash \\
+    \hline
+    \pycode{WRITE} & \tableDash & \pycode{dat0[f(*i)] = t0[*i]} \\
+    \hline
+    \pycode{RW} & \pycode{t0[*i] = dat0[f(*i)]} & \pycode{dat0[f(*i)] = t0[*i]} \\
+    \hline
+    \pycode{INC} & \pycode{t0[*i] = 0} & \pycode{dat0[f(*i)] = dat0[f(*i)] + t0[*i]} \\
+    \hline
+    \pycode{MIN_WRITE} & \tableDash & \pycode{dat0[f(*i)] = min(dat0[f(*i)], t0[*i])} \\
+    \hline
+    \pycode{MIN_INC} & \pycode{t0[*i] = dat0[f(*i)]} & \pycode{dat0[f(*i)] = min(dat0[f(*i)], t0[*i])} \\
+    \hline
+    \pycode{MAX_WRITE} & \tableDash & \pycode{dat0[f(*i)] = max(dat0[f(*i)], t0[*i])} \\
+    \hline
+    \pycode{MAX_INC} & \pycode{t0[*i] = dat0[f(*i)]} & \pycode{dat0[f(*i)] = max(dat0[f(*i)], t0[*i])} \\
+    \hline
+  \end{tabular}
+
+  \caption{
+    Intent values supported by \pyop3 kernels.
+    The generated instructions (pack and unpack columns) assume that one is packing from a global array \pycode{dat0} into local temporary \pycode{t0}.
+    The loop indices in the expressions are shown as \pycode{*i}, and the global array's layout function is represented by the function \pycode{f(*i)}.
+  }
+  \label{tab:intents}
+\end{table}
+
 \section{Code generation}
 % compilation pipeline, transformations then lowering then more transformations
 
-\subsection{\pyop3 transformations}
+\subsection{Loop expression transformations}
 
 expand loop contexts
 
@@ -32,12 +208,12 @@ pack unpack transforms
 
 don't think we actually do any of these currently...
 
-\section{PETSc integration}
-
-also not sure that this is the right place for this section, maybe put inside an "other features" section?
-
-Arguably this could even go after where we discuss parallel. Most of the content is focused on axis tree arrays so this is arguably a confusing distraction. Should probably have a section per chapter on PETsc matrices as there are relevant bits per chapter that apply.
-
-Need to discuss raxes, caxes, and tabulating the rmap and cmap, they are materialised indexed things (like we have for temporaries).
+% \section{PETSc integration}
+%
+% also not sure that this is the right place for this section, maybe put inside an "other features" section?
+%
+% Arguably this could even go after where we discuss parallel. Most of the content is focused on axis tree arrays so this is arguably a confusing distraction. Should probably have a section per chapter on PETsc matrices as there are relevant bits per chapter that apply.
+%
+% Need to discuss raxes, caxes, and tabulating the rmap and cmap, they are materialised indexed things (like we have for temporaries).
 
 \end{document}

@@ -30,7 +30,7 @@
 
 % edge (non) DoFs
 \coordinate (edgedof) at ($(edge)+(0,-1.5)$);
-\draw (edgedof) node[cross] {};
+\drawCross{(edgedof)};
 \draw [connector] (edge) -- (edgedof);
 
 % vertex DoFs

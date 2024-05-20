@@ -37,10 +37,10 @@ clean:
 	-rm ./*.pdf 2>/dev/null || true
 
 # Remove specific PDF
-%.clean: ALWAYS
-	-rm ./$*.pdf 2>/dev/null || true
+# %.clean: ALWAYS
+# 	-rm ./$*.pdf 2>/dev/null || true
 
-$(THESIS): %.pdf: $(CHAPTERS) %.clean %.tex
+$(THESIS): %.pdf: $(CHAPTERS) %.tex
 	$(TEX) $*
 
 $(CHAPTERS): %.pdf: $(FIGURES) $(CHAPTERS_DIR)/%.tex

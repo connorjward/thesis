@@ -50,18 +50,11 @@
 
 % --- FULLY INDEXED ---
 
-\coordinate (origin) at (8.5,0);
+\coordinate (origin) at (8.5,-1);
 
 % top
 \drawWhiteDofSmall{(origin)}{$e_0$\,($a_2$)};
 \drawWhiteDofSmall{($(origin)+(1,0)$)}{$e_1$\,($a_4$)};
-
-\coordinate (aleft) at ($(origin)+(1,0)$);
-\coordinate (aright) at ($(origin)+(2,0)$);
-
-% bottom
-\coordinate (origin) at ($(aleft)+(-1,-1.5)$);
-\node [anchor=west] at (origin) {\footnotesize{($i_d=1, i_b=2)$}};
 
 \end{tikzpicture}
 \end{document}

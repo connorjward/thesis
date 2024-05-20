@@ -36,7 +36,7 @@ In many cases it is directly equivalent to the same terminology/operation as num
       \hline
       \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
       \hline
-      \{$c$, $b$\} & \{$a$, $b$\} & \{$i_a$: $2 i_c$, $i_b$: $i_d+1$\} \\
+      \{$c$, $d$\} & \{$a$, $b$\} & \{$i_a$: $2 i_c$, $i_b$: $i_d+1$\} \\
       \hline
     \end{tabular}
     \caption{
@@ -87,13 +87,51 @@ This encodes the information that source axis entry $c_0$ maps to $a_0$, $c_1$ m
 This is clearly shown by the indexed tree in \cref{fig:index_linear_tree_data_layout}.
 The same principle applies to axes $b$ and $d$, except that the different slicing pattern means that the target expression now includes an offset.
 
-% subsets are also supported in the same way, they can be used to reorder inside axes (give example)
-
-% Maybe doesn't need to be a section?
-\subsection{Substituting layout functions}
-
 With the target expressions mapping from the indexed axis tree back to the unindexed one, and with the unindexed tree having layout functions that map from axis variables to offsets, we possess all of the information necessary for the indexed arrays to ``know" what data they in fact contain.
 All one needs to do is to replace the axis variables in the layout functions with the target expressions from the indexed tree to get the right mapping from the source axis variables to the right offsets.
+
+\subsection{Multi-component index trees}
+
+% motivation: needed since we need to pack clever things
+% "proto" axis trees
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{multi_component_slice_transform}
+    \caption{
+      Diagram of the data layout transformation.
+      ...
+    }
+    \label{fig:multi_component_slice_transform_flowchart}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{|c|c|c|}
+      \hline
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+      \hline
+      % TODO
+      % \{$c$, $d$\} & \{$a$, $b$\} & \{$i_a$: $2 i_c$, $i_b$: $i_d+1$\} \\
+      \hline
+    \end{tabular}
+    \caption{
+      The indexing information carried by the transformed axis tree that allows it to map back to the original unindexed tree.
+    }
+    \label{fig:multi_component_slice_transform_exprs}
+  \end{subfigure}
+
+  \caption{
+    TODO
+    The axis tree transformation resulting from indexing a linear axis tree with shape $(5, 3)$ with the slices (\pycode{::2}) and (\pycode{1::}) on axes $a$ and $b$ respectively.
+    The resulting axis tree has shape $(3, 2)$ and different labels: $c$ and $d$.
+  }
+  \label{fig:multi_component_slice_transform}
+\end{figure}
 
 \section{Index composition}
 \label{sec:index_composition}
@@ -180,13 +218,14 @@ for i in range(len(numpy_dat)):
   \label{fig:simple_loop}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}
   \centering
   \begin{subfigure}{\textwidth}
     \centering
     \includegraphics{loop_index_linear_tree_data_layout}
     \caption{
-      TODO
+      The data layout transformation from the unindexed axis tree (left) to the indexed one (right).
+      Note how the $a$ axis is no longer present in the final axis tree as it has been fully indexed.
     }
     \label{fig:loop_index_linear_tree_data_layout}
   \end{subfigure}
@@ -199,17 +238,20 @@ for i in range(len(numpy_dat)):
       \hline
       \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
       \hline
-      \{$b$\} & \{$a$, $b$\} & \{$i_a$: $i_{p(a)}$, $i_b$: $i_b$\} \\
+      \{$b$\} & \{$a$, $b$\} & \{$i_a$: $i^p_a$, $i_b$: $i_b$\} \\
       \hline
     \end{tabular}
     \caption{
-      TODO
+      The indexing information carried by the indexed axis tree (right).
+      Note how the target expression for axis $a$ is the \textit{loop index} $i^p_a$.
+      This means that the indexed axis tree cannot be interpreted without the outer loop $p$ being present.
     }
     \label{fig:loop_index_linear_tree_data_layout_exprs}
   \end{subfigure}
 
   \caption{
-    TODO
+    Index transformation equivalent to indexing a numpy array with shape \pycode{(5, 3)} with indices \pycode{[p, ::]}, where \pycode{p} is an index coming from some outer loop.
+    The resulting array has shape \pycode{(3,)} because the outermost loop has been fully indexed by \pycode{p}.
   }
   \label{fig:loop_index_linear_tree_data_layout_all}
 \end{figure}
@@ -251,7 +293,8 @@ In \pyop3 we say that it is \textit{context-dependent}.
     \centering
     \includegraphics{index_map_data_layout}
     \caption{
-      TODO
+      The data layout transformation from the unindexed axis tree (left) to the indexed one (right).
+      Note how the $a$ axis has been replaced by the map axis $c$.
     }
     \label{fig:index_map_data_layout}
   \end{subfigure}
@@ -264,16 +307,20 @@ In \pyop3 we say that it is \textit{context-dependent}.
       \hline
       \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
       \hline
-      \{$b$\} & \{$a$, $b$\} & \{$i_a$: ???, $i_b$: $i_b$\} \\
+      \{$c$, $b$\} & \{$a$, $b$\} & \{$i_a$: $f(i^p_a, i_c)$, $i_b$: $i_b$\} \\
       \hline
     \end{tabular}
     \caption{
-      TODO
+      The indexing information carried by the indexed axis tree (right).
+      Using a map means that the index for axis $a$ is an expression containing both the outer loop index ($i^p_a$) and an index over the shape coming from the map's arity ($i_c$).
     }
     \label{fig:index_map_data_layout_exprs}
   \end{subfigure}
 
-  \caption{TODO}
+  \caption{
+    Index transformation representing the packing of an axis tree with shape \pycode{(5, 3)} containing the entries referenced by the map $f(p)$, where $p$ is some outer loop index.
+    The map has arity 3, so the resulting array has shape \pycode{(3, 3)}.
+  }
   \label{fig:index_map_data_layout_all}
 \end{figure}
 
@@ -281,17 +328,126 @@ Maps differ from slices because they add additional shape. They have a from inde
 
 How to build a map.
 
-Give closure as an example. Index tree.
+% explain what arity is, it leads to extra shape!
+% they need outer loop indices
+% expressions are of the form f(i, j), could be an affine transformation or a lookup
+
+% they have "target leaves" - bad terminology
 
 \subsection{Ragged maps}
 
-Ragged maps are also supported. e.g. support, star
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{ragged_map_transform}
+    \caption{
+      TODO
+    }
+    \label{fig:ragged_map_transform_flowchart}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{|c|c|c|}
+      \hline
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+      \hline
+      % TODO
+      % \{$c$, $b$\} & \{$a$, $b$\} & \{$i_a$: $f(i^p_a, i_c)$, $i_b$: $i_b$\} \\
+      \hline
+    \end{tabular}
+    \caption{
+      TODO
+    }
+    \label{fig:ragged_map_transform_exprs}
+  \end{subfigure}
+
+  \caption{
+    TODO
+  }
+  \label{fig:ragged_map_transform}
+\end{figure}
+
+Ragged maps are also supported. e.g. support, star, PIC
+
+% arity is now an array
 
 \subsection{Map composition}
 
-e.g. g(f(p))
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{map_composition_transform}
+    \caption{
+      TODO
+    }
+    \label{fig:map_composition_transform}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{|c|c|c|}
+      \hline
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+      \hline
+      \{$c$, $d$, $b$\} & \{$a$, $b$\} & \{$i_a$: $g(f(i^p_a, i_c), i_d)$, $i_b$: $i_b$\} \\
+      \hline
+    \end{tabular}
+    \caption{
+      TODO
+    }
+    \label{fig:map_composition_transform_exprs}
+  \end{subfigure}
+
+  \caption{TODO}
+  \label{fig:map_composition_transform_all}
+\end{figure}
 
 \section{Data layout transformations}
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{data_layout_transform}
+    \caption{
+      The data layout transformation from the unindexed axis tree (left) to the indexed one (right).
+      TODO
+    }
+    \label{fig:data_layout_transform}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{|c|c|c|}
+      \hline
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+      \hline
+      \{$c$, $b$\} & \{$a$, $b$\} & \{$i_a$: $f(i^p_a, i_c)$, $i_b$: $i_b$\} \\
+      \hline
+    \end{tabular}
+    \caption{
+      The indexing information carried by the indexed axis tree (right).
+      Note how the values here are entirely identical to those in \cref{fig:index_map_data_layout_exprs}.
+      This is because the indexing operations are kept separate from any layout considerations.
+    }
+    \label{fig:data_layout_transform_exprs}
+  \end{subfigure}
+
+  \caption{
+    Index transformation equivalent to \cref{fig:index_map_data_layout} apart from the fact that the data layout of the original axis tree has been transposed with axes $a$ and $b$ flipped.
+    Despite this, the indexing transformation and resultant indexed tree are exactly the same as they were before.
+  }
+  \label{fig:data_layout_transform_all}
+\end{figure}
 
 With \pyop3's axis trees it is straightforward to construct alternative data layouts for the same data.
 This is touched upon in \cref{sec:axis_tree_examples} for the cases of vector and mixed function spaces.
