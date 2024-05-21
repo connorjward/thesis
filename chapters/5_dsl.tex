@@ -157,7 +157,6 @@ for ia in range(2):
 % access descriptors (vague)
 
 \section{Code generation}
-% compilation pipeline, transformations then lowering then more transformations
 
 \begin{figure}[h]
   \centering
@@ -165,8 +164,6 @@ for ia in range(2):
   \caption{TODO}
   \label{fig:codegen_flowchart}
 \end{figure}
-
-\subsection{Loop expression transformations}
 
 \begin{table}
   \centering
@@ -201,30 +198,33 @@ for ia in range(2):
   \label{tab:intents}
 \end{table}
 
-\begin{enumerate}
-  \item
-    \textbf{Expand multi-component loops} \\
-    Blah blah blah
-  \item
-    \textbf{Expand implicit pack/unpack operations} \\
-    Blah blah blah
-\end{enumerate}
+% transformations can be split into functional ones and optimisation ones
 
+\subsection{Example}
 
+\begin{figure}
+  \centering
 
-\subsection{Lowering to loopy}
-% inames etc
+  \begin{subfigure}[t]{.3\textwidth}
+    \includegraphics{loop_expr_tree_initial.pdf}
+    \caption{The initial loop expression tree.}
+    \label{fig:loop_expr_tree_transform_initial}
+  \end{subfigure}
+  %
+  \hfill
+  %
+  \begin{subfigure}[t]{.68\textwidth}
+    \includegraphics{loop_expr_tree_expanded.pdf}
+    \caption{The transformed loop expression tree where the implicit pack and unpack instructions have been made explicit via conversion to \pycode{write} and \pycode{inc} instructions.}
+    \label{fig:loop_expr_tree_transform_expanded}
+  \end{subfigure}
 
-\subsection{Loopy transformations}
+  \caption{
+    The expression tree transformation expanding implicit pack and unpack instructions for \pycode{kernel}, which has argument intents of \pycode{READ} and \pycode{INC} for its first and second argument respectively.
+  }
+  \label{fig:loop_expr_tree_transform}
+\end{figure}
 
-don't think we actually do any of these currently...
-
-% \section{PETSc integration}
-%
-% also not sure that this is the right place for this section, maybe put inside an "other features" section?
-%
-% Arguably this could even go after where we discuss parallel. Most of the content is focused on axis tree arrays so this is arguably a confusing distraction. Should probably have a section per chapter on PETsc matrices as there are relevant bits per chapter that apply.
-%
-% Need to discuss raxes, caxes, and tabulating the rmap and cmap, they are materialised indexed things (like we have for temporaries).
+\paragraph{Loop expression transformations}
 
 \end{document}
