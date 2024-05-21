@@ -1,0 +1,61 @@
+---------------------------------------------------------------------------
+KERNEL: loopy_kernel
+---------------------------------------------------------------------------
+ARGUMENTS:
+x: type: np:dtype('float64'), shape: (6), dim_tags: (N0:stride:1) in aspace: global
+y: type: np:dtype('float64'), shape: (1), dim_tags: (N0:stride:1) in/out aspace: global
+---------------------------------------------------------------------------
+DOMAINS:
+{ [i] : 0 <= i <= 5 }
+---------------------------------------------------------------------------
+INAME TAGS:
+i: None
+---------------------------------------------------------------------------
+INSTRUCTIONS:
+for i
+  y[0] = y[0] + x[i]  {id=insn}
+end i
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+KERNEL: mykernel
+---------------------------------------------------------------------------
+ARGUMENTS:
+array_0: ArrayArg, type: np:dtype('float64'), shape: unknown in aspace: global
+array_1: ArrayArg, type: np:dtype('int64'), shape: unknown in aspace: global
+array_2: ArrayArg, type: np:dtype('float64'), shape: unknown in/out aspace: global
+---------------------------------------------------------------------------
+DOMAINS:
+{ [i_0] : 0 <= i_0 <= 4 }
+{ [i_1] : 0 <= i_1 <= 1 }
+{ [i_2] : 0 <= i_2 <= 2 }
+{ [i_3] : 0 <= i_3 <= 5 }
+{ [i_4] : i_4 = 0 }
+---------------------------------------------------------------------------
+INAME TAGS:
+i_0: None
+i_1: None
+i_2: None
+i_3: None
+i_4: None
+---------------------------------------------------------------------------
+TEMPORARIES:
+j_0: type: np:dtype('int32'), shape: () aspace: auto
+j_1: type: np:dtype('int32'), shape: () aspace: auto
+j_2: type: np:dtype('int32'), shape: () aspace: auto
+t_0: type: np:dtype('float64'), shape: (6), dim_tags: (N0:stride:1) aspace: auto
+t_1: type: np:dtype('float64'), shape: (1), dim_tags: (N0:stride:1) aspace: auto
+---------------------------------------------------------------------------
+INSTRUCTIONS:
+      for i_0, i_1, i_2
+↱           j_0 = i_1*3 + i_2  {id=insn_0}
+├↱          t_0[j_0] = array_0[array_1[i_0*2 + i_1]*3 + i_2]  {id=insn_1}
+││      end i_1, i_2
+│├↱     j_1 = 0  {id=insn_2}
+││├↱    t_1[j_1] = 0  {id=insn_3}
+│││└↱   [i_4]: t_1[i_4] = loopy_kernel([i_3]: t_0[i_3], [i_4]: t_1[i_4])  {id=insn_4}
+│││↱└   j_2 = 0  {id=insn_5}
+│││├↱   array_2[i_0] = array_2[i_0] + t_1[j_2]  {id=insn_6}
+│││││ end i_0
+└└└└└ CODE(j_0, t_1, t_0, j_1, array_1, j_2, array_0, array_2|)  {id=insn}
+      
+---------------------------------------------------------------------------

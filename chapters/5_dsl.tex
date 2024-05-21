@@ -161,7 +161,11 @@ for ia in range(2):
 \begin{figure}[h]
   \centering
   \includegraphics{codegen_flowchart.pdf}
-  \caption{TODO}
+  \caption{
+    The code generation pipeline for the compilation of a loop expression into a callable function.
+    The input (``Loop expression") and output (``Compiled function") are shown in blue whilst the intermediate processes are red.
+    The dashed line from input expression to output function is included to represent the fact that the compiled function additionally requires data from the input loop expression in order to be usable.
+  }
   \label{fig:codegen_flowchart}
 \end{figure}
 
@@ -199,6 +203,8 @@ for ia in range(2):
 \end{table}
 
 % transformations can be split into functional ones and optimisation ones
+
+% dual role of loop expression: codegen spec *and* data to pass through (ref. figure)
 
 \subsection{Example}
 

@@ -2,12 +2,12 @@
 \input{figures/common/preamble}
 
 \begin{document}
-\begin{tikzpicture}
+\begin{tikzpicture}[yscale=-1]
 
 \tikzstyle{flowchartnode} = [
   draw=black,
   align=center,
-  anchor=center,
+  anchor=west,
   font=\footnotesize,
   text centered,
   minimum height=.8cm,
@@ -30,25 +30,31 @@
 
 \coordinate (start) at (0,0);
 \tikzmath{
-  \shift = -1.2;
+  \xshift = .8;
+  \yshift = 1.5;
 }
 
 \node (pyop3) [io] at (start) {Loop expression};
-\node (transform_pyop3) [process] at ($(start)+(0,\shift*1)$) {Transform loop expression};
-\node (lower_pyop3) [process] at ($(start)+(0,\shift*2)$) {Lower loop expression\\to loopy kernel};
-\node (transform_loopy) [process] at ($(start)+(0,\shift*3)$) {Transform loopy kernel};
-\node (lower_loopy) [process] at ($(start)+(0,\shift*4)$) {Lower loopy kernel to C};
-\node (compile_code) [process] at ($(start)+(0,\shift*5)$) {Compile C code};
-\node (compiled_function) [io] at ($(start)+(0,\shift*6)$) {Compiled function};
+\node (transform_pyop3) [process] at ($(pyop3.east)+(\xshift,0)$) {Transform loop\\expression};
+\node (lower_pyop3) [process] at ($(transform_pyop3.east)+(\xshift,0)$) {Lower loop expression\\to loopy kernel};
+
+\node (transform_loopy) [process] at ($(lower_pyop3.east)+(\xshift*.6,\yshift*.5)$) {Transform loopy kernel};
+
+\node (compiled_function) [io] at ($(start)+(0,\yshift)$) {Compiled function};
+\node (compile_code) [process] at ($(compiled_function.east)+(\xshift,0)$) {Compile C string};
+\node (lower_loopy) [process] at ($(compile_code.east)+(\xshift,0)$) {Lower loopy kernel\\to C string};
 
 \draw [arrow] (pyop3) -- (transform_pyop3);
 \draw [arrow] (transform_pyop3) -- (lower_pyop3);
-\draw [arrow] (lower_pyop3) -- (transform_loopy);
-\draw [arrow] (transform_loopy) -- (lower_loopy);
+% \draw [arrow] (lower_pyop3) -- (transform_loopy);
+% \draw [arrow] (transform_loopy) -- (lower_loopy);
 \draw [arrow] (lower_loopy) -- (compile_code);
 \draw [arrow] (compile_code) -- (compiled_function);
 
-\draw [arrow,densely dashed] (pyop3.east) to [bend left=40] node[midway,right,align=center,font=\footnotesize] {Call with data from\\loop expression} (compiled_function.east);
+\draw [arrow,rounded corners=5pt] (lower_pyop3.east) -| (transform_loopy.north);
+\draw [arrow,rounded corners=5pt] (transform_loopy.south) |- (lower_loopy.east);
+
+\draw [arrow,densely dashed] (pyop3.west) to [bend left=60] node[midway,left,align=center,font=\footnotesize] {Call with data from\\loop expression} (compiled_function.west);
 
 \end{tikzpicture}
 \end{document}
