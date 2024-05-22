@@ -26,6 +26,11 @@
   % https://tex.stackexchange.com/questions/161124/how-to-make-a-minted-code-listing-centered-on-a-page
   \RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
 
+  % settings for all minted environments
+  \setminted{fontsize=\footnotesize,bgcolor=gray!20,autogobble}
+  % do not apply a background to inline code
+  \setmintedinline{fontsize=\normalsize,bgcolor={}}
+
 % code overlay: https://tex.stackexchange.com/questions/287549/is-it-possible-to-use-tikzmark-inside-minted
 \usepackage{tikz}
   \usetikzlibrary{calc,decorations.pathreplacing,tikzmark}

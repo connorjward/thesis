@@ -2,9 +2,9 @@
 KERNEL: mykernel
 ---------------------------------------------------------------------------
 ARGUMENTS:
-array_0: ArrayArg, type: np:dtype('float64'), shape: unknown in aspace: global
-array_1: ArrayArg, type: np:dtype('int64'), shape: unknown in aspace: global
-array_2: ArrayArg, type: np:dtype('float64'), shape: unknown in/out aspace: global
+array_0: ArrayArg, type: np:dtype('float64'), shape: unknown in
+array_1: ArrayArg, type: np:dtype('int64'), shape: unknown in
+array_2: ArrayArg, type: np:dtype('float64'), shape: unknown in/out
 ---------------------------------------------------------------------------
 DOMAINS:
 { [i_0] : 0 <= i_0 <= 4 }
@@ -12,15 +12,15 @@ DOMAINS:
 { [i_2] : 0 <= i_2 <= 2 }
 ---------------------------------------------------------------------------
 TEMPORARIES:
-t_0: type: np:dtype('float64'), shape: (6), dim_tags: (N0:stride:1) aspace: auto
-t_1: type: np:dtype('float64'), shape: (1), dim_tags: (N0:stride:1) aspace: auto
+t_0: type: np:dtype('float64'), shape: (6), dim_tags: (N0:stride:1)
+t_1: type: np:dtype('float64'), shape: (1), dim_tags: (N0:stride:1)
 ---------------------------------------------------------------------------
 INSTRUCTIONS:
-      for i_0, i_1, i_2
-            t_0[i_1*3 + i_2] = array_0[array_1[i_0*2 + i_1]*3 + i_2]
-        end i_1, i_2
-       t_1[0] = 0
-       loopy_kernel(t_0, t_1)
-       array_2[i_0] = array_2[i_0] + t_1[0]
-     end i_0
+for i_0, i_1, i_2
+    t_0[i_1*3 + i_2] = array_0[array_1[i_0*2 + i_1]*3 + i_2]
+  end i_1, i_2
+  t_1[0] = 0
+  loopy_kernel(t_0, t_1)
+  array_2[i_0] = array_2[i_0] + t_1[0]
+end i_0
 ---------------------------------------------------------------------------
