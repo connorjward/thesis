@@ -47,7 +47,3 @@
 \newcommand{\drawComma}[1]{
   \node [font=\huge] at #1 {,};
 }
-
-\newcommand{\drawCompose}[1]{
-  \node [font=\huge] at #1 {$\otimes$};
-}

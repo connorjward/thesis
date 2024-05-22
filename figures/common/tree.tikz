@@ -40,8 +40,8 @@
   \draw [treenodearrow] ($(\px1,\py2)+(0,.15)$) -- #3;
 }
 
-\newcommand{\bigOTimes}[1]{
-  \node [font=\huge] (times) at #1 {$\otimes$};
+\newcommand{\drawCompositionCircle}[1]{
+  \node [circle,draw] at #1 {};
 }
 
 \newcommand{\bigArrow}[1]{
@@ -49,11 +49,3 @@
 }
 
 \newcommand{\component}{\subnode[minimum width=0pt]};
-
-% \newcommand{\unpackSubnode}[2]{
-%   \node [fit=#1,inner sep=0pt] #1 {};
-% }
-
-% \newcommand{\debugDrawSubnode}[1]{
-%   \node [fit=#1,draw,inner sep=0pt] {};
-% }
