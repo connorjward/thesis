@@ -1,4 +1,4 @@
-void mykernel(double const *__restrict__ array_0,
+void pyop3_kernel(double const *__restrict__ array_0,
               int64_t const *__restrict__ array_1,
               double *__restrict__ array_2)
 {
@@ -13,7 +13,7 @@ void mykernel(double const *__restrict__ array_0,
         t_0[i_1 * 3 + i_2] = array_0[array_1[2 * i_0 + i_1] * 3 + i_2];
       }
     t_1[0] = 0.0;
-    loopy_kernel(&(t_0[0]), &(t_1[0]));
+    kernel(&(t_0[0]), &(t_1[0]));
     array_2[i_0] = array_2[i_0] + t_1[0];
   }
 }

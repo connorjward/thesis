@@ -10,6 +10,12 @@ Most of the innovation in \pyop3 stems from its novel data model.
 Data structures associated with a mesh are created using more information about the mesh topology.
 This lays the groundwork for a much more expressive DSL since more of the semantics are captured/represented.
 
+% TODO: Also discuss the data model which is DMPlex + Section. It's ragged
+% and cannot tell if things are cells or edges etc. Supports renumbering.
+% Both DMPlex and PyOP2 are not able to flexibly add further shape.
+% Maybe this section needs a bit of a reordering, do we introduce axis trees and then compare
+% to PyOP2/DMPlex or do we introduce the latter two and describe their shortcomings?
+
 \begin{figure}
   \centering
   \includegraphics{two_cell_mesh_lagrange.pdf}
