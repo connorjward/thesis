@@ -1,0 +1,40 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/data_layout.tikz}
+
+% dat0
+\coordinate (origin) at (0,0);
+\drawWhiteDof{(origin)}{$x_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$x_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$x_2$};
+\drawWhiteDof{($(origin)+(3,0)$)}{$x_3$};
+\drawWhiteDof{($(origin)+(4,0)$)}{$x_4$};
+\drawWhiteDof{($(origin)+(5,0)$)}{$x_5$};
+\drawWhiteDof{($(origin)+(6,0)$)}{$x_6$};
+\drawWhiteDof{($(origin)+(7,0)$)}{$x_7$};
+
+\coordinate (aleft) at ($(origin)+(3,0)$);
+\coordinate (aright) at ($(origin)+(4,0)$);
+
+\coordinate (origin) at ($(aleft)+(-1,-2)$);
+\drawWhiteDof{(origin)}{$y_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$y_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$y_2$};
+
+\draw [connector] (aleft) -- ($(origin)+(0,1)$);
+\draw [connector] (aright) -- ($(origin)+(3,1)$);
+
+% dat1
+\coordinate (origin) at (10,-1);
+\drawWhiteDof{(origin)}{$a_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$a_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$a_2$};
+\drawWhiteDof{($(origin)+(3,0)$)}{$a_3$};
+\drawWhiteDof{($(origin)+(4,0)$)}{$a_4$};
+
+\end{tikzpicture}
+\end{document}

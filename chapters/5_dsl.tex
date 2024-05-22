@@ -36,7 +36,7 @@ Thus far, all of the data structures that we have encountered would be stored as
 \pycode{Dats} are constructed with a single axis tree that provides the information necessary to address the underlying flat array that carries the data.
 Having a single axis tree, \pycode{Dats} may be indexed using a single index (\cref{chapter:indexing}).
 
-Currently \pycode{Dats} use numpy arrays as the underlying data storage mechanism, but we intend to permit further array types to enable targeting accelerator architectures like CUDA GPUs.
+Currently \pycode{Dats} use numpy arrays as the underlying data storage mechanism, but we intend to permit further array types to enable targeting accelerator architectures like CUDA GPUs (see \cref{sec:future_work}).
 
 \subsection{Matrices (\pycode{Mats})}
 
@@ -49,13 +49,14 @@ Since \pycode{Mats} have two axis trees, two indices are needed when indexing.
 \section{The domain-specific language}
 \label{sec:dsl}
 
+% forms a tree, show a more complex example
+
 \subsection{Loop expressions}
 % loop expressions, made of a loop index and statements
 % can be context-sensitive
 
 % how do they manifest? how do we generate code from them?
 % the axes turn into loops - this can be done without mentioning loopy
-% maybe have API alongside generated code? what about the axis trees?
 
 \begin{figure}[h]
   \centering
@@ -162,12 +163,14 @@ for ia in range(2):
   \label{fig:multi_component_loop_expr}
 \end{figure}
 
+% terminals! be more generic
 \subsection{Kernels}
 
 % kernels
 % access descriptors (vague)
 
 \section{Code generation}
+\label{sec:codegen}
 
 \begin{figure}[h]
   \centering
@@ -180,40 +183,6 @@ for ia in range(2):
   \label{fig:codegen_flowchart}
 \end{figure}
 
-\begin{table}
-  \centering
-
-  \begin{tabular}{|c|l|l|}
-    \hline
-    \textbf{Intent} & \textbf{Pack instruction} & \textbf{Unpack instruction} \\
-    \hline
-    \pycode{READ} & \pycode{t0[*i] = dat0[*j]} & \tableDash \\
-    \hline
-    \pycode{WRITE} & \tableDash & \pycode{dat0[*j] = t0[*i]} \\
-    \hline
-    \pycode{RW} & \pycode{t0[*i] = dat0[*j]} & \pycode{dat0[*j] = t0[*i]} \\
-    \hline
-    \pycode{INC} & \pycode{t0[*i] = 0} & \pycode{dat0[*j] = dat0[*j] + t0[*i]} \\
-    \hline
-    \pycode{MIN_WRITE} & \tableDash & \pycode{dat0[*j] = min(dat0[*j], t0[*i])} \\
-    \hline
-    \pycode{MIN_INC} & \pycode{t0[*i] = 0} & \pycode{dat0[*j] = min(dat0[*j], t0[*i])} \\
-    \hline
-    \pycode{MAX_WRITE} & \tableDash & \pycode{dat0[*j] = max(dat0[*j], t0[*i])} \\
-    \hline
-    \pycode{MAX_INC} & \pycode{t0[*i] = 0} & \pycode{dat0[*j] = max(dat0[*j], t0[*i])} \\
-    \hline
-  \end{tabular}
-
-  \caption{
-    Intent values supported by \pyop3 kernels and their corresponding pack/unpack instructions.
-    The generated instructions (pack and unpack columns) assume that one is packing from global array \pycode{dat0} into local temporary \pycode{t0}.
-    The multi-indices used to index into \pycode{t0} and \pycode{dat0} are represented by \pycode{*i} and \pycode{*j} respectively.
-    Table entries marked with a ``\pycode{-}" indicate that no pack/unpack instruction is emitted for this intent.
-  }
-  \label{tab:intents}
-\end{table}
-
 % transformations can be split into functional ones and optimisation ones
 
 % dual role of loop expression: codegen spec *and* data to pass through (ref. figure)
@@ -225,7 +194,7 @@ To aid with the explanation, we will take a straightforward loop expression typi
     \begin{minted}{python}
       loop(
         p := a.index(),
-        kernel(dat0[map0(p)], dat1[p]),
+        kernel(dat0[map0(p), :], dat1[p]),
       )
     \end{minted}
   \end{minipage}
@@ -234,10 +203,11 @@ To aid with the explanation, we will take a straightforward loop expression typi
 In this loop expression a number of terms require further explanation.
 Firstly, \pycode{dat0} and \pycode{dat1} are defined to be arrays with shape \pycode{(8, 3)} and \pycode{(5,)} respectively, with their axis trees appearing as follows:
 
-...
-% x,y and a
+\begin{center}
+  \includegraphics{codegen_example_dat_axes.pdf}
+\end{center}
 
-The axis tree that forms the loop index (\pycode{a}) is the same as the one used to construct \pycode{dat1}.
+The axis tree used to construct \pycode{dat1} (right) is the same as the one used in the loop index \pycode{p := a.index()}.
 We therefore expect that the generated loop will have the following structure (since axis $a$ has 5 entries):
 
 \begin{center}
@@ -249,37 +219,63 @@ We therefore expect that the generated loop will have the following structure (s
   \end{minipage}
 \end{center}
 
-% how are they indexed? what are the temporary shapes?
-% map0 means that dat0[map0(p)] has 6 entries, implicit slice
+\pycode{dat1} is entirely indexed by the loop index \pycode{p}, and so the indexed array \pycode{dat1[p]} only has size 1.
+The situation for \pycode{dat0} is more complicated.
+\pycode{map0} is a map from axis $a$ to axis $x$ with arity 2, and the slice notation ``\pycode{:}" indicates a full slice over the inner axis $y$.
+The indexed object \pycode{dat0[map0(p), :]} passed through to \pycode{kernel} therefore has size 6.
 
 Lastly, the local kernel (\pycode{kernel}) is defined to be some function taking two arguments with size 6 and intent \pycode{READ}, and size 1 and intent \pycode{INC} respectively.
 
 \subsection{Loop expression transformations}
 
-\begin{figure}
+\begin{table}
   \centering
 
-  \begin{subfigure}[t]{.3\textwidth}
-    \includegraphics{loop_expr_tree_initial.pdf}
-    \caption{The initial loop expression tree.}
-    \label{fig:loop_expr_tree_transform_initial}
-  \end{subfigure}
-  %
-  \hfill
-  %
-  \begin{subfigure}[t]{.68\textwidth}
-    \includegraphics{loop_expr_tree_expanded.pdf}
-    \caption{The transformed loop expression tree where the implicit pack and unpack instructions have been made explicit via conversion to \pycode{write} and \pycode{inc} instructions.}
-    \label{fig:loop_expr_tree_transform_expanded}
-  \end{subfigure}
+  \begin{tabular}{|c|l|l|}
+    \hline
+    \textbf{Intent} & \textbf{Pack instruction} & \textbf{Unpack instruction} \\
+    \hline
+    \pycode{READ} & \ccode{write(temporary, indexed)} & \tableDash \\
+    \hline
+    \pycode{WRITE} & \tableDash & \ccode{write(indexed, temporary)} \\
+    \hline
+    \pycode{RW} & \ccode{write(temporary, indexed)} & \ccode{write(indexed, temporary)} \\
+    \hline
+    \pycode{INC} & \ccode{write(temporary, 0)} & \ccode{inc(indexed, temporary)} \\
+    \hline
+    \pycode{MIN_WRITE} & \tableDash & \ccode{min(indexed, temporary)} \\
+    \hline
+    \pycode{MIN_INC} & \ccode{write(temporary, 0)} & \ccode{min(indexed, temporary)} \\
+    \hline
+    \pycode{MAX_WRITE} & \tableDash & \ccode{max(indexed, temporary)} \\
+    \hline
+    \pycode{MAX_INC} & \ccode{write(temporary, 0)} & \ccode{max(indexed, temporary)} \\
+    \hline
+  \end{tabular}
 
   \caption{
-    The expression tree transformation expanding implicit pack and unpack instructions for \pycode{kernel}, which has argument intents of \pycode{READ} and \pycode{INC} for its first and second argument respectively.
+    Intent values supported by \pyop3 kernels and their corresponding pack/unpack instructions.
+    In the instructions, the variable ``\ccode{indexed}" is used to represent the indexed view of some piece of global data (e.g. \pycode{dat0[map0(p)]}) and the variable ``\ccode{temporary}" is the temporary buffer for storing the materialised data.
+    Table entries marked with a ``\pycode{-}" indicate that no pack/unpack instruction is emitted for this intent.
+  }
+  \label{tab:intents}
+\end{table}
+
+\begin{figure}
+  \centering
+  \includegraphics{loop_expr_tree_transform.pdf}
+
+  \caption{
+    The expression tree transformation expanding implicit pack and unpack instructions for the example loop expression (\cref{sec:codegen}).
+    The input loop expression is shown on the left and the output, expanded, loop expression is shown on the right.
+    \pycode{kernel} has argument intents of \pycode{READ} and \pycode{INC} for its first and second argument respectively and so the transformed expression contains \pycode{write} and \pycode{inc} instructions where appropriate.
   }
   \label{fig:loop_expr_tree_transform}
 \end{figure}
 
-% \paragraph{Loop expression transformations}
+% explain implicit pack/unpack expansion, reference table (and explain notation) and reference figure (demo)
+
+\subsection{Lowering loop expressions to loopy kernels}
 
 \begin{figure}
   \centering
@@ -287,9 +283,44 @@ Lastly, the local kernel (\pycode{kernel}) is defined to be some function taking
     \inputminted{text}{./scripts/artefacts/codegen_example_loopy_kernel_tidy.txt}
   \end{minipage}
   \caption{
-    Abbreviated textual representation of the loopy kernel generated for expression XXX.
+    Abbreviated textual representation of the loopy kernel generated for the example expression (\cref{sec:codegen}).
   }
   \label{lst:codegen_example_loopy_kernel}
 \end{figure}
+
+% single pass
+% tree is traversed in a pre-order fashion (parents visited first)
+% loops emit domains and perhaps assignments (ragged)
+% then terminals (i.e. function calls and assignments) also emit domains and assignments
+
+% explain substituted target expressions
+
+\subsection{Compilation and execution of loopy kernels}
+\label{sec:codegen_loopy_kernel}
+
+\begin{figure}
+  \centering
+  \begin{minipage}{.8\textwidth}
+    \inputminted{c}{./scripts/artefacts/codegen_example_c_code_tidy.c}
+  \end{minipage}
+  \caption{
+    TODO
+  }
+  \label{lst:codegen_example_c_code}
+\end{figure}
+
+Once at the level of a loopy kernel, the rest of the compilation becomes straightforward.
+Depending on the \textit{target} attribute belonging to a kernel, loopy can generate an appropriate string of C code that \pyop3 writes to a file and compiles with a traditional C compiler (e.g. gcc).
+Once compiled, \pyop3 can load the function pointer from the shared object file, allowing it to be executed.
+This process is unchanged from \pyop2.
+
+For our demo the generated C code can be seen in \cref{lst:codegen_example_c_code}.
+Unsurprisingly it looks very similar to the input loopy kernel (\cref{lst:codegen_example_loopy_kernel}).
+
+\paragraph{Note}
+
+Despite being included in the compilation flowchart (\cref{fig:codegen_flowchart}), no transformations are currently applied at the level of the loopy kernel.
+Transformations at this level would include operations like intra-element vectorisation~\cite{sunStudyVectorizationMatrixfree2020}, or enabling the generated code to run on GPUs~\cite{fenics2021-kulkarni}.
+These things are considered to be future work (see \cref{sec:future_work}).
 
 \end{document}

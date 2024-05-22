@@ -10,11 +10,18 @@
 
 \input{figures/common/ast.tikz}
 
-\node (root) [element] at (0,0) {\pycodemini{loop(p := axes.index())}};
-\node (one) [element] at (-5,1.5) {\pycodemini{write(t0, datX[mapA(p)])}};
+% before
+\node (parent) [element,anchor=center] at (0,0) {\pycodemini{loop(p := axes.index())}};
+\node (child) [element,anchor=center] at (0,1.5) {\pycodemini{kernel(dat0[map0(p), :], dat1[p])}};
+
+\draw (parent) -- (child);
+
+% after
+\node (root) [element] at (8,0) {\pycodemini{loop(p := axes.index())}};
+\node (one) [element] at (3,1.5) {\pycodemini{write(t0, dat0[map0(p), :])}};
 \node (two) [element] at ($(one.east)+(.2,0)$) {\pycodemini{write(t1, 0)}};
 \node (three) [element] at ($(two.east)+(.2,0)$) {\pycodemini{kernel(t0, t1)}};
-\node (four) [element] at ($(three.east)+(.2,0)$) {\pycodemini{inc(datY[p], t1)}};
+\node (four) [element] at ($(three.east)+(.2,0)$) {\pycodemini{inc(dat1[p], t1)}};
 
 \draw (root) -- (one);
 \draw (root) -- (two);
