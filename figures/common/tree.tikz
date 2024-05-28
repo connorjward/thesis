@@ -41,7 +41,7 @@
 }
 
 \newcommand{\drawCompositionCircle}[1]{
-  \node [circle,draw] at #1 {};
+  \node [circle,draw,minimum size=2mm,inner sep=0] at #1 {};
 }
 
 \newcommand{\bigArrow}[1]{

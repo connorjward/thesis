@@ -6,6 +6,8 @@
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=3cm]{geometry}
 
 \usepackage{amsmath}
+% https://tex.stackexchange.com/questions/4216/how-to-typeset-correctly
+\usepackage{mathtools}
 
 \usepackage{setspace}
   \onehalfspacing
@@ -24,12 +26,15 @@
 \usepackage{minted}
   % center code listings
   % https://tex.stackexchange.com/questions/161124/how-to-make-a-minted-code-listing-centered-on-a-page
-  \RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
+  \usepackage{xpatch,letltxmacro}
+  \LetLtxMacro{\cminted}{\minted}
+  \let\endcminted\endminted
+  \xpretocmd{\cminted}{\RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}}{}{}
 
   % settings for all minted environments
-  \setminted{fontsize=\footnotesize,bgcolor=gray!20,autogobble}
-  % do not apply a background to inline code
-  \setmintedinline{fontsize=\normalsize,bgcolor={}}
+  % https://tex.stackexchange.com/questions/25190/defining-a-command-for-a-minted-environment
+  \newminted[pyalg]{python}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
+  \newenvironment{env}{\VerbatimEnvironment\begin{pyalg}}{\end{pyalg}}
 
 % code overlay: https://tex.stackexchange.com/questions/287549/is-it-possible-to-use-tikzmark-inside-minted
 \usepackage{tikz}

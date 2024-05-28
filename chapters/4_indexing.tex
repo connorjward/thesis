@@ -2,28 +2,92 @@
 
 \begin{document}
 
-% TODO: Somewhere talk about ragged temporaries?
-
 \chapter{Indexing}
 
-Axis trees provide us with a method for describing the data layout of global objects.
-In order to be able to execute compact stencils this is insufficient.
-We need a way to extract portions of the array such that they may be operated on independently.
-In \pyop3, this extraction operation is referred to as \textit{indexing}.
-In many cases it is directly equivalent to the same terminology/operation as numpy.
+In array codes it is very rarely the case that the entire array is operated on as a single unit.
+Instead, what more commonly happens is the array is restricted to a smaller piece (e.g. a single value) so that it may be read or modified.
+This operation is almost universally referred to as \textit{array indexing}.
+In this chapter we introduce the necessary abstractions and algorithms required to index axis trees in \pyop3.
+
+\section{A primer: indexing numpy arrays}
+\label{sec:indexing_numpy_arrays}
+
+\begin{table}
+  \centering
+
+  \begin{tabular}{|l|l|l|l|}
+    \hline
+    \textbf{Index operation} & \textbf{Example} & \textbf{Return value} & \textbf{Array return type} \\
+    \hline
+    Single element indexing & \pycode{array[1]} & \pycode{"B"} & N/A \\
+    \hline
+    Slicing & \pycode{array[1:6:2]} & \pycode{["B", "D", "F"]} & View \\
+    \hline
+    Integer array indexing & \pycode{array[[0, 3, 4]]} & \pycode{["A", "D", "E"]} & Copy \\
+    \hline
+  \end{tabular}
+
+  \caption{
+    Common indexing operations for numpy arrays.
+    The examples shown apply the index to the string array \pycode{["A", "B", "C", "D", "E", "F"]} (called \pycode{array} above).
+    The array return type for single element indexing is marked as ``N/A" because a string is returned instead of an array.
+  }
+  \label{tab:numpy_indexing_ops}
+\end{table}
+
+Just as axis trees can be regarded as a generalisation of numpy arrays, indexing arrays in \pyop3 is, as far as possible, analogous to indexing operations in numpy.
+Before diving into how \pyop3 does things it is therefore instructive to review how indexing is done in numpy.
+
+Some of the ways that a numpy array may be indexed are shown in \cref{tab:numpy_indexing_ops}:
+
+\begin{itemize}
+  \item \textbf{Single element indexing}
+
+    Single element indexing takes an integer and simply returns the value stored at that point.
+
+  \item \textbf{Slicing}
+
+    Slices are a standard Python concept for describing ranges of indices and have the syntax \pycode{[start:stop:step]}.
+    Omitting \pycode{start}, \pycode{stop} or \pycode{step} will default to 0, the end of the array, and 1 respectively.
+    In the example shown in \cref{tab:numpy_indexing_ops} the slice \pycode{[1:6:2]} corresponds to asking for ``the values in the array from index 1 (inclusive) to index 6 (exclusive), striding by 2".
+
+  \item \textbf{Integer array indexing}
+
+    Integer array indexing returns a new array containing values stored at the requested indices, for the example in \cref{tab:numpy_indexing_ops} this simply being 0, 3 and 4.
+
+\end{itemize}
+
+Although the examples provided are all for a 1-dimensional array, it is completely permissible to index N-dimensional arrays with a collection of these indexing operations, one per axis of the array.
+
+numpy draws a distinction between ``basic" indexing, single element indexing and slicing, and ``advanced" indexing like using integer arrays.
+For the former, the array returned from the indexing operation is a \textit{view}, whereas for the latter a \textit{copy} is returned.
+Alongside the obvious memory advantages, views are also preferable to copies because they are \textit{composable}.
+One can take views of views repeatedly without triggering a copy, allowing for changes to the indexed array to be propagated back to the original.
+In \pyop3, as well as generalising the indexing operations above to axis trees, we overcome this shortcoming of numpy's advanced indexing such that views are always used regardless of the indexing method used.
 
 \section{Index trees}
 \label{sec:index_trees}
 
-\begin{figure}[h]
+In \pyop3, indexing is accomplished via the use of \textit{index trees}.
+Analogously to axis trees, index trees consist of multiple \textit{index} objects, each of which has one or more \textit{index components}.
+When an axis tree is indexed, it is transformed via composition with an index tree:
+
+\begin{equation*}
+  \textnormal{Axis tree} \quad \circ \quad \textnormal{Index tree} \quad \to \quad \textnormal{Indexed axis tree}
+\end{equation*}
+
+This composition operation yields a new \textit{indexed} axis tree that understand how its entries map back to the original axis tree.
+In other words, it is a \textit{view}.
+
+\begin{figure}
   \centering
   \begin{subfigure}{\textwidth}
     \centering
     \includegraphics{index_linear_tree_data_layout}
     \caption{
       Diagram of the data layout transformation.
-      The original axis tree (left) is composed with an index tree (see \cref{sec:index_trees}) (middle) to produce a new axis tree (right).
-      The bracketed values in the resultant tree show the original indices that they map to.
+      The original axis tree (left) is composed with an index tree (middle) to produce a new, indexed, axis tree (right).
+      The bracketed values in the final tree show the original array entries that they map to.
     }
     \label{fig:index_linear_tree_data_layout}
   \end{subfigure}
@@ -46,56 +110,97 @@ In many cases it is directly equivalent to the same terminology/operation as num
   \end{subfigure}
 
   \caption{
-    The axis tree transformation resulting from indexing a linear axis tree with shape $(5, 3)$ with the slices (\pycode{::2}) and (\pycode{1::}) on axes $a$ and $b$ respectively.
-    The resulting axis tree has shape $(3, 2)$ and different labels: $c$ and $d$.
+    The axis tree transformation resulting from indexing a linear axis tree with shape \pycode{(5, 3)} with slices \pycode{[::2]} and \pycode{[1::]} on axes $a$ and $b$ respectively.
+    The resulting axis tree has shape \pycode{(3, 2)} and different labels: $c$ and $d$.
   }
   \label{fig:index_linear_tree_all}
 \end{figure}
 
-In \pyop3, indexing is accomplished via the use of \textit{index trees}.
-Analogously to axis trees, index trees consist of multiple \textit{index} objects (equivalent to an axis), each of which has one or more \textit{index components}.
-When an array is indexed, its associated axis tree is \textit{transformed} via composition with an index tree.
-This composition operation yields a new \textit{indexed} axis tree that understand how its entries map back to the original array.
-Finally this new axis tree is used to construct a new array object.
-
 To illustrate this with a simple example, consider the indexing operation shown in \cref{fig:index_linear_tree_all}.
-It shows a slicing operation applied to a linear axis tree (left) with shape (5, 3) and with axes labelled $a$ and $b$.
-The index tree (middle) is also linear and consists of two \textit{slice} objects over the axes $a$ and $b$ respectively with the former taking every even entry in $a$ (\pycode{::2}) and the latter taking all but the first entry in $b$ (\pycode{1::}).
-The axis tree resulting from the composition of these trees is shown to the right.
-As shown in the figure, only the selected components of the original axis tree are present and the array has additionally received a new label numbering from zero: $c$ and $d$.
-This resulting axis tree is in fact an \textit{indexed} axis tree, which differs from an ordinary axis tree in a number of ways:
-\begin{itemize}
+It shows a slicing operation applied to a linear axis tree with shape \pycode{(5, 3)} and axes labelled $a$ and $b$.
+The index tree is also linear and consists of two \textit{slice} objects over the axes $a$ and $b$ respectively with the former taking every other entry in $a$ (\pycode{[::2]}) and the latter taking all but the first entry in $b$ (\pycode{[1::]}).
+The indexed axis tree resulting from the composition of these trees is shown to the right: only the selected indices from axes $a$ and $b$ are present and the axes have been relabelled (arbitrarily) $c$ and $d$.
+
+In addition to having a new shape and new labels, the indexed axis tree also carries the information necessary to map back from the indexed shape (the \textit{source}) to the original axis tree (the \textit{target}).
+This is done by associating two attributes with the indexed axis tree:
+
+\paragraph{Target paths}
+
+The target path is a map from the source tree to the axis labels of the target tree.
+It allows \pyop3 to know where the source axes came from so it can select the right layout functions (\cref{sec:layouts}) from the target tree.
+In \cref{fig:index_linear_tree_exprs}, the target path is shown to be, for source path $\{a, b\}$, indicating that source axes $c$ and $d$ map back to $a$ and $b$ in the original array.
+
+\paragraph{Target expressions}
+
+For an indexed axis tree, the target expressions relate the source indices to the target indices as a distinct symbolic expression per target axis.
+In \cref{fig:index_linear_tree_exprs} the two target expressions are shown to be $i_a \coloneq 2 i_c$ and $i_b \coloneq i_d + 1$, telling us that $c_m$ maps to $a_{2m}$ and that $d_n$ maps to $b_{n+1}$ respectively.
+
+With these two pieces of information, it is now possible to implement view-like semantics for indexed axis trees.
+One simply has to:
+
+\begin{enumerate}
   \item
-    It does not retabulate any layout functions. These are reused from the original, unindexed, axis tree.
+    Use the target path to select the appropriate layout function from the target axis tree.
   \item
-    It knows about the fact that it is indexed and can map back to the original axis tree using \textit{target paths} and \textit{target expressions}.
-\end{itemize}
+    Modify the layout function by substituting the target indices in the function with the source indices as described by the target expressions attribute of the indexed tree.
+  \item
+    Evaluate the offset using the new layout function (that is now a function of the source indices rather than the target indices).
+\end{enumerate}
 
-\subsection{Target paths and expressions}
-% NOTE: It is arguably confusing that we use "source" and "target" this way around...
+Applying these steps using the indexing operation of \cref{fig:index_linear_tree_all}, we have:
 
-When an axis is indexed, two pieces of information need to be retained for the indexed tree to be able to map back to the original array:
-(a) which component of the original axis tree is targeted, and
-(b) the correct expression taking index values from the indexed tree and mapping them to index values in the original tree.
-Of these the former is termed the \textit{target paths} and the latter the \textit{target expressions}.
-Due to the notion of mapping \textit{from} the indexed axis tree back \textit{to} the original axis tree, the indexed tree is also called the \textit{source} axis tree and the original tree is the \textit{target}.
+\begin{enumerate}
+  \item
+    The target path is $\{a, b\}$, so the selected layout function is $\mathit{offset} = 3 i_a + i_b$.
+  \item
+    Substituting the target expressions in \cref{fig:index_linear_tree_exprs}, we get the new layout function $\mathit{offset} = 6 i_c + i_d + 1$.
+  \item
+    The original axis tree may now be addressed using the source indices $i_c$ and $i_d$.
+\end{enumerate}
 
-For the indexing operation shown in \cref{fig:index_linear_tree_all}, the resulting target paths and target expressions are shown in \cref{fig:index_composition_linear_tree_exprs}.
-Since the tree is linear, only a single pair of path and expressions exist mapping the source axes $c$ and $d$ back to the target axes $a$ and $b$.
-Regarding the target expressions, it can be seen that the index value for target axis $a$ is given by an expression involving the index associated to source axis $c$: $i_a = 2 i_c$.
-This encodes the information that source axis entry $c_0$ maps to $a_0$, $c_1$ maps to $a_2$ etc.
-This is clearly shown by the indexed tree in \cref{fig:index_linear_tree_data_layout}.
-The same principle applies to axes $b$ and $d$, except that the different slicing pattern means that the target expression now includes an offset.
+\subsection{Indexed axis tree construction}
 
-With the target expressions mapping from the indexed axis tree back to the unindexed one, and with the unindexed tree having layout functions that map from axis variables to offsets, we possess all of the information necessary for the indexed arrays to ``know" what data they in fact contain.
-All one needs to do is to replace the axis variables in the layout functions with the target expressions from the indexed tree to get the right mapping from the source axis variables to the right offsets.
+\begin{algorithm}
+  \begin{pyalg}
+    def index_axes(index, old_axis_tree):
+      # process the current index
+      axis_tree, target_paths, target_exprs = index_handler(index, old_axis_tree)
 
-\subsection{Multi-component index trees}
+      for component in index.components:
+        if has_subindex(index, component):
+          # recursively visit child indices
+          subindex = get_subindex(index, component)
+          subaxis_tree, subtarget_paths, subtarget_exprs = index_axes(subindex, old_axis_tree)
+
+          axis_tree.add_subtree(subaxis_tree)
+          target_paths |= subtarget_paths
+          target_exprs |= subtarget_exprs
+
+      return axis_tree, target_paths, target_exprs
+  \end{pyalg}
+
+  \caption{
+    Algorithm that constructs the necessary components to build an indexed axis tree by visiting the nodes of an index tree.
+  }
+  \label{alg:index_axis_tree}
+\end{algorithm}
+
+The construction of an indexed axis tree from an axis tree and index tree is accomplished via a traversal of the index tree (\cref{alg:index_axis_tree}).
+Each index of the tree is processed by the function \pycode{index_handler} (line XXX) to give an axis tree and set of targets paths and expressions specific to that index.
+These axis trees are then glued together (line YYY) to give the axis tree for the final object while the target paths and target expressions are similarly combined (lines AAA and BBB).
+Finally, once collected, the three returned variables may be used to construct a finished indexed axis tree.
+
+The original axis tree (\pycode{old_axis_tree}) plays only a small role in the indexing algorithm.
+It is used to determine the sizes of sliced axes and consistency checks.
+
+% TODO: use multi-component indexing as an example here
+
+% "Thus far we have only considered the case of linear index trees..."
 
 % motivation: needed since we need to pack clever things
 % "proto" axis trees
 
-\begin{figure}[h]
+\begin{figure}
   \centering
   \begin{subfigure}{\textwidth}
     \centering
@@ -133,10 +238,11 @@ All one needs to do is to replace the axis variables in the layout functions wit
   \label{fig:multi_component_slice_transform}
 \end{figure}
 
-\section{Index composition}
+
+\subsection{Index composition}
 \label{sec:index_composition}
 
-\begin{figure}[h]
+\begin{figure}
   \centering
   \begin{subfigure}{\textwidth}
     \centering
@@ -410,6 +516,8 @@ Ragged maps are also supported. e.g. support, star, PIC
 \end{figure}
 
 \section{Data layout transformations}
+
+% It is worthwhile to note that the input axis tree (\pycode{old_axis_tree}) is passed into the function but not really used to construct the new tree... (ref alg:index_axis_tree)
 
 \begin{figure}[h]
   \centering
