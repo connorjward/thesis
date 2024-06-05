@@ -5,113 +5,53 @@
 \chapter{Introduction}
 \label{chapter:introduction}
 
+% TODO: Review notes from previous meetings where motivation is discussed.
+
+% * (numerically) solving PDEs is very important for lots of things:
+%   * climate
+%   * manufacturing
+%   * fluids...
+%   * ???
+
+% * If a computational scientist wants to develop a new application they have two
+% options available to them:
+%   * write a new code from scratch, VERY slow (years of work "reinventing the
+%     wheel", not a domain specialist, poor performance...)
+%   * use a pre-existing framework
+
+% These frameworks target different levels of abstraction...
+% * "on the one hand..." a high level of abstraction lets one express problems concisely, quick to iterate
+%    * Composability!
+%    * Separation of concerns: Domain specialists can focus on the things they do best.
+%      Crucially it lowers the barrier to entry for scientists to do novel work.
+%    * Can do some really complicated optimisations that would be very hard to reason about
+%      by hand
+%      * with codegen, i.e. compilers, one can do some really amazing optimisations not available
+%      * to library interfaces and traditional compilers. In particular cross-loop optimisations?
+%      * Also data layout/memory bandwidth minimising optimisations.
+%      * this is because DSLs provide a high-level representation of the problem where complicated problems may be straightforwardly expressed.
+%      * It is an example of an inspector-executor application.
+%      * key principle: optimisations are easy, synthesis is hard. Level of abstraction
+%      * facilitates memory optimisations.
+
+% * "However..." abstractions also lock one into a particular way of working. Limitations in
+%   the abstraction prohibit new methods from being developed,. Assumptions made when the
+%   code was originally written shackle things.
+% * One way out of this is to have "escape hatches" in your abstraction. Exponential
+%   explosion of implementation complexity (not composable). Maybe feature X and feature Y work, but both together? 
+%   As the number of features increases this becomes an enormous problem to maintain.
+%   E.g. porting to GPUs often requires substantial rewrites of the underlying code
+%   (years of developer time, cite PETSc?).
+
+% In this work we will present pyop3, a new abstraction for mesh iteration
+% * mesh iteration is ubiquitous in numerical solution of PDEs (FDM, FEM, FVM)
+% * pyop3 is a DSL
+% * pyop3 was created to address shortcomings in its predecessor PyOP2.
+% * more powerful (expressive), can describe more things, more flexible about data layouts, easier to use (better API)
+% This increased expressiveness is beneficial as it enables higher-level DSLs (e.g. UFL) to express more problems without having to resort to abstraction-breaking internal code changes.
 % "pyop3 is a new abstraction that better captures the semantics of what it means to execute over a mesh"
-
-% where does this go>?
-A common criticism of domain specific languages is that they are superfluous since any code they generate could have been written in C, C++ or Fortran by hand instead.
-This is especially true for \pyop3 since it generates a simple subset of C code focussed on reading/writing from array-like data structures.
-This is the sort of code that is bread-and-butter for undergraduate courses on high-performance computing; classical optimisations like loop tiling and AoS-SoA are very simple to write by hand.
-
-The counter point, of course, is that \pyop3 is not primarily intended to be used as a simulation front-end, but instead as an intermediate representation of some higher level abstraction.
-DSLs can more or less only express problems that are also expressible in all of their IRs.
-The only exception to this is if the abstractions provide an escape hatch where one can inject custom code to perform a particular task.
-Escape hatches, however, are difficult to produce and ``hacky".
-Also, the cost of implementing one can be prohibitive.
-It would be preferable for problems to be fully expressible in all IRs.
-
-The key contribution of \pyop3 is that it increases the number of representable states of a finite-element-like code (whilst also cutting down on boilerplate).
-This increased expressiveness is beneficial as it enables higher-level DSLs (e.g. UFL) to express more problems without having to resort to abstraction-breaking internal code changes.
-As a consequence, implementing novel numerical methods that would have previously been infeasible are now tractable.
-
-% WHAT IS THE PROBLEM THAT I AM TRYING TO SOLVE AND WHY DOES IT MATTER?
-
-% solving PDEs is very important for lots of things
-% * climate
-% * manufacturing
-% * fluids...
-% * ???
-
-% 1. what is the problem area? what is it important for?
-% - stencil calcs?
-% - mesh iteration?
-
-% * mesh iteration is ubiquitous in numerical solution of PDEs
-
-% -----------------
-
-% WHAT ARE THE KEY ISSUES THAT ONE ENCOUNTERS WHEN ATTEMPTING TO SOLVE THIS PROBLEM?
-
-% solving them can be very complicated, and solving them efficiently can
-% be VERY complicated. So many things to consider: portability, performance, scaling,
-% discretisation/convergence...
-
-% code generation frameworks rely on having a data layout abstraction
-% the data layout abstraction needs to be able to interface with the generated code in some
-% (performant) way.
-% assumptions about the data layout (e.g. regularity, depth) can prohibit numerical methods.
-% requires a major redesign in order to get things right/sufficiently flexible.
-
-% "One of the major roadblocks to implementing mesh based simulation code is in"
-% "finangling the data structures. Complex algorithms like mesh adaptivity with"
-% "hanging nodes require a fundamental rewrite of the code base because it usually"
-% "violates a number of assumptions about what the underlying data looks like..."
-
-% i.e. solving PDEs with FEM is characterised by irregular data access patterns
-% and complex data structures. Assumptions about data structures inhibit the implementation
-% of certain numerical methods.
-
-% 2. Why is it a hard problem to solve?
-
-% other considerations?
-% - MPI?
-% - portable?
-
-% n. What problems exist with current implementations?
-% by hand
-% - portability
-% automatic
-% - like libceed - think this is wrong
-
-% * portability
-% * to address limitations in PyOP2's abstraction
-% * parallel is hard
-%    - pyop3 provides a transparent parallel abstraction
-%    - libCEED requires user input
-
-% Data layout choices are "baked-in" at the start of a simulation and implementation must follow suit
-% e.g. raggedness or constant inner shape? dual implementation?
-
-% -----------------
-
-% WHAT ARE THE CONCEPTS THAT ARE INTEGRAL TO MY WORK?
-
-% * Praise DSLs!
-% Code generation and DSLs provide a separation of concerns.
-% Domain specialists can focus
-% on the things they do best. Crucially it lowers the barrier to entry for scientists
-% to do novel work.
-
-% with codegen, i.e. compilers, one can do some really amazing optimisations not available
-% to library interfaces and traditional compilers. In particular cross-loop optimisations?
-% Also data layout/memory bandwidth minimising optimisations.
-
-% this is because DSLs provide a high-level representation of the problem where complicated problems may be straightforwardly expressed.
-
-% It is an example of an inspector-executor application.
-
-% key principle: optimisations are easy, synthesis is hard. Level of abstraction
-% facilitates memory optimisations.
-
-% -----------------
-
-% "IN THIS THESIS..."
+% As a consequence, implementing novel numerical methods that would have previously been infeasible are now tractable.
 
 The remainder of this paper is laid out as follows\dots
-
-
-% ===== NOTES =====
-
-% See M. Homolya's thesis for a nice example of a good introduction. It is basically
-% a longer form abstract which also describes the rest of the thesis.
 
 \end{document}

@@ -2,39 +2,64 @@
 
 \begin{document}
 
-  % "Case studies"?
-  \chapter{Firedrake integration}
+% PERFORMANCE OPTIMISATIONS?
 
-  %1. mesh
-  % 2. function spaces
-  % 3. functions and matrices? sparsities?
+% e.g. can do things like \cite{dasSlicingAnalysisIndirect1994} and "flatten" repeated indexing
 
-  % what is Firedrake! should go here not in background.
+% "Case studies"?
+\chapter{Firedrake integration}
 
-  % mesh.points, V.axes
-  % renumbering
-  % DatView for viewing function components
-  % mixed dats are now contiguous
+%1. mesh
+% 2. function spaces
+% 3. functions and matrices? sparsities?
 
-  \section{Packing}
-  \subsection{Tensor product cells}
-  \subsection{Hexahedral elements}
+% what is Firedrake! should go here not in background.
 
-  %\subsection{Fieldsplit} ???
+% mesh.points, V.axes
+% renumbering
+% DatView for viewing function components
+% mixed dats are now contiguous
 
-  %\subsection{Performance} ???
-  % all about minimising memory bandwidth, aim for roofline peak at all points
-  % I need to implement the map compression algorithm (generically)
+\section{Packing}
+\subsection{Tensor product cells}
+\subsection{Hexahedral elements}
 
-  \chapter{Summary}
+%\subsection{Fieldsplit} ???
 
-  \section{Future work}
-  \label{sec:future_work}
+%\subsection{Performance} ???
+% all about minimising memory bandwidth, aim for roofline peak at all points
+% I need to implement the map compression algorithm (generically)
 
-  % GPUs, vectorisation (\cref{sec:codegen_loopy_kernel})
-  % Hanging nodes: AMR? hp-adaptivity
-  % orientations?
+\chapter{Summary}
 
-  \section{Conclusions}
+% NOTE: Probably best to put elsewhere to be honest - can reference elements when they become relevant
+% NOTE: What makes pyop3 really stand out here is the amount of code reuse it achieves - PETSc stuff and loopy.
+\section{Comparison to related work}
+
+% NOTE: I think a comparison to Simit, Ebb and Liszt would be geniunely useful here, as they perform 
+% effectively the same job:
+
+%pyop3 is like Ebb and Simit, but the data model is chosen to truly unify PETSc and N-dim arrays. We get maths-y optimisations that the others don't have, like mesh numbering.
+%
+%It solves the same problem but from a different direction.
+%
+%Primary objectives: integration with PETSc, distributed parallel - data model that is compatible with DMPlex etc.
+% we don't need our own mesh implementation - so distribution, I/O etc we get "for free"
+%
+%Simit is also very similar, but not distributed parallel and pyop3 unifies the hypergraph and linear algebra data views.
+%
+% and Liszt? Just quite old, reimplements a lot
+
+\section{Future work}
+\label{sec:future_work}
+
+% GPUs, vectorisation (\cref{sec:codegen_loopy_kernel})
+% Hanging nodes: AMR? hp-adaptivity
+% orientations?
+% WENO slope limiters?
+% finite volume?
+% patchPC
+
+\section{Conclusions}
 
 \end{document}

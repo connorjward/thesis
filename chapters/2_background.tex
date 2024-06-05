@@ -5,137 +5,12 @@
 \chapter{Background}
 \label{chapter:background}
 
-% introduce:
-% * FEM
-% * DMPlex
-  % * layouts with petscsection
-% * PyOP2
-%  * loopy (kernels, domains and instructions, motivation: loop transformations)
-% * numpy (including slice notation)
+% NOTE: Do I talk about numpy in this chapter??? It would be before talking about Liszt etc. I think
+% it is quite important to stress that my code is similar to numpy.
 
-% split into:
-% * abstractions for arrays (1 or 2?)
-% * abstractions for PDEs (2 or 1?)
-% * abstractions for execution models
-  % * PyOP2 (incompletely bridges the gap)
-% (motivation lives in introduction chapter)
+\section{The finite element method}
 
-
-% ====================OLD=======================
-% \subsubsection{Representing data layouts with DMPlex}
-%
-% DMPlex represents a mesh as a set of points where the points are divided into \textit{strata} (cells, edges, vertices, etc).
-% These points are connected in a graph (Hasse diagram) and a rich set of queries can be used to determine the right adjacencies needed for things like the finite element method.
-%
-% In order to associated data with these mesh points, a typical PETSc application will construct a PETSc \ccode{Section}.
-% These are simple CSR-like (?) data structures that encode a data layout by associating a particular number of DoFs with each mesh point.
-% Sections are a powerful tool for describing data layouts but they have a number of limitations:
-%
-% \begin{itemize}
-%   \item
-%     Sections are fully ragged.
-%     They only store DoF information per point in a completely unstructured way and are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
-%     This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) that it would have been able to do were it to know of a constant loop extent.
-%     Additionally, this variable size increases memory pressure as redundant arrays of constant sizes need to be streamed through memory.
-%
-%   \item
-%     DoFs per point are treated as a flat array.
-%     This means that shape information is lost for, say, vector-valued functions.
-% \end{itemize}
-%
-% With PETSc/DMPlex, the P3 DoF layout would be represented as shown in Figure~\ref{???}.
-% % figure showing PetscSection info
-%
-% \subsubsection{Data layouts in \pyop2}
-%
-% \pyop2 takes a very different approach to describing data layouts to DMPlex.
-% Firstly, it has no conception of what a mesh is and it deals solely with \textit{sets} and \textit{mappings between sets}.
-% The rich query language provided by DMPlex is therefore unavailable and the task of determining the right adjacency maps is passed to the user.
-%
-% \subsection{What \pyop3 does}
-
-  % start with P3?
-
-
-
-% ====== NOTES ======
-
-% meshes
-  % dmplex (introduce PETSc here)
-
-% FEM demo here?
-
-% data layouts on meshes
-  % continuity between cells done by associating DoFs with vertices and edges etc
-  % stencils
-    % stencils in dmplex, topological query language
-
-% performance considerations for FEM?
-
-% codegen + DSLs
-  % how does loopy work?
-
-% ----------------------------
-
-% definitely need a section on "the rest of the software stack" - needs to be before I
-% start using DMPlex terminology
-% \section{Stencil languages}
-% \section{Firedrake}
-% \section{PyOP2}
-% \section{Code generation for PDEs}
-
-% explain loopy's programming model of kernel plus transformations. It is fundamentally
-% very similar to how high level mathematical DSLs like UFL work except for loops.
-
-\subsection{Inspector-executor model}
-% two programs, an inspector that generates a schedule, and an executor that uses it. Executor
-% is a transformed original program.
-% these aim to improve data locality and parallelisation opportunities.
-% important point is that I/E strategies utilise runtime information to generate optimal schedules
-% this is very important for unstructured applications where the compilers would have a really hard time!
-% we care less about parallelisation because mesh decomposition is a solved problem/out of scope
-% and we, like PETSc, believe that threading is not a useful model for massively parallel
-% simulations.
-\cite{knepleyExascaleComputingThreads2015} % PETSc rebuttal
-
-\cite{stroutSparsePolyhedralFramework2018} % review article
-\cite{mirchandaneyPrinciplesRuntimeSupport1988} % old (general purpose) example
-\cite{arenazInspectorExecutorAlgorithmIrregular2004} % fem example but specifically parallelisation
-% perhaps also cite Luporini for sparse tiling? yes I think that would be good.
-
-% Interesting note: composing inspector-executor transformations is difficult.
-% see "The Sparse Polyhedral Framework: Composing Compiler-Generated Inspector-Executor Code"
-% DSLs like loopy and pyop3 can make this easier to handle.
-
-
-% mesh numbering is an example of an inspector-executor thing.
-% so is determining core and owned to overlap communication and computation
-
-% DSLs help a lot to implement this sort of thing because transformations can be a lot easier to
-% express using a high-level representation.
-
-% -----------------
-\section{Domain-specific languages}  % compiler design???
-
-% UFL paper has a lot to say on this.
-% special note: we use an embedded DSL for simpler interop with other libraries.
-% "seamless integration with other libraries."
-% also can use parser of host language
-
-% stress "composed in arbitrary ways"
-% UFL paper: "Paraphrasing P. Hudak [1996], a DSEL is the ultimate abstraction, allowing the user to reason about the program within the domain semantics, rather than within the semantics of the programming language."
-
-% should also discuss the advantages of high level abstractions, helicopter principle?
-
-% why not JIT like Julia or numba?
-% - loses semantic information, precluding domain-specific optimisations
-%   (e.g. sum factorisation (i.e. common subexpr elimination) from tensor repr)
-% - we target loopy because it is a convenient abstraction for expressing the types
-%   of optimisations relevant to our use case. From loopy it is more natural to lower to
-%   C/CUDA than something like Julia or numba.
-% We target loopy because that is the level of abstraction that we care about. We could then generate julia or numba code from there but there would be zero point. The julia JIT would make practically the same machine code (I think) and things like PETSc callbacks would get vastly slower as they would have to go via the Julia runtime.
-
-% ----------------
+Prior to the development of a more general approach for applying computations across an unstructured mesh, it is instructive to review a classical example of such a calculation: \textit{finite element assembly}.
 
 \subsection{An example of a complicated stencil function: solving the Stokes equations using the finite element method}
 
@@ -182,6 +57,8 @@ For the second equation we simply get
 
 In order for these equations to be well-posed we require that the functions $u$, $v$, $p$ and $q$ be drawn from appropriate function spaces\dots
 
+% must be P3? I think must be dimension + 1 (see papers about counting DoFs by multigrid man)
+
 % now introduce discrete function spaces V_h and Q_h and convert equations to basis function form
 % with coefficients for u and p
   % the coefficients for v may be ignored as they cancel
@@ -191,7 +68,7 @@ In order for these equations to be well-posed we require that the functions $u$,
 % *** Associating DoFs with mesh entities *** (new section)
 % what constraints are there on the function spaces? H1 and L2
 % specify the chosen element pair with Taylor-Hood (vec Pk, Pk-1, in this case k=3)?
-% show what the basis functions look like, use defelement
+% show what the basis functions look like, *use defelement*
 % in FEM, basis functions overlap with points in closure(support(p)) - adjacency.
 
 % ---
@@ -206,21 +83,159 @@ In order for these equations to be well-posed we require that the functions $u$,
 % "just" a different stencil. find an example integral with, say, a jump term.
 % could have a diagram for this too!
 
+  % continuity between cells done by associating DoFs with vertices and edges etc
 
-\section{Related work}  % here? not really, need to introduce data layout abstraction first...
+\section{Abstractions for unstructured meshes}
+% * DMPlex
+  % * layouts with petscsection
 
-% What other array languages/frameworks exist in this space?
-% * OP2
-% * PyOP2
-% * TACO (tree structure but not SoA-like)
-% * Chill sparse compiler thing, sparse polyhedral framework
-% * Halide?
-% * Liszt
-% * Simit
-% * Taichi
+% data layouts on meshes
+  % stencils
+    % stencils in dmplex, topological query language
+
+% \subsubsection{Representing data layouts with DMPlex}
+%
+% DMPlex represents a mesh as a set of points where the points are divided into \textit{strata} (cells, edges, vertices, etc).
+% These points are connected in a graph (Hasse diagram) and a rich set of queries can be used to determine the right adjacencies needed for things like the finite element method.
+%
+% In order to associated data with these mesh points, a typical PETSc application will construct a PETSc \ccode{Section}.
+% These are simple CSR-like (?) data structures that encode a data layout by associating a particular number of DoFs with each mesh point.
+% Sections are a powerful tool for describing data layouts but they have a number of limitations:
+%
+% \begin{itemize}
+%   \item
+%     Sections are fully ragged.
+%     They only store DoF information per point in a completely unstructured way and are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
+%     This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) that it would have been able to do were it to know of a constant loop extent.
+%     Additionally, this variable size increases memory pressure as redundant arrays of constant sizes need to be streamed through memory.
+%
+%   \item
+%     DoFs per point are treated as a flat array.
+%     This means that shape information is lost for, say, vector-valued functions.
+% \end{itemize}
+%
+% With PETSc/DMPlex, the P3 DoF layout would be represented as shown in Figure~\ref{???}.
+% % figure showing PetscSection info
+
+\section{Array languages}
+
+% numpy
+
+\textbf{Taichi} is a programming language embedded in C\+\+ for operating on complex data structures~\cite{huTaichiLanguageHighperformance2019}.
+Just like \pyop3, Taichi declares data structures hierarchically and the data layout is kept distinct from the operations applied to them.
+Taichi has no concept of a mesh, and it does not work on distributed machines.
+% https://www.taichi-lang.org/
+% very successful!
+
+% TACO (tree structure but not SoA-like)
 % * AwkwardArray (ragged)
 % * DistArray (distributed)
-% * libCEED - batches kernel launches, specifically one-form assembly at high-order
-  % exploit vectorisation opportunities at different levels? like "unified residual assembly"
+
+
+\section{Execution models for unstructured meshes}
+
+% NOTE: These all sort of unify array abstractions with unstructured meshes in some way.
+% I claim that pyop3 does a better job, and it doesn't even need a mesh object...
+% well it does think of it like an N-dimensional array and the others don't quite. How
+% does it compare to Simit's hypergraph set thing?
+
+% Liszt
+% \cite{devitoLisztDomainSpecific2011}
+% * dead project (since 2013)
+% * works in parallel, but custom mesh etc so has to do its own partitioning etc
+% * mesh is not dimension-independent
+% * embedded in Scala
+% * (needs a mesh)
+
+% Ebb
+% http://ebblang.org/
+% * dead project
+% \cite{bernsteinEbbDSLPhysical2016}
+% uses a relational database model to describe mesh connectivity
+% uses a layer model to separate data structure definition from simulation code
+% * (doesn't need a mesh)
+% * embedded in lua
+% * not multi-core
+
+% Simit
+% https://simit-lang.org/
+% \cite{kjolstadSimitLanguagePhysical2016}
+% * dead project
+% * C++ code
+% * does not work on multi-core machines, does work with GPUs
+% * hypergraph is like DMPlex, has a custom mesh implementation
+% * stores data as "hypergraph sets with tensor fields" - associates data with topological entities
+% * has "dual" representations of mesh data structures: as hypergraphs and as tensors. pyop3 effectively unifies the two
+% * (needs a mesh - sort of)
+
+% OP2: \cite{mudaligeOP2ActiveLibrary2012}
+% Simit, Liszt, Ebb, OP2, PyOP2
+% inspector-executor?
+% execution models
+
+\subection{PyOP2}
+% and why OP2 not Liszt?
+% why chosen? interop with PETSc, good for FEM, works in parallel...
+
+% loopy
+% PyOP2 limitations
+% explain loopy's programming model of kernel plus transformations. It is fundamentally
+% very similar to how high level mathematical DSLs like UFL work except for loops.
+
+% \subsubsection{Data layouts in \pyop2}
+%
+% \pyop2 takes a very different approach to describing data layouts to DMPlex.
+% Firstly, it has no conception of what a mesh is and it deals solely with \textit{sets} and \textit{mappings between sets}.
+% The rich query language provided by DMPlex is therefore unavailable and the task of determining the right adjacency maps is passed to the user.
+%
+
+% ============= summary at end=============
+
+% end with a wrap up/summary:
+  % * PyOP2 (incompletely bridges the gap)
+
+
+\subsection{Inspector-executor model}
+% two programs, an inspector that generates a schedule, and an executor that uses it. Executor
+% is a transformed original program.
+% these aim to improve data locality and parallelisation opportunities.
+% important point is that I/E strategies utilise runtime information to generate optimal schedules
+% this is very important for unstructured applications where the compilers would have a really hard time!
+% we care less about parallelisation because mesh decomposition is a solved problem/out of scope
+% and we, like PETSc, believe that threading is not a useful model for massively parallel
+% simulations.
+\cite{knepleyExascaleComputingThreads2015} % PETSc rebuttal
+
+\cite{stroutSparsePolyhedralFramework2018} % review article
+\cite{mirchandaneyPrinciplesRuntimeSupport1988} % old (general purpose) example
+\cite{arenazInspectorExecutorAlgorithmIrregular2004} % fem example but specifically parallelisation
+% perhaps also cite Luporini for sparse tiling? yes I think that would be good.
+
+% Interesting note: composing inspector-executor transformations is difficult.
+% see "The Sparse Polyhedral Framework: Composing Compiler-Generated Inspector-Executor Code"
+% DSLs like loopy and pyop3 can make this easier to handle.
+
+
+% mesh numbering is an example of an inspector-executor thing.
+% so is determining core and owned to overlap communication and computation
+
+% DSLs help a lot to implement this sort of thing because transformations can be a lot easier to
+% express using a high-level representation.
+
+% -----------------
+\section{Domain-specific languages}  % compiler design???
+
+% UFL paper has a lot to say on this.
+% special note: we use an embedded DSL for simpler interop with other libraries.
+% "seamless integration with other libraries."
+% also can use parser of host language
+
+% stress "composed in arbitrary ways"
+% UFL paper: "Paraphrasing P. Hudak [1996], a DSEL is the ultimate abstraction, allowing the user to reason about the program within the domain semantics, rather than within the semantics of the programming language."
+
+% should also discuss the advantages of high level abstractions, helicopter principle?
+
+% ----------------
+
 
 \end{document}
