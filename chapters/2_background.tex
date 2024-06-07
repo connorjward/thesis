@@ -5,62 +5,199 @@
 \chapter{Background}
 \label{chapter:background}
 
+% This is sort of OK. I think I have to break the narrative in this chapter anyway.
+Before a discussion of \pyop3, it is useful to review some of the relevant background material.
+We will first provide a mathematical motivation for mesh execution models using a common operation, \textit{finite element assembly}, as an example.
+Then we will review\dots
+Finally, we describe in more detail the core pieces of software that \pyop3 bases its abstractions upon: \pyop2, numpy and PETSc DMPlex.
+
 \section{The finite element method}
 
-Prior to the development of a more general approach for applying computations across an unstructured mesh, it is instructive to review a classical example of such a calculation: \textit{finite element assembly}.
+% TODO: Rephrase
+For a non-trivial example for when mesh loops (?) are required, we consider solving the Stokes equations using the \gls{fem}.
+Our exposition will focus on the aspects of the computation that are relevant for \pyop3, for a more complete review of \gls{fem} we refer the reader to~\cite{brennerMathematicalTheoryFinite2008} and~\cite{larsonFiniteElementMethod2013}.
 
-\subsection{An example of a complicated stencil function: solving the Stokes equations using the finite element method}
-
-For a moderately complex stencil operation that we will refer to throughout this thesis we consider solving the Stokes equations using the finite element method (FEM)~\parencite{larsonFiniteElementMethod2013}.
 The Stokes equations are a linearisation of the Navier-Stokes equations and are used to describe fluid flow for laminar (slow and calm) media.
-For domain $\Omega$ they are given by
+For domain $\Omega$ and boundary $\Gamma$, omitting any viscosity or forcing terms for simplicity, they are given by
 
-% split into sub-equations that may be separately labelled
-\begin{align}
-  \label{strong_stokes_equation}
-  - \nu \Delta u + \nabla p &= f \quad \textrm{in} \ \Omega, \\
-  \nabla \cdot u &= 0 \quad \textrm{in} \ \Omega, \\
-\end{align}
+\begin{subequations}
+  \begin{align}
+    - \Delta u + \nabla p &= 0 \quad \textrm{in} \ \Omega, \\
+    %
+    \nabla \cdot u &= 0 \quad \textrm{in} \ \Omega, \\
+    %
+    u &= g \quad \textrm{on} \ \Gamma.
+  \end{align}
+  %
+  \label{eq:strong_stokes}
+\end{subequations}
 
-where $u$ is the fluid velocity, $p$ the pressure, $\nu$ the viscosity and $f$ is a known forcing term.
-We also prescribe Dirichlet boundary conditions for the velocity across the entire boundary
+with $u$ the fluid velocity and $p$ the pressure.
+We also prescribe Dirichlet boundary conditions for the velocity across the entire boundary, setting $u$ to the value of function $g$.
+Since we have a coupled system of two variables ($u$ and $p$), we refer to the Stokes system as being a \textit{mixed} problem.
 
-\begin{equation}
-  \label{strong_stokes_equation_bc}
-  u = g \quad \textrm{on} \ \Gamma. 
-\end{equation}
+\subsection{Deriving a weak formulation}
 
 For the finite element method we seek the solution to the \textit{variational}, or \textit{weak}, formulation of these equations.
 These are obtained by multiplying each equation by a suitable \textit{test function} and integrating over the domain.
-% should use sub-equation
-For \ref{strong_stokes_equation}, with $v$ as the test function and integrating by parts, this gives
+For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions, drawn from function spaces $\hat V$ and $Q$ respectively, and integrating by parts this gives
 
-% taken from https://nbviewer.org/github/firedrakeproject/firedrake/blob/master/docs/notebooks/06-pde-constrained-optimisation.ipynb
+% taken from 
+% https://nbviewer.org/github/firedrakeproject/firedrake/blob/master/docs/notebooks/06-pde-constrained-optimisation.ipynb
+% and Larson and Bengzon (pg. 293)
+\begin{subequations}
+  \begin{align}
+    \int \nabla u : \nabla v \, \textrm{d}\Omega
+    - \int p \nabla \cdot v \, \textrm{d}\Omega
+    - \int (\nabla u \cdot n) \cdot v \, \textrm{d}\Gamma
+    - \int p n \cdot v \, \textrm{d}\Gamma
+    &= 0
+    &\forall \ v \in \hat V
+    \label{eq:weak_stokes_extra_V} \\
+    %
+    \int q \, \nabla \cdot u \, \textrm{d}\Omega
+    &= 0
+    &\forall \ q \in Q.
+    \label{eq:weak_stokes_extra_Q}
+  \end{align}
+  \label{eq:weak_stokes_extra}
+\end{subequations}
+
+From these weak forms it is now possible to classify the function spaces for $u$ and $p$.
+For $u$, we already know that the space must be vector-valued, since it stores a velocity, and constrained to $g$ on the boundary.
+\Cref{eq:weak_stokes_extra_V} further shows us that $u$ must have at least one weak derivative.
+We can therefore say that $u \in V$ where
+
+\begin{equation*}
+  V = \{ \ v \in [H^1(\Omega)]^d : v |_{\Gamma} = g \ \}  \\
+\end{equation*}
+
+$p$ is scalar-valued, no derivatives of $p$ are present in the weak formulation, nor are any boundary conditions applied to it and so we can write that $p \in Q$ where
+
+\begin{equation*}
+  Q = \{ \ q \in L^2(\Omega) \ \}  \\
+\end{equation*}
+
+Since the values of $u$ at the boundary are already prescribed, the function space of the test function $v$ is defined to be zero at those nodes
+
+\begin{equation*}
+  \hat V = \{\ v \in [H^1(\Omega)]^d : v|_{\Gamma} = 0 \ \}.
+\end{equation*}
+
+This allows us to drop some terms from \cref{eq:weak_stokes_extra_V}, allowing us to state the final problem as follows:
+
+\vspace{1em}
+
+%TODO: Not sure how to format this best
+Find $(u, p) \in V \times Q$ such that
+
+\begin{subequations}
+  \begin{align}
+    \int \nabla u : \nabla v \, \textrm{d}\Omega
+    - \int p \nabla \cdot v \, \textrm{d}\Omega
+    &= 0
+    &\forall \ v \in \hat V
+    \label{eq:weak_stokes_V} \\
+    %
+    \int q \, \nabla \cdot u \, \textrm{d}\Omega
+    &= 0
+    &\forall \ q \in Q.
+    \label{eq:weak_stokes_Q}
+  \end{align}
+  \label{eq:weak_stokes}
+\end{subequations}
+
+\subsection{Discretising the system of equations}
+
+In order to solve this weak formulation using the finite element method we discretise the function spaces in use by replacing them with a finite dimensional equivalent:
+
+\begin{equation*}
+  V \to V_h \subset V,
+  \quad
+  \hat V \to \hat V_h \subset \hat V,
+  \quad
+  Q \to Q_h \subset Q.
+\end{equation*}
+
+Each of these discrete spaces is spanned by a set of basis functions so any function can be expressed as a linear combination of the basis functions and their coefficients.
+For example, we can write the function $u_h \in V_h$ as
+
+\begin{equation*}
+  u_h = \Sigma^N_{i=1} \hat u_i \psi^{V_h}_i
+\end{equation*}
+
+for basis functions $\psi^{V_h}_i$ and coefficients $\hat u_i$.
+
+Substituting these discrete function spaces back into \cref{eq:weak_stokes}, and discarding the basis coefficients for the arbitrary functions $v_h$ and $q_h$, we obtain the discrete problem:
+
+\vspace{1em}
+
+%TODO: Not sure how to format this best
+Find $(\hat u, \hat p)$ such that
+
+\begin{subequations}
+  \begin{align}
+    \int \hat u \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
+    - \int \hat p \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega
+    &= 0
+    &\forall \ \psi^{\hat V} \\
+    %
+    \int \psi^Q \, \nabla \cdot \hat u \psi^{V_h} \, \textrm{d}\Omega
+    &= 0
+    &\forall \ \psi^{Q}
+  \end{align}
+  \label{eq:weak_stokes_discrete}
+\end{subequations}
+
+This can be reformulated as the (saddle point) linear system
+
 \begin{equation}
-  \int \nu \nabla u : \nabla v \textrm{d}\Omega
-  - \int p \nabla \cdot v \textrm{d}\Omega
-  = \int f \cdot v \textrm{d}\Omega
+  \left (
+  \begin{array}{c|c}
+    \int \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
+    &
+    - \int \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega \\
+    \hline
+    \int \psi^Q \, \nabla \cdot \psi^{V_h} \, \textrm{d}\Omega
+    &
+    0
+  \end{array}
+  \right )
+  \left (
+  \begin{array}{c}
+    \hat u \\
+    \hline
+    \hat p
+  \end{array}
+  \right )
+  =
+  \left (
+  \begin{array}{c}
+    0 \\ \hline 0
+  \end{array}
+  \right )
+  %
+  \label{eq:stokes_linear_system}
 \end{equation}
 
-% TODO Explain reduced function spaces better to motivate V vs V_0
-% Or, just say "prescribing Dirichlet boundary conditions on the full surface gives..."
-Note that the surface terms from the integration by parts can be dropped since $v$ is defined to be zero at Dirichlet nodes.
+Solving the Stokes equations using the finite element method therefore boils down to constructing, or \textit{assembling}, the left-hand-side matrix and the, here trivial, right-hand-side vector before solving for the coefficients $\hat u$ and $\hat p$.
 
-For the second equation we simply get
+\subsection{Choosing a finite element pair}
 
-\begin{equation}
-  \int q \, \nabla \cdot u \textrm{d}\Omega = 0.
-\end{equation}
+% explain mesh stuff!
+% * continuity achieved via shared entities.
+% assembling via a cell loop
 
-In order for these equations to be well-posed we require that the functions $u$, $v$, $p$ and $q$ be drawn from appropriate function spaces\dots
+% stable element pair?
+% ...
+% how does this manifest in memory? Can refer to the matrix-vector system above
+
+
+
+% ------------
+
 
 % must be P3? I think must be dimension + 1 (see papers about counting DoFs by multigrid man)
-
-% now introduce discrete function spaces V_h and Q_h and convert equations to basis function form
-% with coefficients for u and p
-  % the coefficients for v may be ignored as they cancel
-% this is a block matrix vector system, test functions are rows and trial functions are columns
-% (see Homolya thesis)
 
 % *** Associating DoFs with mesh entities *** (new section)
 % what constraints are there on the function spaces? H1 and L2
