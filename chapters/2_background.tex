@@ -184,50 +184,67 @@ Solving the Stokes equations using the finite element method therefore boils dow
 
 \subsection{Choosing a finite element pair}
 
-% explain mesh stuff!
-% * continuity achieved via shared entities.
-% assembling via a cell loop
+\begin{figure}
+  \begin{subfigure}{.3\textwidth}
+    % include my own diagram, not from defelement - then my colouring is consisten
+    % but use defelement numbering as we don't really care and it is consistent with the basis function sketches
+    % \includegraphics[width=\textwidth]{element_Lagrange_2_dofs.pdf}
+    \caption{P2, TODO}
+  \end{subfigure}
+  \begin{subfigure}{.68\textwidth}
+    \begin{tabular}{c c c}
+      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof0.pdf}
+      &
+      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof1.pdf}
+      &
+      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof2.pdf}
+      \\
+      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof3.pdf}
+      &
+      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof4.pdf}
+      &
+      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof5.pdf}
+    \end{tabular}
+    %
+    \caption{P2 basis functions, TODO}
+  \end{subfigure}
+  %
+  \caption{TODO, \cite{defelement}}
+\end{figure}
 
-% stable element pair?
-% ...
-% how does this manifest in memory? Can refer to the matrix-vector system above
+% What do the basis functions we described above look like?
+% * associated with topological entities (so shared between adjacent cells)
+% * compact support, for this reason often called "hat functions"
+% * reference Lagrange 2 figure 
 
+% The basis functions are a consequence of the choice of *finite element*
+% * Give the Ciarlet definition
+% * Reference Lagrange 2 figure again and talk about functionals etc
 
+% "The choice of basis functions used by the function spaces has significant implications for the convergence and stability of the model."
+% * for Stokes "a good choice is..." use P3-DG2? SV? TH? whatever is discontinuous (and explain what that means)
+% * must be a certain degree to be stable (P3?) (see papers about counting DoFs by multigrid man)
+% * reference a figure showing the element pair
 
-% ------------
+% This choice of finite element pair means that one would have, for a single element mesh, 36 (?) unknown basis coefficients (DoFs), and the matrix would have 36 rows and 36 columns (and would in fact be dense)
+% * In memory these would typically be laid out as... (reference a figure)
+%NOTE: No need to discuss numbering here because for a single cell it isn't a thing
 
+\subsection{The assembly algorithm}
 
-% must be P3? I think must be dimension + 1 (see papers about counting DoFs by multigrid man)
+% Since the basis functions only have local support we only need to compute the interaction between a small number of basis functions, most values in the matrix will be zero (i.e. sparse)
+% * So we loop over cells and compute interactions of basis functions on that cell, then we can incrementally add to the global matrix
+% * We do something analogous for the global vector
+% * Show as a pseudo-code algorithm
+% * can show my pretty diagram now!
 
-% *** Associating DoFs with mesh entities *** (new section)
-% what constraints are there on the function spaces? H1 and L2
-% specify the chosen element pair with Taylor-Hood (vec Pk, Pk-1, in this case k=3)?
-% show what the basis functions look like, *use defelement*
-% in FEM, basis functions overlap with points in closure(support(p)) - adjacency.
+% On massively parallel machines we parallelise our computation by partitioning the mesh between processes
+% * Basis functions whose support crosses into another process are stored in that processes "halo"
+% * Show a simple diagram - continue to use triangles (and basis functions)
+% * The global matrix is also partitioned, usually by row, so each process only sees a portion of it
 
-% ---
-
-% Ciarlet element definition
-
-% now we have discrete basis function form, convert to a cellwise sum of integrals
-% this is a stencil calculation - for each cell, compute the contribution of all basis
-% functions that have support on the cell. This is closure(cell) - a stencil! Applies to both LHS and RHS
-
-% can show my pretty diagram now!
-
-% explain discontinuous case? interior facets? separate section.
-% "just" a different stencil. find an example integral with, say, a jump term.
-% could have a diagram for this too!
-
-  % continuity between cells done by associating DoFs with vertices and edges etc
-
-% NOTE: Could definitely discuss DMPlex here
-% \subsubsection{A software aside: Unstructured meshing with PETSc DMPlex}?
-
-% *** End this section by discussing how there are weird looking data structures and that we need to iterate over them cell by cell
-% iteration can be shown as pseudo-code
-% Also make clear that the mesh is numbered so vertex and edge dofs are interleaved.
-% also that it is distributed (parallel)
+%NOTE:I could perhaps talk about mesh renumbering here - I kind of want a "FEM optimisations" section to talk about it, and perhaps interleaving computation and communication?
+% Or are those specific to the software?
 
 % "Domain-specific languages"?
 % "Domain-specific languages for array computations"?
@@ -341,6 +358,7 @@ Taichi has no concept of a mesh, and it does not work on distributed machines.
 % TODO: MUST talk about mesh renumbering here, also parallel stuff (SF)
 % No, parallel can be later, just mention here that the mesh is distributed and
 % point to the parallel chapter.
+% Numbering can reference the FEM pseudo-code - we need cellwise data to be "close"
 
 % \subsubsection{Representing data layouts with DMPlex}
 %
