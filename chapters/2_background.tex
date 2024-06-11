@@ -186,9 +186,7 @@ Solving the Stokes equations using the finite element method therefore boils dow
 
 \begin{figure}
   \begin{subfigure}{.3\textwidth}
-    % include my own diagram, not from defelement - then my colouring is consisten
-    % but use defelement numbering as we don't really care and it is consistent with the basis function sketches
-    % \includegraphics[width=\textwidth]{element_Lagrange_2_dofs.pdf}
+    \includegraphics[width=\textwidth]{lagrange_element_2.pdf}
     \caption{P2, TODO}
   \end{subfigure}
   \begin{subfigure}{.68\textwidth}
@@ -221,12 +219,36 @@ Solving the Stokes equations using the finite element method therefore boils dow
 % * Give the Ciarlet definition
 % * Reference Lagrange 2 figure again and talk about functionals etc
 
+\begin{figure}
+  \centering
+  %
+  \hfill
+  %
+  \begin{subfigure}{.4\textwidth}
+    \includegraphics[width=\textwidth]{lagrange_element_3.pdf}
+  \end{subfigure}
+  %
+  \hfill
+  %
+  \begin{subfigure}{.4\textwidth}
+    \includegraphics[width=\textwidth]{lagrange_element_2_dg.pdf}
+  \end{subfigure}
+  %
+  \hfill
+  %
+  \caption{Scott-Vogelius element (degree 3?)}
+  \label{fig:scott_vogelius_element}
+\end{figure}
+
 % "The choice of basis functions used by the function spaces has significant implications for the convergence and stability of the model."
-% * for Stokes "a good choice is..." use P3-DG2? SV? TH? whatever is discontinuous (and explain what that means)
-% * must be a certain degree to be stable (P3?) (see papers about counting DoFs by multigrid man)
+% * for Stokes in 2D "a good choice is the Scott-Vogelius finite element pair..." 
+% * cite L. R. Scott and M. Vogelius, Conforming finite element methods for incompressible and nearly incompressible continua, in Large-Scale Computations in Fluid Mechanics, Part 2 (La Jolla, Calif., 1983), Lectures in Appl. Math. 22-2, Amer. Math. Soc., Providence, RI, 1985, pp. 221--244.
+% * and J. Guzm\' an and L. R. Scott, The Scott--Vogelius finite elements revisited, Math. Comp., 88 (2019), pp. 515--529, https://doi.org/10.1090/mcom/3346?
+% * explain DG element (assoc with cells only)
+% * must be a certain degree to be stable (P3?) (see papers about counting DoFs by multigrid man), they claim k >= 4, which I can't fit
 % * reference a figure showing the element pair
 
-% This choice of finite element pair means that one would have, for a single element mesh, 36 (?) unknown basis coefficients (DoFs), and the matrix would have 36 rows and 36 columns (and would in fact be dense)
+% This choice of finite element pair means that one would have, for a single element mesh, 26 (?) unknown basis coefficients (DoFs), and the matrix would have 26 rows and 26 columns (and would in fact be dense)
 % * In memory these would typically be laid out as... (reference a figure)
 %NOTE: No need to discuss numbering here because for a single cell it isn't a thing
 

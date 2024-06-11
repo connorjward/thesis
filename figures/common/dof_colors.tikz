@@ -7,3 +7,5 @@
 \colorlet{bgedgedofcolor}{edgedofcolor!60}
 \colorlet{bgvertdofcolor}{vertdofcolor!60}
 \colorlet{bgnodedofcolor}{nodedofcolor!60}
+
+\tikzstyle {edge} = [draw=black,line width=1pt];

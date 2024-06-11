@@ -1,4 +1,4 @@
-\tikzstyle {edge} = [draw=black,line width=1pt];
+\input{figures/common/dof_colors.tikz}
 
 \newcommand{\defTwoCellMesh}{%
   \tkzDefPoint(0,2){v0}
