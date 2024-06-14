@@ -9,6 +9,7 @@ Instead, what more commonly happens is the array is restricted to a smaller piec
 This operation is almost universally referred to as \textit{array indexing}.
 In this chapter we introduce the necessary abstractions and algorithms required to index axis trees in \pyop3.
 
+% TODO: Move to background section
 \section{A primer: indexing numpy arrays}
 \label{sec:indexing_numpy_arrays}
 
@@ -35,6 +36,7 @@ In this chapter we introduce the necessary abstractions and algorithms required 
   \label{tab:numpy_indexing_ops}
 \end{table}
 
+% NOTE: Too casual "does things".
 Just as axis trees can be regarded as a generalisation of numpy arrays, indexing arrays in \pyop3 is, as far as possible, analogous to indexing operations in numpy.
 Before diving into how \pyop3 does things it is therefore instructive to review how indexing is done in numpy.
 
@@ -79,6 +81,10 @@ When an axis tree is indexed, it is transformed via composition with an index tr
 This composition operation yields a new \textit{indexed} axis tree that understand how its entries map back to the original axis tree.
 In other words, it is a \textit{view}.
 
+% TODO: Get rid of source path, instead target path is a mapping c -> a, d -> b
+% TODO: Possibly explain how the ordering of things does not matter.
+% TODO: Add labels to individual entries in the array and propagate them, put labels outside.
+% TODO: For the target expressions use "=", not ":"
 \begin{figure}
   \centering
   \begin{subfigure}{\textwidth}
@@ -128,7 +134,7 @@ This is done by associating two attributes with the indexed axis tree:
 
 The target path is a map from the source tree to the axis labels of the target tree.
 It allows \pyop3 to know where the source axes came from so it can select the right layout functions (\cref{sec:layouts}) from the target tree.
-In \cref{fig:index_linear_tree_exprs}, the target path is shown to be, for source path $\{a, b\}$, indicating that source axes $c$ and $d$ map back to $a$ and $b$ in the original array.
+In \cref{fig:index_linear_tree_exprs}, the target path shows that source axes $c$ and $d$ map back to $a$ and $b$ in the original array.
 
 \paragraph{Target expressions}
 
@@ -151,9 +157,9 @@ Applying these steps using the indexing operation of \cref{fig:index_linear_tree
 
 \begin{enumerate}
   \item
-    The target path is $\{a, b\}$, so the selected layout function is $\mathit{offset} = 3 i_a + i_b$.
+    The target path is $\{a, b\}$, so the selected layout function is $\mathrm{offset}(i_a, i_b) = 3 i_a + i_b$.
   \item
-    Substituting the target expressions in \cref{fig:index_linear_tree_exprs}, we get the new layout function $\mathit{offset} = 6 i_c + i_d + 1$.
+    Substituting the target expressions in \cref{fig:index_linear_tree_exprs}, we get the new layout function $\mathrm{offset}(i_c, i_d) = 6 i_c + i_d + 1$.
   \item
     The original axis tree may now be addressed using the source indices $i_c$ and $i_d$.
 \end{enumerate}

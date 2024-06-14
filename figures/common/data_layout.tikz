@@ -4,6 +4,20 @@
 \tikzstyle{ptlabel} = [anchor=center,color=black,opacity=1]
 \tikzstyle{connector} = [densely dashed]
 
+% TODO: Remove
+\newcommand{\drawBox}[5]{
+  \filldraw[draw=black,fill=#5,line width=.7pt] #1 rectangle #2;
+  \node [at={#3},fill=#5] {#4};
+}
+
+\newcommand{\drawBoxNew}[3]{
+  \filldraw[draw=black,fill=#3,line width=.7pt] #1 rectangle #2;
+}
+
+\newcommand{\labelBox}[3]{
+  \node [at={#1},fill=#3,inner sep=2pt,minimum width=0pt] {#2};
+}
+
 \newcommand{\drawDof}[3]{%
   \filldraw[draw=black,fill=#3,line width=.7pt] #1 rectangle ++ (1,1);
   \node [at={($#1+(.5,.5)$)}] {#2};
@@ -46,4 +60,8 @@
 
 \newcommand{\drawComma}[1]{
   \node [font=\huge] at #1 {,};
+}
+
+\newcommand{\drawConnector}[2]{
+  \draw [connector] #1 -- #2;
 }

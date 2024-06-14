@@ -1,0 +1,97 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}[yscale=-1]
+
+\input{figures/common/data_layout.tikz}
+
+\coordinate (origin0) at (0,0);
+
+% fields
+\drawWhiteDof{(origin0)}{$V_0$}
+\drawWhiteDof{($(origin0)+(1,0)$)}{$V_1$}
+
+\coordinate (base00) at ($(origin0)+(0,1)$);
+\coordinate (base01) at ($(origin0)+(1,1)$);
+\coordinate (base02) at ($(origin0)+(2,1)$);
+
+% P3
+\coordinate (origin1) at ($(origin0)+(-13,2)$);
+
+\drawVertDof{(origin1)}{\textbf{0}}
+\drawVertDof{($(origin1)+(1,0)$)}{\textbf{1}}
+\drawVertDof{($(origin1)+(2,0)$)}{\textbf{2}}
+\drawEdgeDof{($(origin1)+(3,0)$)}{\textbf{3}}
+\drawEdgeDof{($(origin1)+(4,0)$)}{\textbf{4}}
+\drawEdgeDof{($(origin1)+(5,0)$)}{\textbf{5}}
+\drawEdgeDof{($(origin1)+(6,0)$)}{\textbf{6}}
+\drawEdgeDof{($(origin1)+(7,0)$)}{\textbf{7}}
+\drawEdgeDof{($(origin1)+(8,0)$)}{\textbf{8}}
+\drawCellDof{($(origin1)+(9,0)$)}{\textbf{9}}
+
+\coordinate (base10) at ($(origin1)+(.5,1)$);
+\coordinate (base11) at ($(origin1)+(1.5,1)$);
+\coordinate (base12) at ($(origin1)+(2.5,1)$);
+\coordinate (base13) at ($(origin1)+(3.5,1)$);
+\coordinate (base14) at ($(origin1)+(4.5,1)$);
+\coordinate (base15) at ($(origin1)+(5.5,1)$);
+\coordinate (base16) at ($(origin1)+(6.5,1)$);
+\coordinate (base17) at ($(origin1)+(7.5,1)$);
+\coordinate (base18) at ($(origin1)+(8.5,1)$);
+\coordinate (base19) at ($(origin1)+(9.5,1)$);
+
+% DG2
+\coordinate (origin2) at ($(origin0)+(5,4)$);
+
+\drawCellDof{(origin2)}{\textbf{0}}
+\drawCellDof{($(origin2)+(1,0)$)}{\textbf{1}}
+\drawCellDof{($(origin2)+(2,0)$)}{\textbf{2}}
+\drawCellDof{($(origin2)+(3,0)$)}{\textbf{3}}
+\drawCellDof{($(origin2)+(4,0)$)}{\textbf{4}}
+\drawCellDof{($(origin2)+(5,0)$)}{\textbf{5}}
+
+% P3 shape
+\coordinate (origin) at ($(origin1)+(-6,2)$);
+\drawVertDof{(origin)}{}
+\drawVertDof{($(origin)+(1,0)$)}{}
+
+\coordinate (origin) at ($(origin)+(2.25,0)$);
+\drawVertDof{(origin)}{}
+\drawVertDof{($(origin)+(1,0)$)}{}
+
+\coordinate (origin) at ($(origin)+(2.25,0)$);
+\drawVertDof{(origin)}{}
+\drawVertDof{($(origin)+(1,0)$)}{}
+
+\coordinate (origin) at ($(origin)+(2.25,0)$);
+\drawEdgeDof{(origin)}{}
+\drawEdgeDof{($(origin)+(1,0)$)}{}
+
+\coordinate (origin) at ($(origin)+(2.25,0)$);
+\drawEdgeDof{(origin)}{}
+\drawEdgeDof{($(origin)+(1,0)$)}{}
+
+\coordinate (origin) at ($(origin)+(2.25,0)$);
+\drawEdgeDof{(origin)}{}
+\drawEdgeDof{($(origin)+(1,0)$)}{}
+
+\coordinate (origin) at ($(origin)+(2.25,0)$);
+\drawEdgeDof{(origin)}{}
+\drawEdgeDof{($(origin)+(1,0)$)}{}
+
+\coordinate (origin) at ($(origin)+(2.25,0)$);
+\drawEdgeDof{(origin)}{}
+\drawEdgeDof{($(origin)+(1,0)$)}{}
+
+\coordinate (origin) at ($(origin)+(2.25,0)$);
+\drawEdgeDof{(origin)}{}
+\drawEdgeDof{($(origin)+(1,0)$)}{}
+
+\coordinate (origin) at ($(origin)+(2.25,0)$);
+\drawCellDof{(origin)}{}
+\drawCellDof{($(origin)+(1,0)$)}{}
+
+
+\end{tikzpicture}
+\end{document}

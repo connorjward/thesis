@@ -38,6 +38,8 @@ Since we have a coupled system of two variables ($u$ and $p$), we refer to the S
 
 \subsection{Deriving a weak formulation}
 
+% TODO: Add a forcing term $f$ so the RHS is non-zero so we can happily show the assembly diagram
+
 For the finite element method we seek the solution to the \textit{variational}, or \textit{weak}, formulation of these equations.
 These are obtained by multiplying each equation by a suitable \textit{test function} and integrating over the domain.
 For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions, drawn from function spaces $\hat V$ and $Q$ respectively, and integrating by parts this gives
@@ -182,12 +184,40 @@ This can be reformulated as the (saddle point) linear system
 
 Solving the Stokes equations using the finite element method therefore boils down to constructing, or \textit{assembling}, the left-hand-side matrix and the, here trivial, right-hand-side vector before solving for the coefficients $\hat u$ and $\hat p$.
 
-\subsection{Choosing a finite element pair}
+\subsection{The assembly algorithm}
+
+% TODO: I reckon that this would look better if it output a small matrix which was inserted into a larger one - might be overkill though
+\begin{figure}
+  \centering
+  \includegraphics{fem_assembly.pdf}
+  \caption{TODO}
+  \label{fig:fem_assembly}
+\end{figure}
+
+% TODO: Decide on a consistent algorithm format
+\begin{algorithm}
+  \begin{verbatim}
+    FOR EACH cell IN mesh.cells:
+      FOR EACH coefficient IN expression:
+        collect the coefficients of basis functions that have non-zero support over cell
+      compute the integral numerically
+      scatter the values of the computed integrals into the global matrix or vector
+  \end{verbatim}
+  \caption{TODO}
+  \label{alg:fem_assembly}
+\end{algorithm}
+
+In order to assemble such a system, the integrals must be evaluated numerically for each pair of basis functions in the two function spaces.
+In the finite element method this process can be done efficiently because the basis functions are defined to have \textit{local support}, that is, they are defined to be zero across almost the entire domain.
+This means that, instead of iterating over all pairs of basis functions, the cells of the mesh may be visited in turn and only the basis functions with non-zero support on that cell are computed with.
+These cell-wise contributions are then accumulated to form the global matrix.
+Since most of the basis functions have zero overlap the resultant matrix is \textit{sparse}.
 
 \begin{figure}
   \begin{subfigure}{.3\textwidth}
-    \includegraphics[width=\textwidth]{lagrange_element_2.pdf}
+    \includegraphics{lagrange_element_2.pdf}
     \caption{P2, TODO}
+    \label{fig:lagrange_element_2}
   \end{subfigure}
   \begin{subfigure}{.68\textwidth}
     \begin{tabular}{c c c}
@@ -205,19 +235,53 @@ Solving the Stokes equations using the finite element method therefore boils dow
     \end{tabular}
     %
     \caption{P2 basis functions, TODO}
+    \label{fig:lagrange_element_2_basis}
   \end{subfigure}
   %
   \caption{TODO, \cite{defelement}}
 \end{figure}
 
-% What do the basis functions we described above look like?
-% * associated with topological entities (so shared between adjacent cells)
-% * compact support, for this reason often called "hat functions"
-% * reference Lagrange 2 figure 
+The basis functions are derived from a finite element definition.
+First formalised by Ciarlet~\parencite{ciarletElement2002}, a finite element is the triple $(K, P, N)$, where:
 
-% The basis functions are a consequence of the choice of *finite element*
-% * Give the Ciarlet definition
-% * Reference Lagrange 2 figure again and talk about functionals etc
+\begin{itemize}
+  \item $K$ is a cell in the mesh with non-empty interior and piecewise smooth boundary,
+  \item $P$ is a finite-dimensional space of functions on $K$, and
+  \item $N$ is a set of linear functionals that form a basis for the dual space of $P$.
+\end{itemize}
+
+% TODO: Reword this because the point evaluation stuff is a bit confusingly worded
+A simple example of a finite element, the degree 2 Lagrange element, is shown in \cref{fig:lagrange_element_2}.
+For this element $K$ (the cell) is a triangle, $P$ (the function space) is the space of order 2 polynomials, and $N$ (the dual basis) is defined to be point evaluation at each of the nodes:
+
+\begin{equation*}
+  l_i(v) = v(x_i),
+\end{equation*}
+
+where $l_i$ is the linear functional associated with node $i$, $v$ is some function in $P$ and $x_i$ are the coordinates of the $i$-th node.
+
+From these attributes, it is possible to determine a \textit{nodal basis} for $P$ by imposing that
+
+% TODO: define n_k
+\begin{equation*}
+  l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, n_k.
+\end{equation*}
+
+In the case of the degree 2 Lagrange element this yields the basis functions
+
+% see https://defelement.com/elements/examples/triangle-lagrange-equispaced-2.html
+\begin{align*}
+  &\psi_0 = 2x^2 + 4xy - 3x + 2y^2-3y+1, \\
+  &\psi_1 = x(2x-1), \\
+  &\psi_2 = y(2y-1), \\
+  &\psi_3 = 4xy, \\
+  &\psi_4 = 4y(-x-y+1), \\
+  &\psi_5 = 4x(-x-y+1),
+\end{align*}
+
+shown in \cref{fig:lagrange_element_2_basis}.
+
+\subsection{A finite element pair for the Stokes equations}
 
 \begin{figure}
   \centering
@@ -225,13 +289,13 @@ Solving the Stokes equations using the finite element method therefore boils dow
   \hfill
   %
   \begin{subfigure}{.4\textwidth}
-    \includegraphics[width=\textwidth]{lagrange_element_3.pdf}
+    \includegraphics{lagrange_element_3.pdf}
   \end{subfigure}
   %
   \hfill
   %
   \begin{subfigure}{.4\textwidth}
-    \includegraphics[width=\textwidth]{lagrange_element_2_dg.pdf}
+    \includegraphics{lagrange_element_2_dg.pdf}
   \end{subfigure}
   %
   \hfill
@@ -239,6 +303,8 @@ Solving the Stokes equations using the finite element method therefore boils dow
   \caption{Scott-Vogelius element (degree 3?)}
   \label{fig:scott_vogelius_element}
 \end{figure}
+
+% NOTE: Mention that we need to choose elements matching the function space constraints for V and Q earlier (ref eqs)
 
 % "The choice of basis functions used by the function spaces has significant implications for the convergence and stability of the model."
 % * for Stokes in 2D "a good choice is the Scott-Vogelius finite element pair..." 
@@ -248,17 +314,16 @@ Solving the Stokes equations using the finite element method therefore boils dow
 % * must be a certain degree to be stable (P3?) (see papers about counting DoFs by multigrid man), they claim k >= 4, which I can't fit
 % * reference a figure showing the element pair
 
+\begin{figure}
+  \centering
+  \includegraphics{lagrange_element_dof_layout2.pdf}
+  \caption{TODO}
+  \label{fig:lagrange_element_dof_layout}
+\end{figure}
+
 % This choice of finite element pair means that one would have, for a single element mesh, 26 (?) unknown basis coefficients (DoFs), and the matrix would have 26 rows and 26 columns (and would in fact be dense)
 % * In memory these would typically be laid out as... (reference a figure)
 %NOTE: No need to discuss numbering here because for a single cell it isn't a thing
-
-\subsection{The assembly algorithm}
-
-% Since the basis functions only have local support we only need to compute the interaction between a small number of basis functions, most values in the matrix will be zero (i.e. sparse)
-% * So we loop over cells and compute interactions of basis functions on that cell, then we can incrementally add to the global matrix
-% * We do something analogous for the global vector
-% * Show as a pseudo-code algorithm
-% * can show my pretty diagram now!
 
 % On massively parallel machines we parallelise our computation by partitioning the mesh between processes
 % * Basis functions whose support crosses into another process are stored in that processes "halo"
@@ -267,6 +332,10 @@ Solving the Stokes equations using the finite element method therefore boils dow
 
 %NOTE:I could perhaps talk about mesh renumbering here - I kind of want a "FEM optimisations" section to talk about it, and perhaps interleaving computation and communication?
 % Or are those specific to the software?
+
+% NOTE: I think the next bit should be more targeted. Start with "abstractions for
+% handling hierarchically structured data", then "abstractions for data on unstructured meshes",
+% then "bridging the gap, execution abstractions", have numpy, DMPlex and PyOP2 as subsections
 
 % "Domain-specific languages"?
 % "Domain-specific languages for array computations"?
