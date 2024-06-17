@@ -66,6 +66,61 @@
   \maketitle
 
   % \subfile{chapters/0_abstract}
+  % abstract!!!
+  % * (numerically) solving PDEs is very important for lots of things:
+  %   * climate
+  %   * manufacturing
+  %   * fluids...
+  %   * ???
+
+  % * If a computational scientist wants to develop a new application they have two
+  % options available to them:
+  %   * write a new code from scratch, VERY slow (years of work "reinventing the
+  %     wheel", not a domain specialist, poor performance...)
+  %   * use a pre-existing framework
+
+  % * "on the one hand..." a high level of abstraction lets one express problems concisely, quick to iterate
+  %    * Composability!
+  %    * Cite Betteridge, abstractions let one tweak the problem ("implementation choices") from a high
+  %      level to give good performance of different platforms. Cite FFTW, Spiral, BLIS?
+  %    * Separation of concerns: Domain specialists can focus on the things they do best.
+  %      Crucially it lowers the barrier to entry for scientists to do novel work.
+  %    * Can do some really complicated optimisations that would be very hard to reason about
+  %      by hand
+  %      * with codegen, i.e. compilers, one can do some really amazing optimisations not available
+  %      * to library interfaces and traditional compilers. In particular cross-loop optimisations?
+  %      * Also data layout/memory bandwidth minimising optimisations.
+  %      * this is because DSLs provide a high-level representation of the problem where complicated problems may be straightforwardly expressed.
+  %      * It is an example of an inspector-executor application.
+  %      * key principle: optimisations are easy, synthesis is hard. Level of abstraction
+  %      * facilitates memory optimisations.
+
+  % * "However..." abstractions also lock one into a particular way of working. Limitations in
+  %   the abstraction prohibit new methods from being developed,. Assumptions made when the
+  %   code was originally written shackle things.
+  % * One way out of this is to have "escape hatches" in your abstraction. Exponential
+  %   explosion of implementation complexity (not composable). Maybe feature X and feature Y work, but both together? 
+  %   As the number of features increases this becomes an enormous problem to maintain.
+  % * imposes technological debt and impedes development
+  %   E.g. porting to GPUs often requires substantial rewrites of the underlying code
+  %   (years of developer time, cite PETSc?).
+
+  % * mesh iteration is ubiquitous in numerical solution of PDEs (FDM, FEM, FVM)
+  % * (i.e. loop over mesh entities, apply some local computational kernel, scatter to global
+  %   matrix or vector)
+  % * An abstraction for this is valuable because implementation choices can then be made at a high level (e.g. target hardware, data structures/data layout), plus complex optimisations are easier to implement (vectorisation, time tiling). Otherwise lots of code needs rewriting
+
+  % * abstractions for this are really hard as the data structures are totally different to
+  %   those used elsewhere in scientific computing because they are associated with an unstructured mesh (and has topological entities to think about). This introduces another level of complexity inhibiting adoption into highly successful tensor-like abstractions (TACO?, more?) and linear algebra.
+  % Further, distributed parallel, I/O etc make this really really challenging.
+
+  % In this work we will present pyop3, a new abstraction for mesh iteration
+  % * pyop3 is a DSL
+  % * pyop3 was created to address shortcomings in its predecessor PyOP2 (which assumed FEM).
+  % * more powerful (expressive), can describe more things, more flexible about data layouts, easier to use (better API)
+  % This increased expressiveness is beneficial as it enables higher-level DSLs (e.g. UFL) to express more problems without having to resort to, sui generis, abstraction-breaking internal code changes.
+  % "pyop3 is a new abstraction that better captures the semantics of what it means to execute over a mesh"
+  % As a consequence, implementing novel numerical methods that would have previously been infeasible are now tractable.
 
   \tableofcontents
 

@@ -1,0 +1,54 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+  \input{figures/common/element.tikz}
+
+  \defTriangle
+  \drawTriangle
+
+    \tkzDefBarycentricPoint(v1=2.3,v2=1) \tkzGetPoint{e0d0}
+  \tkzDefBarycentricPoint(v1=1,v2=2.3) \tkzGetPoint{e0d1}
+
+  \tkzDefBarycentricPoint(v0=2.3,v2=1) \tkzGetPoint{e1d0}
+  \tkzDefBarycentricPoint(v0=1,v2=2.3) \tkzGetPoint{e1d1}
+
+  \tkzDefBarycentricPoint(v0=2.3,v1=1) \tkzGetPoint{e2d0}
+  \tkzDefBarycentricPoint(v0=1,v1=2.3) \tkzGetPoint{e2d1}
+
+  \tkzDefShiftPoint[v0](35:.2){v0y}
+  \tkzDefShiftPoint[v1](35:.2){v1y}
+  \tkzDefShiftPoint[v2](35:.2){v2y}
+  \tkzDefShiftPoint[e0d0](35:.2){e0d0y}
+  \tkzDefShiftPoint[e0d1](35:.2){e0d1y}
+  \tkzDefShiftPoint[e1d0](35:.2){e1d0y}
+  \tkzDefShiftPoint[e1d1](35:.2){e1d1y}
+  \tkzDefShiftPoint[e2d0](35:.2){e2d0y}
+  \tkzDefShiftPoint[e2d1](35:.2){e2d1y}
+  \tkzDefShiftPoint[c0](35:.2){c0y}
+
+  \drawFilledVertex{v0y}{}
+  \drawFilledVertex{v0}{0}
+  \drawFilledVertex{v1y}{}
+  \drawFilledVertex{v1}{1}
+  \drawFilledVertex{v2y}{}
+  \drawFilledVertex{v2}{2}
+  \drawFilledEdge{e0d0y}{}
+  \drawFilledEdge{e0d0}{3}
+  \drawFilledEdge{e0d1y}{}
+  \drawFilledEdge{e0d1}{4}
+  \drawFilledEdge{e1d0y}{}
+  \drawFilledEdge{e1d0}{5}
+  \drawFilledEdge{e1d1y}{}
+  \drawFilledEdge{e1d1}{6}
+  \drawFilledEdge{e2d0y}{}
+  \drawFilledEdge{e2d0}{7}
+  \drawFilledEdge{e2d1y}{}
+  \drawFilledEdge{e2d1}{8}
+  \drawFilledCell{c0y}{}
+  \drawFilledCell{c0}{9}
+
+\end{tikzpicture}
+\end{document}

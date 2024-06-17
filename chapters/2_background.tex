@@ -2,359 +2,37 @@
 
 \begin{document}
 
-\chapter{Background}
-\label{chapter:background}
+\chapter{Foundations}
 
-% This is sort of OK. I think I have to break the narrative in this chapter anyway.
-Before a discussion of \pyop3, it is useful to review some of the relevant background material.
-We will first provide a mathematical motivation for mesh execution models using a common operation, \textit{finite element assembly}, as an example.
-Then we will review\dots
-Finally, we describe in more detail the core pieces of software that \pyop3 bases its abstractions upon: \pyop2, numpy and PETSc DMPlex.
+In this chapter we review a number of existing libraries whose designs served as inspiration for the abstractions underpinning \pyop3.
+In order these are:
+\pyop2, another mesh execution library and the direct precursor to \pyop3;
+DMPlex, an unstructured mesh abstraction;
+and numpy, the go-to library for representing structured data in Python.
 
-\section{The finite element method}
+\section{\pyop2}
 
-% TODO: Rephrase
-For a non-trivial example for when mesh loops (?) are required, we consider solving the Stokes equations using the \gls{fem}.
-Our exposition will focus on the aspects of the computation that are relevant for \pyop3, for a more complete review of \gls{fem} we refer the reader to~\cite{brennerMathematicalTheoryFinite2008} and~\cite{larsonFiniteElementMethod2013}.
+% why chosen? interop with PETSc, good for FEM, works in parallel...
 
-The Stokes equations are a linearisation of the Navier-Stokes equations and are used to describe fluid flow for laminar (slow and calm) media.
-For domain $\Omega$ and boundary $\Gamma$, omitting any viscosity or forcing terms for simplicity, they are given by
+% integrated with Firedrake (popular FEM lib)
 
-\begin{subequations}
-  \begin{align}
-    - \Delta u + \nabla p &= 0 \quad \textrm{in} \ \Omega, \\
-    %
-    \nabla \cdot u &= 0 \quad \textrm{in} \ \Omega, \\
-    %
-    u &= g \quad \textrm{on} \ \Gamma.
-  \end{align}
-  %
-  \label{eq:strong_stokes}
-\end{subequations}
+% loopy
+% PyOP2 limitations
+% explain loopy's programming model of kernel plus transformations. It is fundamentally
+% very similar to how high level mathematical DSLs like UFL work except for loops.
 
-with $u$ the fluid velocity and $p$ the pressure.
-We also prescribe Dirichlet boundary conditions for the velocity across the entire boundary, setting $u$ to the value of function $g$.
-Since we have a coupled system of two variables ($u$ and $p$), we refer to the Stokes system as being a \textit{mixed} problem.
+% \subsubsection{Data layouts in \pyop2}
+%
+% \pyop2 takes a very different approach to describing data layouts to DMPlex.
+% Firstly, it has no conception of what a mesh is and it deals solely with \textit{sets} and \textit{mappings between sets}.
+% The rich query language provided by DMPlex is therefore unavailable and the task of determining the right adjacency maps is passed to the user.
+%
 
-\subsection{Deriving a weak formulation}
 
-% TODO: Add a forcing term $f$ so the RHS is non-zero so we can happily show the assembly diagram
 
-For the finite element method we seek the solution to the \textit{variational}, or \textit{weak}, formulation of these equations.
-These are obtained by multiplying each equation by a suitable \textit{test function} and integrating over the domain.
-For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions, drawn from function spaces $\hat V$ and $Q$ respectively, and integrating by parts this gives
+% interleave computation and communication
 
-% taken from 
-% https://nbviewer.org/github/firedrakeproject/firedrake/blob/master/docs/notebooks/06-pde-constrained-optimisation.ipynb
-% and Larson and Bengzon (pg. 293)
-\begin{subequations}
-  \begin{align}
-    \int \nabla u : \nabla v \, \textrm{d}\Omega
-    - \int p \nabla \cdot v \, \textrm{d}\Omega
-    - \int (\nabla u \cdot n) \cdot v \, \textrm{d}\Gamma
-    - \int p n \cdot v \, \textrm{d}\Gamma
-    &= 0
-    &\forall \ v \in \hat V
-    \label{eq:weak_stokes_extra_V} \\
-    %
-    \int q \, \nabla \cdot u \, \textrm{d}\Omega
-    &= 0
-    &\forall \ q \in Q.
-    \label{eq:weak_stokes_extra_Q}
-  \end{align}
-  \label{eq:weak_stokes_extra}
-\end{subequations}
-
-From these weak forms it is now possible to classify the function spaces for $u$ and $p$.
-For $u$, we already know that the space must be vector-valued, since it stores a velocity, and constrained to $g$ on the boundary.
-\Cref{eq:weak_stokes_extra_V} further shows us that $u$ must have at least one weak derivative.
-We can therefore say that $u \in V$ where
-
-\begin{equation*}
-  V = \{ \ v \in [H^1(\Omega)]^d : v |_{\Gamma} = g \ \}  \\
-\end{equation*}
-
-$p$ is scalar-valued, no derivatives of $p$ are present in the weak formulation, nor are any boundary conditions applied to it and so we can write that $p \in Q$ where
-
-\begin{equation*}
-  Q = \{ \ q \in L^2(\Omega) \ \}  \\
-\end{equation*}
-
-Since the values of $u$ at the boundary are already prescribed, the function space of the test function $v$ is defined to be zero at those nodes
-
-\begin{equation*}
-  \hat V = \{\ v \in [H^1(\Omega)]^d : v|_{\Gamma} = 0 \ \}.
-\end{equation*}
-
-This allows us to drop some terms from \cref{eq:weak_stokes_extra_V}, allowing us to state the final problem as follows:
-
-\vspace{1em}
-
-%TODO: Not sure how to format this best
-Find $(u, p) \in V \times Q$ such that
-
-\begin{subequations}
-  \begin{align}
-    \int \nabla u : \nabla v \, \textrm{d}\Omega
-    - \int p \nabla \cdot v \, \textrm{d}\Omega
-    &= 0
-    &\forall \ v \in \hat V
-    \label{eq:weak_stokes_V} \\
-    %
-    \int q \, \nabla \cdot u \, \textrm{d}\Omega
-    &= 0
-    &\forall \ q \in Q.
-    \label{eq:weak_stokes_Q}
-  \end{align}
-  \label{eq:weak_stokes}
-\end{subequations}
-
-\subsection{Discretising the system of equations}
-
-In order to solve this weak formulation using the finite element method we discretise the function spaces in use by replacing them with a finite dimensional equivalent:
-
-\begin{equation*}
-  V \to V_h \subset V,
-  \quad
-  \hat V \to \hat V_h \subset \hat V,
-  \quad
-  Q \to Q_h \subset Q.
-\end{equation*}
-
-Each of these discrete spaces is spanned by a set of basis functions so any function can be expressed as a linear combination of the basis functions and their coefficients.
-For example, we can write the function $u_h \in V_h$ as
-
-\begin{equation*}
-  u_h = \Sigma^N_{i=1} \hat u_i \psi^{V_h}_i
-\end{equation*}
-
-for basis functions $\psi^{V_h}_i$ and coefficients $\hat u_i$.
-
-Substituting these discrete function spaces back into \cref{eq:weak_stokes}, and discarding the basis coefficients for the arbitrary functions $v_h$ and $q_h$, we obtain the discrete problem:
-
-\vspace{1em}
-
-%TODO: Not sure how to format this best
-Find $(\hat u, \hat p)$ such that
-
-\begin{subequations}
-  \begin{align}
-    \int \hat u \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
-    - \int \hat p \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega
-    &= 0
-    &\forall \ \psi^{\hat V} \\
-    %
-    \int \psi^Q \, \nabla \cdot \hat u \psi^{V_h} \, \textrm{d}\Omega
-    &= 0
-    &\forall \ \psi^{Q}
-  \end{align}
-  \label{eq:weak_stokes_discrete}
-\end{subequations}
-
-This can be reformulated as the (saddle point) linear system
-
-\begin{equation}
-  \left (
-  \begin{array}{c|c}
-    \int \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
-    &
-    - \int \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega \\
-    \hline
-    \int \psi^Q \, \nabla \cdot \psi^{V_h} \, \textrm{d}\Omega
-    &
-    0
-  \end{array}
-  \right )
-  \left (
-  \begin{array}{c}
-    \hat u \\
-    \hline
-    \hat p
-  \end{array}
-  \right )
-  =
-  \left (
-  \begin{array}{c}
-    0 \\ \hline 0
-  \end{array}
-  \right )
-  %
-  \label{eq:stokes_linear_system}
-\end{equation}
-
-Solving the Stokes equations using the finite element method therefore boils down to constructing, or \textit{assembling}, the left-hand-side matrix and the, here trivial, right-hand-side vector before solving for the coefficients $\hat u$ and $\hat p$.
-
-\subsection{The assembly algorithm}
-
-% TODO: I reckon that this would look better if it output a small matrix which was inserted into a larger one - might be overkill though
-\begin{figure}
-  \centering
-  \includegraphics{fem_assembly.pdf}
-  \caption{TODO}
-  \label{fig:fem_assembly}
-\end{figure}
-
-% TODO: Decide on a consistent algorithm format
-\begin{algorithm}
-  \begin{verbatim}
-    FOR EACH cell IN mesh.cells:
-      FOR EACH coefficient IN expression:
-        collect the coefficients of basis functions that have non-zero support over cell
-      compute the integral numerically
-      scatter the values of the computed integrals into the global matrix or vector
-  \end{verbatim}
-  \caption{TODO}
-  \label{alg:fem_assembly}
-\end{algorithm}
-
-In order to assemble such a system, the integrals must be evaluated numerically for each pair of basis functions in the two function spaces.
-In the finite element method this process can be done efficiently because the basis functions are defined to have \textit{local support}, that is, they are defined to be zero across almost the entire domain.
-This means that, instead of iterating over all pairs of basis functions, the cells of the mesh may be visited in turn and only the basis functions with non-zero support on that cell are computed with.
-These cell-wise contributions are then accumulated to form the global matrix.
-Since most of the basis functions have zero overlap the resultant matrix is \textit{sparse}.
-
-\begin{figure}
-  \begin{subfigure}{.3\textwidth}
-    \includegraphics{lagrange_element_2.pdf}
-    \caption{P2, TODO}
-    \label{fig:lagrange_element_2}
-  \end{subfigure}
-  \begin{subfigure}{.68\textwidth}
-    \begin{tabular}{c c c}
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof0.pdf}
-      &
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof1.pdf}
-      &
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof2.pdf}
-      \\
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof3.pdf}
-      &
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof4.pdf}
-      &
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof5.pdf}
-    \end{tabular}
-    %
-    \caption{P2 basis functions, TODO}
-    \label{fig:lagrange_element_2_basis}
-  \end{subfigure}
-  %
-  \caption{TODO, \cite{defelement}}
-\end{figure}
-
-The basis functions are derived from a finite element definition.
-First formalised by Ciarlet~\parencite{ciarletElement2002}, a finite element is the triple $(K, P, N)$, where:
-
-\begin{itemize}
-  \item $K$ is a cell in the mesh with non-empty interior and piecewise smooth boundary,
-  \item $P$ is a finite-dimensional space of functions on $K$, and
-  \item $N$ is a set of linear functionals that form a basis for the dual space of $P$.
-\end{itemize}
-
-% TODO: Reword this because the point evaluation stuff is a bit confusingly worded
-A simple example of a finite element, the degree 2 Lagrange element, is shown in \cref{fig:lagrange_element_2}.
-For this element $K$ (the cell) is a triangle, $P$ (the function space) is the space of order 2 polynomials, and $N$ (the dual basis) is defined to be point evaluation at each of the nodes:
-
-\begin{equation*}
-  l_i(v) = v(x_i),
-\end{equation*}
-
-where $l_i$ is the linear functional associated with node $i$, $v$ is some function in $P$ and $x_i$ are the coordinates of the $i$-th node.
-
-From these attributes, it is possible to determine a \textit{nodal basis} for $P$ by imposing that
-
-% TODO: define n_k
-\begin{equation*}
-  l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, n_k.
-\end{equation*}
-
-In the case of the degree 2 Lagrange element this yields the basis functions
-
-% see https://defelement.com/elements/examples/triangle-lagrange-equispaced-2.html
-\begin{align*}
-  &\psi_0 = 2x^2 + 4xy - 3x + 2y^2-3y+1, \\
-  &\psi_1 = x(2x-1), \\
-  &\psi_2 = y(2y-1), \\
-  &\psi_3 = 4xy, \\
-  &\psi_4 = 4y(-x-y+1), \\
-  &\psi_5 = 4x(-x-y+1),
-\end{align*}
-
-shown in \cref{fig:lagrange_element_2_basis}.
-
-\subsection{A finite element pair for the Stokes equations}
-
-\begin{figure}
-  \centering
-  %
-  \hfill
-  %
-  \begin{subfigure}{.4\textwidth}
-    \includegraphics{lagrange_element_3.pdf}
-  \end{subfigure}
-  %
-  \hfill
-  %
-  \begin{subfigure}{.4\textwidth}
-    \includegraphics{lagrange_element_2_dg.pdf}
-  \end{subfigure}
-  %
-  \hfill
-  %
-  \caption{Scott-Vogelius element (degree 3?)}
-  \label{fig:scott_vogelius_element}
-\end{figure}
-
-% NOTE: Mention that we need to choose elements matching the function space constraints for V and Q earlier (ref eqs)
-
-% "The choice of basis functions used by the function spaces has significant implications for the convergence and stability of the model."
-% * for Stokes in 2D "a good choice is the Scott-Vogelius finite element pair..." 
-% * cite L. R. Scott and M. Vogelius, Conforming finite element methods for incompressible and nearly incompressible continua, in Large-Scale Computations in Fluid Mechanics, Part 2 (La Jolla, Calif., 1983), Lectures in Appl. Math. 22-2, Amer. Math. Soc., Providence, RI, 1985, pp. 221--244.
-% * and J. Guzm\' an and L. R. Scott, The Scott--Vogelius finite elements revisited, Math. Comp., 88 (2019), pp. 515--529, https://doi.org/10.1090/mcom/3346?
-% * explain DG element (assoc with cells only)
-% * must be a certain degree to be stable (P3?) (see papers about counting DoFs by multigrid man), they claim k >= 4, which I can't fit
-% * reference a figure showing the element pair
-
-\begin{figure}
-  \centering
-  \includegraphics{lagrange_element_dof_layout2.pdf}
-  \caption{TODO}
-  \label{fig:lagrange_element_dof_layout}
-\end{figure}
-
-% This choice of finite element pair means that one would have, for a single element mesh, 26 (?) unknown basis coefficients (DoFs), and the matrix would have 26 rows and 26 columns (and would in fact be dense)
-% * In memory these would typically be laid out as... (reference a figure)
-%NOTE: No need to discuss numbering here because for a single cell it isn't a thing
-
-% On massively parallel machines we parallelise our computation by partitioning the mesh between processes
-% * Basis functions whose support crosses into another process are stored in that processes "halo"
-% * Show a simple diagram - continue to use triangles (and basis functions)
-% * The global matrix is also partitioned, usually by row, so each process only sees a portion of it
-
-%NOTE:I could perhaps talk about mesh renumbering here - I kind of want a "FEM optimisations" section to talk about it, and perhaps interleaving computation and communication?
-% Or are those specific to the software?
-
-% NOTE: I think the next bit should be more targeted. Start with "abstractions for
-% handling hierarchically structured data", then "abstractions for data on unstructured meshes",
-% then "bridging the gap, execution abstractions", have numpy, DMPlex and PyOP2 as subsections
-
-% "Domain-specific languages"?
-% "Domain-specific languages for array computations"?
-% "Abstractions for array computations"?
-% This section is really talking about compilers and JIT-ing
-\section{Code generation and domain-specific languages for scientific computing}
-
-% why is code generation useful?
-% We need to be able to express problems in some platform
-% agnostic language that gets compiled to different platforms and can
-% apply platform specific optimisations. Needs to be fast and productive and portable.
-% can be super fast!
-% * Halide?
-% * Spiral?
-% * BLIS?
-% * FFTW?
-
-% NOTE: Not completely sure how to arrange the below bit
-
+% "in the past has been..." (Luporini), aim to recover some of this...
 % inspector-executor model. cite Saltz and Strout
 % two programs, an inspector that generates a schedule, and an executor that uses it. Executor
 % is a transformed original program.
@@ -375,68 +53,8 @@ shown in \cref{fig:lagrange_element_2_basis}.
 
 % Therefore need a nice abstraction for expressing and reasoning about the problem: DSL
 
-\subsection{Abstractions for array computations}
-
-% There are a million and one compilers for handling arrays
-% e.g. polyhedral model, TACO, Tiramisu, einsum notation
-
-% however, they are not sufficient for our purposes because they all use N-dimensional array/tensor layouts.
-% mesh data is more heterogeneous than that so for things to work need to discard information about the topological relations between the mesh and the data
-
-% it can be made more complicated with things like TACO where the layers can differ, but still not sufficient as there are intra-layer differences
-% also sparsity (SPF), ragged (AwkwardArray, PPMD), distributed (DistArray, Chapel)
-
-\subsection{Abstractions for mesh-like data layouts}
-
-% The following all fix this problem and can describe the right kind of data layouts
-%NOTE: could try having a checklist of features?
-
-% OP2: \cite{mudaligeOP2ActiveLibrary2012}
-% PyOP2
-% the simplest solution, use indirection maps
-% works in parallel, not composable/expressive
-% sophisticated overlapping of computation and communication
-% does not need a mesh object, can use external software
-
-% Liszt
-% \cite{devitoLisztDomainSpecific2011}
-% * dead project (since 2013)
-% * works in parallel, but custom mesh etc so has to do its own partitioning etc
-% * mesh is not dimension-independent
-% * embedded in Scala
-% * (needs a mesh)
-
-% Simit
-% https://simit-lang.org/
-% \cite{kjolstadSimitLanguagePhysical2016}
-% * dead project
-% * C++ code
-% * does not work on multi-core machines, does work with GPUs
-% * hypergraph is like DMPlex, has a custom mesh implementation
-% * stores data as "hypergraph sets with tensor fields" - associates data with topological entities
-% * has "dual" representations of mesh data structures: as hypergraphs and as tensors. pyop3 effectively unifies the two
-% * (needs a mesh - sort of)
-
-% Ebb
-% http://ebblang.org/
-% * dead project
-% \cite{bernsteinEbbDSLPhysical2016}
-% uses a relational database model to describe mesh connectivity
-% uses a layer model to separate data structure definition from simulation code
-% * (doesn't need a mesh)
-% * embedded in lua
-% * not multi-core
-
-% AoS-SoA etc? (taichi)
-\textbf{Taichi} is a programming language embedded in C\+\+ for operating on complex data structures~\cite{huTaichiLanguageHighperformance2019}.
-Just like \pyop3, Taichi declares data structures hierarchically and the data layout is kept distinct from the operations applied to them.
-Taichi has no concept of a mesh, and it does not work on distributed machines.
-% https://www.taichi-lang.org/
-% very successful!
-
-% summarise - these all have limitations so we will make a new one based on DMPlex and PyOP2
-
-\section{An abstraction for unstructured meshes: PETSc DMPlex}
+% NOTE: Need to explicit about how what we do needs DMPlex - I guess needs to unify the models
+\section{DMPlex}
 
 % generally introduce PETSc as well in a few sentences (matrices, vectors, solvers, massively parallel, GPU support)
 % * DMPlex
@@ -477,28 +95,7 @@ Taichi has no concept of a mesh, and it does not work on distributed machines.
 
 % End the section by showing some pseudocode for FEM assembly
 
-
-\section{An execution model: PyOP2}
-% and why OP2 not Liszt?
-% why chosen? interop with PETSc, good for FEM, works in parallel...
-
-% integrated with Firedrake (popular FEM lib)
-
-% loopy
-% PyOP2 limitations
-% explain loopy's programming model of kernel plus transformations. It is fundamentally
-% very similar to how high level mathematical DSLs like UFL work except for loops.
-
-% \subsubsection{Data layouts in \pyop2}
-%
-% \pyop2 takes a very different approach to describing data layouts to DMPlex.
-% Firstly, it has no conception of what a mesh is and it deals solely with \textit{sets} and \textit{mappings between sets}.
-% The rich query language provided by DMPlex is therefore unavailable and the task of determining the right adjacency maps is passed to the user.
-%
-
-
-% TODO: I don't know where to put this bit? where we talk about N-dimensional arrays? could explain concepts of shape and indexing? Specific syntax can then be described in later sections...
-\subsection{An interface for multi-dimensional data: numpy}
+\section{numpy}
 
 % (cite paper, search for "citing numpy")
 % although not a JIT, numpy is important for introducing ergonomic ways of
