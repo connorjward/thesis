@@ -13,7 +13,7 @@
 \newcommand{\vertdofcolor}{vertdofcolor}
 
 % draw the mesh
-\begin{scope}[scale=1.6]
+\begin{scope}[scale=1.2]
   % styles specific to the mesh
   \tkzSetUpStyle[draw=black,line width=.5]{edge}
   \tkzSetUpStyle[line width=1]{dof}
@@ -161,11 +161,11 @@
     (v5patch) -- (v9patch) -- (v10patch) -- cycle;
 
   % define arrow source
-  \tkzDefPoint(1.8,1.65){src1}
+  \tkzDefPoint(1.8,1.5){src1}
 \end{scope}
 
 % data layout
-\begin{scope}[xshift=7cm,yshift=4.5cm,scale=.5]
+\begin{scope}[xshift=4.8cm,yshift=3cm,scale=.4]
   \tkzSetUpStyle[draw=black,line width=.5]{dof}
   \tkzSetUpStyle[dof,fill=\celldofcolor]{celldof}
   \tkzSetUpStyle[dof,fill=\edgedofcolor]{edgedof}
@@ -183,22 +183,104 @@
   \filldraw[celldof] (9,0) rectangle ++ (1,1);
 
   % define arrow sources
-  \tkzDefPoint(2.7,0){src2}
+  \tkzDefPoint(0,0){src2}
   \tkzDefPoint(4.5,0){src3}
 \end{scope}
 
 % local kernel
-\begin{scope}[xshift=11.5cm,yshift=0cm]
-  \node [inner sep=0pt,at={(0,1)}] {$\int_K f \psi^{V_h} \textrm{d}\Omega$};
+\begin{scope}[xshift=7cm,yshift=0cm]
+  \node [inner sep=0pt,at={(0,1)}] {$\int_K \nu \nabla \psi_i : \nabla \psi_j \textrm{d}\Omega$};
 
   % define arrow source
-  \tkzDefPoint(-.5,1){src4}
+  \tkzDefPoint(-.8,1.1){src4}
+  \tkzDefPoint(0,.8){src5}
+\end{scope}
+
+\newcommand{\drawDot}[2]{
+  \node [circle,draw=#2,minimum size=1.5mm,inner sep=0,fill=#2] at #1 {};
+}
+
+\newcommand{\drawDotSmall}[2]{
+  \node [circle,draw=#2,minimum size=1mm,inner sep=0,fill=#2] at #1 {};
+}
+
+\newcommand{\vertDot}[1]{\drawDot{#1}{vertdofcolor}}
+\newcommand{\edgeDot}[1]{\drawDot{#1}{edgedofcolor}}
+\newcommand{\cellDot}[1]{\drawDot{#1}{celldofcolor}}
+
+\begin{scope}[xshift=5.5cm,yshift=-1.5cm,scale=.3,yscale=-1]
+  \draw (0, 0) grid (10, 10);
+
+  \foreach \x in {0,...,9} {
+    \foreach \y in {0,...,9} {
+      \filldraw [fill=black,draw=black] ($(\x,\y)+(.25,.25)$) rectangle ++ (.5,.5);
+    }
+  }
+
+  \vertDot{(0.5,-.5)}
+  \vertDot{(1.5,-.5)}
+  \vertDot{(2.5,-.5)}
+  \edgeDot{(3.5,-.5)}
+  \edgeDot{(4.5,-.5)}
+  \edgeDot{(5.5,-.5)}
+  \edgeDot{(6.5,-.5)}
+  \edgeDot{(7.5,-.5)}
+  \edgeDot{(8.5,-.5)}
+  \cellDot{(9.5,-.5)}
+
+  \vertDot{(-.5,0.5)}
+  \vertDot{(-.5,1.5)}
+  \vertDot{(-.5,2.5)}
+  \edgeDot{(-.5,3.5)}
+  \edgeDot{(-.5,4.5)}
+  \edgeDot{(-.5,5.5)}
+  \edgeDot{(-.5,6.5)}
+  \edgeDot{(-.5,7.5)}
+  \edgeDot{(-.5,8.5)}
+  \cellDot{(-.5,9.5)}
+
+  % define arrow source
+  \tkzDefPoint(5,-1){src6}
+  \tkzDefPoint(-1,5){src7}
+\end{scope}
+
+\begin{scope}[xshift=0cm,yshift=-1cm,scale=.2,yscale=-1]
+  \draw (0,0) grid (19,19);
+
+  \foreach \x in {1,2,5,6,7,9,12,14,16,17} {
+    \foreach \y in {1,2,5,6,7,9,12,14,16,17} {
+      \filldraw [fill=black,draw=black] ($(\x,\y)+(.25,.25)$) rectangle ++ (.5,.5);
+    }
+  }
+
+  \foreach \x in {1,5,9} {
+    \drawDotSmall{($(\x,-.5)+(.5,0)$)}{vertdofcolor}
+    \drawDotSmall{($(-.5,\x)+(0,.5)$)}{vertdofcolor}
+  }
+
+  \foreach \x in {2,6,7,12,16,17} {
+    \drawDotSmall{($(\x,-.5)+(.5,0)$)}{edgedofcolor}
+    \drawDotSmall{($(-.5,\x)+(0,.5)$)}{edgedofcolor}
+  }
+
+  \foreach \x in {14} {
+    \drawDotSmall{($(\x,-.5)+(.5,0)$)}{celldofcolor}
+    \drawDotSmall{($(-.5,\x)+(0,.5)$)}{celldofcolor}
+  }
+
+  \foreach \x in {0,...,19} { \draw (\x,19) -- (\x,20); }
+  \foreach \y in {0,...,19} { \draw (19,\y) -- (20,\y); }
+
+  % define arrow source
+  \tkzDefPoint(20,10){src8}
 \end{scope}
 
 % connect images
-\tkzSetUpStyle[{stealth}-{stealth},shorten >=4pt,shorten <=4pt,line width=1]{connector}
-\draw [connector] (src1) to [bend right=25] (src2);
-\draw [connector] (src3) to [bend right=25] (src4);
+\tkzSetUpStyle[-{stealth},shorten >=4pt,shorten <=4pt,line width=1]{connector}
+\draw [connector] (src1) to (src2);
+\draw [connector] (src3) to (src4);
+\draw [connector] (src5) to (src6);
+\draw [connector] (src7) to (src8);
 
 \end{tikzpicture}
 \end{document}
