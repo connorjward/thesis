@@ -4,6 +4,15 @@
 
 \chapter{Foundations}
 
+% TODO: include Taichi here
+
+% % AoS-SoA etc? (taichi)
+% \textbf{Taichi} is a programming language embedded in C\+\+ for operating on complex data structures~\cite{huTaichiLanguageHighperformance2019}.
+% Just like \pyop3, Taichi declares data structures hierarchically and the data layout is kept distinct from the operations applied to them.
+% Taichi has no concept of a mesh, and it does not work on distributed machines.
+% https://www.taichi-lang.org/
+% very successful!
+
 In this chapter we review a number of existing libraries whose designs served as inspiration for the abstractions underpinning \pyop3.
 In order these are:
 \pyop2, another mesh execution library and the direct precursor to \pyop3;
@@ -52,6 +61,8 @@ and numpy, the go-to library for representing structured data in Python.
 % express using a high-level representation.
 
 % Therefore need a nice abstraction for expressing and reasoning about the problem: DSL
+
+% motivation for pyop3: sui generis implementation of pcpatch, slate due to limitations - need a more powerful abstraction
 
 % NOTE: Need to explicit about how what we do needs DMPlex - I guess needs to unify the models
 \section{DMPlex}
