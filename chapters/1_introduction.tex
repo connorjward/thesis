@@ -330,13 +330,57 @@ In \cref{eq:stokes_linear_system} the different function spaces have been partit
 Naturally the choice of how to lay these values out in memory is arbitrary, but a common approach is to split them by function space, then by topological entity, and then by vector component (\cref{fig:scott_vogelius_element_dof_layout})
 % This choice of finite element pair means that one would have, for a single element mesh, 26 (?) unknown basis coefficients (DoFs), and the matrix would have 26 rows and 26 columns (and would in fact be dense)
 
+\section{Performance considerations}
+
+% NOTE: Talk about GPU too?
+
+\subsection{Distributed memory parallelism}
+
 % On massively parallel machines we parallelise our computation by partitioning the mesh between processes
 % * Basis functions whose support crosses into another process are stored in that processes "halo"
 % * Show a simple diagram - continue to use triangles (and basis functions)
 % * The global matrix is also partitioned, usually by row, so each process only sees a portion of it
 
-%NOTE:I could perhaps talk about mesh renumbering here - I kind of want a "FEM optimisations" section to talk about it
-%NOTE: No need to discuss numbering here because for a single cell it isn't a thing
+% mention MPI
+
+\subsection{Mesh renumbering}
+
+% cite PyOP2 paper, also perhaps extruded paper
+
+% "put closure data close together"
+
+\subsection{Data layout transformations}
+
+\begin{figure}
+  \centering
+  \includegraphics{scott_vogelius_element_dof_layout_swap.pdf}
+  \caption{
+    TODO
+  }
+  \label{fig:scott_vogelius_element_dof_layout_swap}
+\end{figure}
+
+% many packages "commit early" to a particular representation, potentially sacrificing performance
+
+% TODO: cite AoS/SoA performance paper or something.
+
+% Lastly, OP2 and \pyop2 both commit eagerly to storing the data in a particular format.
+% Depending on the problem at hand, better performance may be achieved by rearranging the way in which DoFs are stored such that data is streamed from memory in the most efficient manner possible.
+% An example demonstrating a different data layout for the data shown in \cref{fig:scott_vogelius_element_dof_layout} is shown in \cref{fig:scott_vogelius_element_dof_layout_swap}.
+% In the latter the vector component part of the data layout has been ``lifted" such that, for the $V_h$ function space, all \glspl{dof} corresponding with the 0th component are stored before all \glspl{dof} for the 1st component.
+% This is equivalent to transforming from an ``array-of-structs" (AoS) layout to a ``struct-of-arrays" (SoA) layout.
+% Neither layout is inherently faster than the other and different applications may want to use one over another.
+% Both OP2 and \pyop2 only support storing data in the AoS format (\cref{fig:scott_vogelius_element_dof_layout_pyop2}) and so cannot do this.
+
+
+\subsection{Interoperability with existing software}
+
+% high level algorithmic changes are essential for performance (JB paper) - want to use top quality solvers
+
+% also, need to reimplement a lot of things best done by existing packages (partitioning, I/O etc)
+
+% certainly hard to do in parallel, sparse matrices etc
+% PETSc is great, name check
 
 \section{Execution models for unstructured meshes}
 
@@ -380,32 +424,58 @@ The software should:
 
 \subsection{Existing software}
 
+% Checklist comparing the features of the libraries, must include mesh numbering or similar
+% include sparse matrices? (not for OP2!)
+% include flexible data layouts? this is DIFFERENT to mesh numbering (PyOP2 is not flexible but can do mesh numbering via node sets)
+% swap rows and cols?
+% \begin{table}
+%   \begin{tabular}{|l|l|}
+%     \hline
+%     % Flexible? Support for numbering?
+%     Software & Distributed memory & GPU support \\
+%     \hline
+%     Liszt \\
+%     \hline
+%     Simit \\
+%     \hline
+%     Ebb \\
+%     \hline
+%     OP2 \\
+%     \hline
+%     \pyop2 \\
+%     \hline
+%   \end{tabular}
+%
+%   \caption{TODO}
+%   \label{tab:capabilities}
+% \end{table}
+
 A number of packages exist that already meet most or all of these requirements:
 
 \paragraph{Liszt}{
-  is a \gls{dsl} embedded in Scala\footnotemark~\cite{devitoLisztDomainSpecific2011}.
+  is a \gls{dsl} embedded in Scala~\cite{devitoLisztDomainSpecific2011}.
   Mesh connectivity is expressed through built-in topological relations and mesh data is associated with specific topological entities.
   Liszt uses a custom mesh implementation with support for parallel partitioning and hence works in a distributed memory environment.
   Liszt is also capable of generating code for use in a multi-threaded or GPU context.
 }
 
 \paragraph{Simit}{
-  is another \gls{dsl} for mesh simulations\footnotemark[\value{footnote}]~\cite{kjolstadSimitLanguagePhysical2016}.
+  is another \gls{dsl} for mesh simulations~\cite{kjolstadSimitLanguagePhysical2016}.
   It has a unique design where mesh data structures have a dual representation: they can either be viewed as a hypergraph or as a multi-dimensional tensor.
   This enables for both mesh-like queries to be applied to the data structures as well as enabling linear algebra operations to be expressed.
   Simit is capable of targeting both CPUs and GPUs without needing to change the input code, though distributed memory computing is not available.
 }
 
 \paragraph{Ebb}{
-  is another \gls{dsl} embedded in Lua\footnotemark[\value{footnote}]~\cite{bernsteinEbbDSLPhysical2016}.
+  is another \gls{dsl} embedded in Lua~\cite{bernsteinEbbDSLPhysical2016}.
   It uses a relational database model to describe the mesh and has a 3-layer infrastructure that separates simulation code from data structure specification and different code generation targets.
   It has support for execution on GPUs but distributed memory computing is not available.
 }
 
-\footnotetext{No longer actively maintained.}
-
+% TODO: mention for these two that they are less expressive than the others.
+% TODO: How to write "C++"?
 \paragraph{OP2}{
-  Unlike the frameworks mentioned above, OP2 is an \textit{active library framework} that provides source-to-source translation from C, C\+\+ or Fortran to target a range of different backends including OpenMP, CUDA and OpenCL~\cite{mudaligeOP2ActiveLibrary2012}.
+  Unlike the frameworks mentioned above, OP2 is an \textit{active library} that provides source-to-source translation from C, C++ or Fortran to target a range of different backends including OpenMP, CUDA and OpenCL~\cite{mudaligeOP2ActiveLibrary2012}.
   OP2 uses a simplified model of a mesh where entities are represented as \textit{sets}.
   One can store data on these sets and mappings exist between sets.
   Computations are termed \textit{kernels} and are provided by the user.
@@ -418,8 +488,11 @@ A number of packages exist that already meet most or all of these requirements:
   \pyop2 currently only targets execution on CPUs though a proof-of-concept GPU extension has been created~\cite{fenics2021-kulkarni}.
   Distributed memory computing is supported and \pyop2 can also assemble sparse matrices with PETSc~\cite{petsc-web-page,petsc-user-ref,petsc-efficient}.
 }
+% Not flexible:
+  % "Whilst appropriate for a great many operations, there are occasions where one needs to be able to execute multiple kernels or have nested loops - for example when developing certain types of preconditioners (e.g. \cite{gibsonSlateExtendingFiredrake2020}, \cite{farrellPCPATCHSoftwareTopological2021}).
+  % "In these cases one has to extend the compiler in a sui-generis manner to achieve the desired result, resulting in code that is harder to maintain and not composable with other features.
 
-\subsection{Limitations}
+\subsection{Data layout limitations}
 
 \begin{figure}
   \centering
@@ -430,43 +503,34 @@ A number of packages exist that already meet most or all of these requirements:
   }
   \label{fig:scott_vogelius_element_dof_layout_pyop2}
 \end{figure}
-% in fig pyop2:
-    "Each function space is stored in a separate array and topological information is not available." This lets us use 10x2 and 6x1 N-dim arrays for the storage at the cost of losing top. info
 
-OP2 and \pyop2 are limited in their expressive power by the decision to admit a single entry point to the libraries.
-They both only work for the case where a single computational kernel is being executed inside a single loop.
-Whilst appropriate for a great many operations, there are occasions where one needs to be able to execute multiple kernels or have nested loops - for example when developing certain types of preconditioners (e.g. \cite{gibsonSlateExtendingFiredrake2020}, \cite{farrellPCPATCHSoftwareTopological2021}).
-In these cases one has to extend the compiler in a sui-generis manner to achieve the desired result, resulting in code that is harder to maintain and not composable with other features.
+% * Liszt, Simit and Ebb are very flexible but they all tie data structures to topological entities. Data layouts
+%   like SV element one are not expressible as it requires interleaving/mesh numbering is not possible.
+%   * also unnatural to treat function spaces like this.
+% * old:
+  % "All of the frameworks described above have had to make a tradeoff between expressivity and flexibility (?).
+  % Liszt, Simit and Ebb are considerably more flexible than either of OP2 or \pyop2 because they can execute any program written in their respective \glspl{dsl}."
 
-% TODO: get the wording right...
-% * difficult to write/program in because sets are not totally natural (esp. when we have node sets) (bookkeeping job of developer)
-Further, the set-and-mapping design of the libraries can be difficult to reason about
-This imposes additional burden on the library's users who must be responsible for the bookkeeping to correctly handle the mappings between sets.
+% * OP2/PyOP2 (and Simit and Ebb?) use a set model that does not have this restriction (i.e. node sets) (ref figure)
+%   * however this makes the code hard to reason about as info is getting thrown away, also makes things hard to compose.
+% * old:
+% Further, the treatment of data as belonging to sets can lead to information being discarded.
+% Considering the data layout shown in \cref{fig:scott_vogelius_element_dof_layout}, \pyop2 would store it as a tuple of two \textit{node sets} (\cref{fig:scott_vogelius_element_dof_layout_pyop2}).
+% Compared with the ``lossless" representation in \cref{fig:scott_vogelius_element_dof_layout}, this approach simplifies the implementation because the data can now be stored as 2 rectangular arrays with shapes \pycode{(10, 2)} and \pycode{(6, 1)}.
+% However, this approach \textit{discards topological information}: the ``Mesh" layer of the representation is gone.
+% This means that the library user has to do the bookkeeping to correctly handle the mappings from mesh entities to nodes.
 
-Considering the data layout shown in \cref{fig:scott_vogelius_element_dof_layout}, \pyop2 would store represent it as a tuple of two \textit{node sets} (\cref{fig:scott_vogelius_element_dof_layout_pyop2}).
-Compared with the ``lossless" representation in \cref{fig:scott_vogelius_element_dof_layout}, this approach simplifies the implementation because the data can now be stored as 2 rectangular arrays with shapes \pycode{(10, 2)} and \pycode{(6, 1)}.
-However, this simplified view discards topological information - the ``Mesh" layer of the representation is gone - meaning that the library user has to do the bookkeeping to correctly handle the mappings from mesh entities to nodes.
+\subsection{The missing abstraction}
 
-% Simit Ebb Liszt are fine for this, but they are doomed to fail because:...
-    \textbf{Custom mesh representations}
-    Despite boasting much richer and expressive abstractions to OP2 and \pyop2, the execution models of Liszt, Simit and Ebb accomplish this via the introduction of their own custom mesh representations.
-    This choice causes certain challenges:
-    (a) Poor interoperability with existing software,
-    (b) Unrelated but essential mesh operations (e.g. I/O, parallel distribution) must be reimplemented. This results in a maintainence burden that is unsustainable, as evidenced by the fact that none of the listed projects are still maintained.
+Clearly, there is something missing here.
+The designs of the existing libraries all require that one either use topological information in a simplified way - associating data with particular mesh entities only - or that one take ownership of the data, discarding topological information that is helpful for having a composable abstraction.
+To get around this difficulty we have developed a new abstraction for data layouts, termed \textit{axis trees}, that bridges the gap between these worlds.
+Axis trees allow the user to describe complex data layouts of the sort shown in \cref{fig:scott_vogelius_element_dof_layout} fully, without needing to discard any of the topological information.
+As a convenient side benefit, expressing data layout transformations (\cref{sec:data_layout_transformations}) becomes natural to do.
 
-% maybe also talk about data layout considerations? could reference the data layout for SV elem
-
-\subsection{\pyop3}
-
-
-To address the gap between the simpler, more compatible execution models of OP2 and \pyop2 with the expressivity of Liszt, Simit and Ebb, we have developed a new library: \pyop3.
+The axis tree abstraction is included in the new Python library \pyop3.
 \pyop3 is a near-total rewrite of \pyop2 that aims to substantially improve its expressivity power and composability.
-Core to this contribution is the development of a novel data structure descriptor, the \textit{axis tree} (\cref{chapter:mesh_data_layouts}), that extends \pyop2's lossy set representation such that it is capable of fully describing complex mesh data layouts such as that shown in \cref{fig:scott_vogelius_element_dof_layout}.
-
-% NOTE: reword? link to PETSc earlier?
-
-% Compatibility with existing libraries is an explicit goal of the library, and hence we are MPI parallel by default (section 6) and support a wide range of sparse matrix types.
-% There is also scope for GPU support in future, again most of the work has been done for us.
+It has support for distributed memory parallelism and integrates with PETSc.
 
 \section{Thesis outline}
 
