@@ -1,0 +1,192 @@
+\documentclass[thesis]{subfiles}
+
+\begin{document}
+
+\chapter{Foundations}
+\label{chapter:foundations}
+
+% TODO: Reference the checklist from the previous chapter
+
+% NOTE: This is sooo hard to write well.
+\pyop3 was created to be a successor to \pyop2, and so it is instructive to review how \pyop2 works and identify any shortcomings.
+We will then review a number of libraries whose abstractions capture the missing behaviour.
+
+\section{\pyop2}
+% NOTE: should mention partial GPU support (cite Kaushik)
+% NOTE: should mention extruded (then mention at end of doc)
+
+Just like \pyop3, \pyop2 is an execution model for the application of compact computational kernels over unstructured meshes~\cite{rathgeberPyOP2HighLevelFramework2012}.
+It was introduced to provide the same abstractions as OP2~\cite{mudaligeOP2ActiveLibrary2012} but using runtime code generation instead of source-to-source translation.
+It is a core component of the Firedrake finite element framework~\cite{FiredrakeUserManual}.
+
+\subsection{Data structures}
+
+\pyop2 has no innate concept of what an unstructured mesh is.
+Instead, topological entities are treated as \textit{sets}, with \textit{mappings} between the different sets.
+
+There are 3 different types of data structures defined in \pyop2: globally constant values, vectors and matrices.
+These are termed \pycode{Globals}, \pycode{Dats} and \pycode{Mats} respectively.
+
+For more complex problems like the Stokes equations in \cref{sec:stokes_equations} the \glspl{dof} are associated with multiple types of topological entity.
+In \cref{fig:scott_vogelius_element_P3} for example the unknowns are associated with the cell, edges and vertices.
+This means that one has to associate the \glspl{dof} for that function space with a distinct \textit{node set}, rather than a set for a particular topological entity.
+As a consequence, the data structures do not know to what topological entity they refer and the library user must take responsibility for constructing the right maps from, say, cells to nodes.
+
+\subsection{Loops}
+
+In order to apply kernels to these data structures, a \textit{parallel loop} (\pycode{par_loop}) is constructed and executed.
+The loop takes as arguments a \textit{local kernel}, \textit{iteration set} and zero or more \textit{arguments} that provide the data structures needed by the local kernel.
+
+% arguments may need map from iteration set to its own (node) set, also accessors
+
+
+An example loop statement is shown in \cref{fig:pyop2_parloop}.
+
+\subsection{Code generation}
+
+\begin{figure}
+  \includegraphics{pyop2_codegen_flowchart.pdf}
+  \caption{Simplified code generation pathway for a \pyop2 parallel loop.}
+  \label{fig:pyop2_codegen}
+\end{figure}
+
+Having constructed a parallel loop, \pyop2 generates low-level code that may then be executed.
+
+The code generation pipeline is summarised in \cref{fig:pyop2_codegen}...
+
+% loopy
+% explain loopy's programming model of kernel plus transformations. It is fundamentally
+% very similar to how high level mathematical DSLs like UFL work except for loops.
+
+% loopy lets us do vectorisation (cite Sun)
+
+\subsection{Parallel execution}
+
+% ghost points
+% interleave computation and communication
+
+% NOTE: This is an acceptable repeat of the sorts of things said in chapter 1.
+\subsection{Limitations}
+
+% composability (loses topo. info)
+% expressibility
+% sui-generis sometimes
+
+% NOTE: Or make this about PETSc instead?
+\section{DMPlex}
+
+% generally introduce PETSc as well in a few sentences (matrices, vectors, solvers, massively parallel, GPU support)
+% * DMPlex
+  % * layouts with petscsection
+
+% data layouts on meshes
+  % stencils
+    % stencils in dmplex, topological query language
+
+% TODO: MUST talk about mesh renumbering here, also parallel stuff (SF)
+% No, parallel can be later, just mention here that the mesh is distributed and
+% point to the parallel chapter.
+% Numbering can reference the FEM pseudo-code - we need cellwise data to be "close"
+
+% \subsubsection{Representing data layouts with DMPlex}
+%
+% DMPlex represents a mesh as a set of points where the points are divided into \textit{strata} (cells, edges, vertices, etc).
+% These points are connected in a graph (Hasse diagram) and a rich set of queries can be used to determine the right adjacencies needed for things like the finite element method.
+%
+% In order to associated data with these mesh points, a typical PETSc application will construct a PETSc \ccode{Section}.
+% These are simple CSR-like (?) data structures that encode a data layout by associating a particular number of DoFs with each mesh point.
+% Sections are a powerful tool for describing data layouts but they have a number of limitations:
+%
+% \begin{itemize}
+%   \item
+%     Sections are fully ragged.
+%     They only store DoF information per point in a completely unstructured way and are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
+%     This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) that it would have been able to do were it to know of a constant loop extent.
+%     Additionally, this variable size increases memory pressure as redundant arrays of constant sizes need to be streamed through memory.
+%
+%   \item
+%     DoFs per point are treated as a flat array.
+%     This means that shape information is lost for, say, vector-valued functions.
+% \end{itemize}
+%
+% With PETSc/DMPlex, the P3 DoF layout would be represented as shown in Figure~\ref{???}.
+% % figure showing PetscSection info
+
+% End the section by showing some pseudocode for FEM assembly
+
+\section{numpy}
+
+% (cite paper, search for "citing numpy")
+% although not a JIT, numpy is important for introducing ergonomic ways of
+% expressing array computations
+% there are some numpy JIT options out there: JAX, pytato, pytorch?
+
+\subsection{N-dimensional arrays}
+
+The key abstraction introduced by numpy is the \textit{N-dimensional array}, or \pycode{ndarray}.
+
+% shape
+% broadcast operations
+
+% implemented as a header and a buffer
+% stride information (for views)
+
+%TODO: cleanup
+\subsection{Indexing arrays}
+\label{sec:numpy_indexing_arrays}
+
+\begin{table}
+  \centering
+
+  \begin{tabular}{|l|l|l|l|}
+    \hline
+    \textbf{Index operation} & \textbf{Example} & \textbf{Return value} & \textbf{Array return type} \\
+    \hline
+    Single element indexing & \pycode{array[1]} & \pycode{"B"} & N/A \\
+    \hline
+    Slicing & \pycode{array[1:6:2]} & \pycode{["B", "D", "F"]} & View \\
+    \hline
+    Integer array indexing & \pycode{array[[0, 3, 4]]} & \pycode{["A", "D", "E"]} & Copy \\
+    \hline
+  \end{tabular}
+
+  \caption{
+    Common indexing operations for numpy arrays.
+    The examples shown apply the index to the string array \pycode{["A", "B", "C", "D", "E", "F"]} (called \pycode{array} above).
+    The array return type for single element indexing is marked as ``N/A" because a string is returned instead of an array.
+  }
+  \label{tab:numpy_indexing_ops}
+\end{table}
+
+Broadcasting operations, that handle the entire array monolithically, are not adequate for many programs.
+numpy, therefore, allows for array \textit{indexing}, where portions of the full array are extracted to yield a new array.
+
+Some of the ways that a numpy array may be indexed are shown in \cref{tab:numpy_indexing_ops}:
+
+\begin{itemize}
+  \item \textbf{Single element indexing}
+
+    Single element indexing takes an integer and simply returns the value stored at that point.
+
+  \item \textbf{Slicing}
+
+    Slices are a standard Python concept for describing ranges of indices and have the syntax \pycode{[start:stop:step]}.
+    Omitting \pycode{start}, \pycode{stop} or \pycode{step} will default to 0, the end of the array, and 1 respectively.
+    In the example shown in \cref{tab:numpy_indexing_ops} the slice \pycode{[1:6:2]} corresponds to asking for ``the values in the array from index 1 (inclusive) to index 6 (exclusive), striding by 2".
+
+  \item \textbf{Integer array indexing}
+
+    Integer array indexing returns a new array containing values stored at the requested indices, for the example in \cref{tab:numpy_indexing_ops} this simply being 0, 3 and 4.
+
+\end{itemize}
+
+Although the examples provided are all for a 1-dimensional array, it is completely permissible to index N-dimensional arrays with a collection of these indexing operations, one per axis of the array.
+This collection of indices is termed a \textit{multi-index}.
+
+numpy draws a distinction between ``basic" indexing, single element indexing and slicing, and ``advanced" indexing like using integer arrays.
+For the former, the array returned from the indexing operation is a \textit{view}, whereas for the latter a \textit{copy} is returned.
+Alongside the obvious memory advantages, views are also preferable to copies because they are \textit{composable}.
+One can take views of views repeatedly without triggering a copy, allowing for changes to the indexed array to be propagated back to the original.
+In \pyop3, as well as generalising the indexing operations above to axis trees, we overcome this shortcoming of numpy's advanced indexing such that views are always used regardless of the indexing method used.
+
+\end{document}

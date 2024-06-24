@@ -17,6 +17,7 @@
 \section{The problem domain: calculations involving mesh iteration}
 
 \subsection{A motivating example: solving the Stokes equations using the finite element method}
+\label{sec:stokes_equations}
 
 As an introductory example to a calculation requiring iterating over a mesh, we consider solving the Stokes equations using the \gls{fem}.
 Our exposition will focus on the aspects of the computation that are relevant for \pyop3, for a more complete review of \gls{fem} we refer the reader to~\cite{brennerMathematicalTheoryFinite2008} and~\cite{larsonFiniteElementMethod2013}.
@@ -296,6 +297,7 @@ shown in \cref{fig:lagrange_element_2_basis}.
   %
   \begin{subfigure}{.4\textwidth}
     \includegraphics{lagrange_element_3_vec.pdf}
+    \label{fig:scott_vogelius_element_P3}
   \end{subfigure}
   %
   \hfill
@@ -395,6 +397,25 @@ This creates a separation of concerns between the framework maintainers, who spe
 In addition to the step-change in programmer productivity, high-level abstractions also facilitate advanced performance optimisations that would be very difficult to implement for a low-level code.
 Sometimes, high-level algorithmic changes (discretisation, solver, etc) are required to achieve acceptable performance on a given machine and having a high-level of abstraction means that tweaking these options is minimally invasive \parencite{betteridgeCodeGenerationProductive2021}.
 Further, having a high-level representation of the problem enables optimisations best expressed at the level of the mathematics that would otherwise be very challenging to implement (e.g.~\cite{homolyaExposingExploitingStructure2017}).
+
+% inspector-executor model?
+% inspector-executor model. cite Saltz and Strout
+% two programs, an inspector that generates a schedule, and an executor that uses it. Executor
+% is a transformed original program.
+% these aim to improve data locality and parallelisation opportunities.
+% important point is that I/E strategies utilise runtime information to generate optimal schedules
+% this is very important for unstructured applications where the compilers would have a really hard time!
+\cite{stroutSparsePolyhedralFramework2018} % review article
+\cite{mirchandaneyPrinciplesRuntimeSupport1988} % old (general purpose) example
+\cite{arenazInspectorExecutorAlgorithmIrregular2004} % fem example but specifically parallelisation
+% perhaps also cite Luporini for sparse tiling? yes I think that would be good.
+% Interesting note: composing inspector-executor transformations is difficult.
+% see "The Sparse Polyhedral Framework: Composing Compiler-Generated Inspector-Executor Code"
+% DSLs like loopy and pyop3 can make this easier to handle.
+% mesh numbering is an example of an inspector-executor thing.
+% so is determining core and owned to overlap communication and computation
+% DSLs help a lot to implement this sort of thing because transformations can be a lot easier to
+% express using a high-level representation.
 
 For the unstructured mesh traversal operation we are interested in, we need an abstraction that:
 

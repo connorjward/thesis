@@ -9,64 +9,6 @@ Instead, what more commonly happens is the array is restricted to a smaller piec
 This operation is almost universally referred to as \textit{array indexing}.
 In this chapter we introduce the necessary abstractions and algorithms required to index axis trees in \pyop3.
 
-% TODO: Move to background section
-\section{A primer: indexing numpy arrays}
-\label{sec:indexing_numpy_arrays}
-
-\begin{table}
-  \centering
-
-  \begin{tabular}{|l|l|l|l|}
-    \hline
-    \textbf{Index operation} & \textbf{Example} & \textbf{Return value} & \textbf{Array return type} \\
-    \hline
-    Single element indexing & \pycode{array[1]} & \pycode{"B"} & N/A \\
-    \hline
-    Slicing & \pycode{array[1:6:2]} & \pycode{["B", "D", "F"]} & View \\
-    \hline
-    Integer array indexing & \pycode{array[[0, 3, 4]]} & \pycode{["A", "D", "E"]} & Copy \\
-    \hline
-  \end{tabular}
-
-  \caption{
-    Common indexing operations for numpy arrays.
-    The examples shown apply the index to the string array \pycode{["A", "B", "C", "D", "E", "F"]} (called \pycode{array} above).
-    The array return type for single element indexing is marked as ``N/A" because a string is returned instead of an array.
-  }
-  \label{tab:numpy_indexing_ops}
-\end{table}
-
-% NOTE: Too casual "does things".
-Just as axis trees can be regarded as a generalisation of numpy arrays, indexing arrays in \pyop3 is, as far as possible, analogous to indexing operations in numpy.
-Before diving into how \pyop3 does things it is therefore instructive to review how indexing is done in numpy.
-
-Some of the ways that a numpy array may be indexed are shown in \cref{tab:numpy_indexing_ops}:
-
-\begin{itemize}
-  \item \textbf{Single element indexing}
-
-    Single element indexing takes an integer and simply returns the value stored at that point.
-
-  \item \textbf{Slicing}
-
-    Slices are a standard Python concept for describing ranges of indices and have the syntax \pycode{[start:stop:step]}.
-    Omitting \pycode{start}, \pycode{stop} or \pycode{step} will default to 0, the end of the array, and 1 respectively.
-    In the example shown in \cref{tab:numpy_indexing_ops} the slice \pycode{[1:6:2]} corresponds to asking for ``the values in the array from index 1 (inclusive) to index 6 (exclusive), striding by 2".
-
-  \item \textbf{Integer array indexing}
-
-    Integer array indexing returns a new array containing values stored at the requested indices, for the example in \cref{tab:numpy_indexing_ops} this simply being 0, 3 and 4.
-
-\end{itemize}
-
-Although the examples provided are all for a 1-dimensional array, it is completely permissible to index N-dimensional arrays with a collection of these indexing operations, one per axis of the array.
-
-numpy draws a distinction between ``basic" indexing, single element indexing and slicing, and ``advanced" indexing like using integer arrays.
-For the former, the array returned from the indexing operation is a \textit{view}, whereas for the latter a \textit{copy} is returned.
-Alongside the obvious memory advantages, views are also preferable to copies because they are \textit{composable}.
-One can take views of views repeatedly without triggering a copy, allowing for changes to the indexed array to be propagated back to the original.
-In \pyop3, as well as generalising the indexing operations above to axis trees, we overcome this shortcoming of numpy's advanced indexing such that views are always used regardless of the indexing method used.
-
 \section{Index trees}
 \label{sec:index_trees}
 

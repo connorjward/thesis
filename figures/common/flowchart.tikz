@@ -1,0 +1,23 @@
+\tikzstyle{flowchartnode} = [
+  draw=black,
+  align=center,
+  anchor=west,
+  font=\footnotesize,
+  text centered,
+  minimum height=.8cm,
+];
+\tikzstyle{process} = [
+  flowchartnode,
+  rectangle,
+  rounded corners,
+  fill=red!70,
+];
+\tikzstyle{io} = [
+  flowchartnode,
+  trapezium,
+  trapezium left angle=70,
+  trapezium right angle=110,
+  fill=blue!30,
+  trapezium stretches=true,
+];
+\tikzstyle{arrow} = [-{stealth}];

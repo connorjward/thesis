@@ -5,6 +5,16 @@
 \chapter{Mesh-like data layouts}
 \label{chapter:mesh_data_layouts}
 
+% TODO: mention taichi in this chapter somewhere as a similar project, maybe also TACO (and SPF?)
+
+% % AoS-SoA etc? (taichi)
+% \textbf{Taichi} is a programming language embedded in C\+\+ for operating on complex data structures~\cite{huTaichiLanguageHighperformance2019}.
+% Just like \pyop3, Taichi declares data structures hierarchically and the data layout is kept distinct from the operations applied to them.
+% Taichi has no concept of a mesh, and it does not work on distributed machines.
+% https://www.taichi-lang.org/
+% very successful!
+
+
 \pyop3 was created to provide a richer abstraction than \pyop2 for describing stencil-like operations over unstructured meshes.
 Most of the innovation in \pyop3 stems from its novel data model.
 Data structures associated with a mesh are created using more information about the mesh topology.
