@@ -32,10 +32,14 @@ In \cref{fig:scott_vogelius_element_P3} for example the unknowns are associated 
 This means that one has to associate the \glspl{dof} for that function space with a distinct \textit{node set}, rather than a set for a particular topological entity.
 As a consequence, the data structures do not know to what topological entity they refer and the library user must take responsibility for constructing the right maps from, say, cells to nodes.
 
+% ghost points
+
 \subsection{Loops}
 
 In order to apply kernels to these data structures, a \textit{parallel loop} (\pycode{par_loop}) is constructed and executed.
 The loop takes as arguments a \textit{local kernel}, \textit{iteration set} and zero or more \textit{arguments} that provide the data structures needed by the local kernel.
+
+% mention loopy here briefly (cref{sec:pyop2_codegen})
 
 % arguments may need map from iteration set to its own (node) set, also accessors
 
@@ -43,6 +47,7 @@ The loop takes as arguments a \textit{local kernel}, \textit{iteration set} and 
 An example loop statement is shown in \cref{fig:pyop2_parloop}.
 
 \subsection{Code generation}
+\label{sec:pyop2_codegen}
 
 \begin{figure}
   \includegraphics{pyop2_codegen_flowchart.pdf}
@@ -50,19 +55,55 @@ An example loop statement is shown in \cref{fig:pyop2_parloop}.
   \label{fig:pyop2_codegen}
 \end{figure}
 
-Having constructed a parallel loop, \pyop2 generates low-level code that may then be executed.
+\begin{figure}
+  \centering
+  \begin{subfigure}{.49\textwidth}
+    \begin{pylisting}
+      knl = loopy.make_kernel(
+        "{ [i]: 0 <= i < n }",  # domains
+        "y[i] = 2*x[i]",        # instructions
+        [                       # arguments
+          loopy.GlobalArg("x", dtype=float),
+          loopy.GlobalArg("y", dtype=float),
+          loopy.ValueArg("n", dtype=int),
+        ],
+      )
+    \end{pylisting}
+    \caption{Python code to construct the kernel. Some arguments to \pycode{make_kernel} have been omitted for simplicity.}
+    \label{fig:loopy_codegen_kernel}
+  \end{subfigure}
+  %
+  \begin{subfigure}{.49\textwidth}
+    \inputminted[fontsize=\footnotesize]{c}{./scripts/artefacts/loopy_example_c_code_tidy.c}
+    \caption{The generated C code.}
+    \label{fig:loopy_codegen_c}
+  \end{subfigure}
 
-The code generation pipeline is summarised in \cref{fig:pyop2_codegen}...
+  \caption{
+    An example loopy kernel.
+    The kernel takes two array arguments, \pycode{x} and \pycode{y}, and sets the values in \pycode{y} to twice those in \pycode{x}.
+    Both arrays have the same unknown length \pycode{n} which is also passed in to the kernel as an argument.
+  }
+  \label{fig:loopy_codegen}
+\end{figure}
 
-% loopy
-% explain loopy's programming model of kernel plus transformations. It is fundamentally
-% very similar to how high level mathematical DSLs like UFL work except for loops.
+The code generation pipeline is summarised in \cref{fig:pyop2_codegen}.
+Having constructed a parallel loop, \pyop2 executes it by first lowering the loop object through a sequence of intermediate representations before compiling and running the generated low-level code.
 
-% loopy lets us do vectorisation (cite Sun)
+The first intermediate representation is loopy~\cite{klocknerLooPyTransformationbased2014}, a polyhedral model inspired Python code generation library.
+
+With loopy, the main entry point is the declaration of a \pycode{LoopKernel}.
+To construct such a kernel, the user needs to specify \textit{domains}, \textit{instructions} and \textit{arguments}.
+An example loopy kernel is shown in \cref{fig:loopy_codegen_kernel}, with the generated C string shown in \cref{fig:loopy_codegen_c}.
+
+% TODO: talk about GPUs
+loopy is capable of generating code for multiple backends including CPUs and GPUs and so \pyop2 targeting loopy should, in principle, allow the same \pyop2 code to target different architectures.
+
+% TODO: talk about vectorisation (cite TJ)
+Once a \pycode{LoopKernel} has been created, loopy also provides a wealth of different code transformations such as loop tiling, vectorisation and loop-invariant code motion.
 
 \subsection{Parallel execution}
 
-% ghost points
 % interleave computation and communication
 
 % NOTE: This is an acceptable repeat of the sorts of things said in chapter 1.

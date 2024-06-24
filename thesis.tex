@@ -34,7 +34,11 @@
   % settings for all minted environments
   % https://tex.stackexchange.com/questions/25190/defining-a-command-for-a-minted-environment
   \newminted[pyalg]{python}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
-  \newenvironment{env}{\VerbatimEnvironment\begin{pyalg}}{\end{pyalg}}
+  % \newenvironment{env}{\VerbatimEnvironment\begin{pyalg}}{\end{pyalg}}
+
+  % this is the same but in principle I think actual code vs algorithms could be different
+  \newminted[pylisting]{python}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
+  % \newenvironment{env}{\VerbatimEnvironment\begin{pylisting}}{\end{pylisting}}
 
 % code overlay: https://tex.stackexchange.com/questions/287549/is-it-possible-to-use-tikzmark-inside-minted
 \usepackage{tikz}

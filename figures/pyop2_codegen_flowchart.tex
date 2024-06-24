@@ -14,20 +14,16 @@
 
 \node (pyop2) [io] at (start) {Parallel loop};
 \node (lower_pyop2) [process] at ($(pyop2.east)+(\xshift,0)$) {Lower parallel loop\\to loopy kernel};
-\node (transform_loopy) [process] at ($(lower_pyop2.east)+(\xshift,0)$) {Transform loopy kernel};
-
-\node (compiled_function) [io] at ($(start)+(0,\yshift)$) {Compiled function};
-\node (compile_code) [process] at ($(compiled_function.east)+(\xshift,0)$) {Compile C string};
-\node (lower_loopy) [process] at ($(compile_code.east)+(\xshift,0)$) {Lower loopy kernel\\to C string};
+\node (lower_loopy) [process] at ($(lower_pyop2.east)+(\xshift,0)$) {Lower loopy kernel\\to C string};
+\node (compile_code) [process] at ($(lower_loopy.east)+(\xshift,0)$) {Compile C string};
+\node (compiled_function) [io] at ($(compile_code.east)+(\xshift,0)$) {Compiled function};
 
 \draw [arrow] (pyop2) -- (lower_pyop2);
-\draw [arrow] (lower_pyop2) -- (transform_loopy);
+\draw [arrow] (lower_pyop2) -- (lower_loopy);
 \draw [arrow] (lower_loopy) -- (compile_code);
 \draw [arrow] (compile_code) -- (compiled_function);
 
-\draw [arrow] (transform_loopy.east) to [bend right=60] (lower_loopy.east);
-
-\draw [arrow,densely dashed] (pyop2.west) to [bend left=60] node[midway,left,align=center,font=\footnotesize] {Call with data from\\parallel loop} (compiled_function.west);
+\draw [arrow,densely dashed] (pyop2.north) to [bend right=15] node[midway,above,align=center,font=\footnotesize] {Call with data from\\parallel loop} (compiled_function.north);
 
 \end{tikzpicture}
 \end{document}
