@@ -81,6 +81,43 @@ An example of such a distribution is shown in Figure~\ref{???}.
 
 \section{Overlapping computation and communication}
 
+% NOTE: reference sec:pyop2_parallel. I mention that two concepts are conflated: data partitioning and iteration set partitioning.
+% in pyop3 we split into owned+ghost (data) and core+noncore (iterset)
+
+% "BUT...
+% (express as a limitation, rather than a mistake.)
+\begin{itemize}
+  \item
+    \textbf{The iteration is conflated with the data layout}\\
+    ...
+    For instance, it is not possible to perform parallel loops using larger stencils because the \textit{core}-\textit{owned} split is different.
+    Embedding the iteration set into the data layout means that the underlying sets of the data structures are invalid.
+
+  \item
+    \textbf{The parallel decomposition is assumed to be the same for all data structures}\\
+    It is not always the case that all data structures will be defined on the same mesh (e.g. mesh transfer operations).
+    In such a case the algorithms used to determine \textit{core} and \textit{owned} points no longer work because the algorithm does not take into account the parallel decomposition of the other mesh.
+    \textit{Core} points on one mesh may be \textit{ghost} in another, and hence the \textit{core} points ought to be labelled \textit{owned}.
+\end{itemize}
+
+These limitations suggest a new approach: the partitioning of data and the partitioning of the iteration set should be \textit{distinct processes}.
+In \pyop3 we adopt the following new terminology:
+
+\begin{itemize}
+  \item
+    Data structures (axis trees) are partitioned into \textit{owned} and \textit{ghost} points with all \textit{owned} points being stored contiguously before the \textit{ghost} points.
+
+  \item
+    Loop expression iteration sets are split into \textit{core} and \textit{non-core} sets.
+    This partitioning is established by running over the iteration set and checking the access pattern for all arguments.
+    If any of the arguments require halo data then the iteration point is classified as \textit{non-core}.
+    All remaining points are then classified \textit{core}.
+    %Rather than being contiguous, the indices are split into two ordered and interleaved subsets. % easy to implement!
+    As ghost points are not iterated over they are not included in the subsets.
+\end{itemize}
+
+% store ghost points at the end because we need to build local vector
+
 \begin{figure}
   \begin{subfigure}{\textwidth}
     \includegraphics{iterset_partition_cell}

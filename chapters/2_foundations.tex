@@ -32,8 +32,6 @@ In \cref{fig:scott_vogelius_element_P3} for example the unknowns are associated 
 This means that one has to associate the \glspl{dof} for that function space with a distinct \textit{node set}, rather than a set for a particular topological entity.
 As a consequence, the data structures do not know to what topological entity they refer and the library user must take responsibility for constructing the right maps from, say, cells to nodes.
 
-% ghost points
-
 \subsection{Loops}
 
 In order to apply kernels to these data structures, a \textit{parallel loop} (\pycode{par_loop}) is constructed and executed.
@@ -103,36 +101,149 @@ loopy is capable of generating code for multiple backends including CPUs and GPU
 Once a \pycode{LoopKernel} has been created, loopy also provides a wealth of different code transformations such as loop tiling, vectorisation and loop-invariant code motion.
 
 \subsection{Parallel execution}
+\label{sec:pyop2_parallel}
 
-% interleave computation and communication
+% NOTE: closure is novel concept...
+\begin{figure}
+  \centering
+  \includegraphics{pyop2_split_mesh.pdf}
+  \caption{
+    \pyop2 entity classes for a mesh distributed between 2 processes.
+    Points belonging to process 1 (left) are shown in red and points belonging to process 2 (right) are shown in blue.
+    \textit{Ghost} points are indicated by points whose colour match the other process, \textit{owned} points are faded and the rest are labelled \textit{core}.
+    We assume that one is only computing cell-wise integrals on the mesh and so the mesh overlap need only contain enough ghost points to ensure that all the cells have a complete closure.
+  }
+  \label{fig:pyop2_split_mesh}
+\end{figure}
+
+\begin{algorithm}
+  \begin{verbatim}
+Trigger required halo exchanges
+FOR EACH item IN iterset.core:
+  compute(item)
+
+Await halo exchanges
+FOR EACH item IN iterset.owned:
+  compute(item)
+  \end{verbatim}
+  \caption{The \pyop2 parallel loop execution algorithm to interleave computation and communication.}
+  \label{alg:pyop2_comp_comm_overlap}
+\end{algorithm}
+
+By keeping careful track of the parallel decomposition of sets, \pyop2 is capable of interleaving computation and communication when executing parallel loops.
+To do so each set is split into 3 parts:
+
+\begin{itemize}
+  \item \textit{Core}: Set elements that do not require any data from other processes during a parallel loop.
+
+  \item \textit{Owned}: Set elements that belong to the current process but do require data from other processes.
+
+  \item \textit{Ghost}: Set elements present on a process that belong to another process.
+\end{itemize}
+
+% NOTE: closure is a new term here
+The number of \textit{ghost} points is known to the mesh already, as it has knowledge of its overlap.
+To determine the \textit{core} and \textit{owned} partitions one loops over the cells of a mesh and inspecting all the points in the closure of the cell.
+If any of the points in the closure are \textit{ghost}, then all other points in the closure are marked as \textit{owned}.
+Any remaining points without a label are labelled \textit{core}.
+An example partitioning of a distributed mesh into \textit{core}, \textit{owned} and \textit{ghost} points is shown in \cref{fig:pyop2_split_mesh}.
+
+From this partitioning it is possible to interleave computation and communication.
+Computations over points marked \textit{core} are not influenced by any ghost data and so can proceed before ghost data has been communicated. \textit{Owned} points need to have up-to-date ghost data and so must wait for all communication to be completed before beginning.
+This is shown in \cref{alg:pyop2_comp_comm_overlap}.
 
 % NOTE: This is an acceptable repeat of the sorts of things said in chapter 1.
 \subsection{Limitations}
 
-% composability (loses topo. info)
-% expressibility
-% sui-generis sometimes
+% NOTE: Not sure I have anything to actually ref here
+As mentioned in \cref{sec:???}, \pyop2 is negatively affected by a number of design choices that limit its suitability:
 
-% NOTE: Or make this about PETSc instead?
-\section{DMPlex}
+% NOTE: bad spacing
+\paragraph{Poor composability}{
+  Associating mesh data with \textit{node sets} discards topological information and places a burden on the library user to keep track of the relations between the mesh topology and the nodes.
+}
 
-% generally introduce PETSc as well in a few sentences (matrices, vectors, solvers, massively parallel, GPU support)
-% * DMPlex
-  % * layouts with petscsection
+\paragraph{Inflexible interface}{
+  Not all mesh operations are expressible as a single kernel executed within a single loop over entities.
+  Algorithms for physics-based preconditioners such as hybridisation~\cite{gibsonSlateExtendingFiredrake2020} and additive Schwartz methods~\cite{farrellPCPATCHSoftwareTopological2021} involve multiple kernels and nested loops and so implementing them required sui-generis additions to \pyop2 that are difficult to extend.
+  It would be preferable to have an abstraction for mesh computations that was sufficiently flexible for these algorithms to be expressible.
+}
 
-% data layouts on meshes
-  % stencils
-    % stencils in dmplex, topological query language
+\pyop3 aims to resolve both of these limitations with \pyop2 by rethinking the core abstractions.
+The design of a number of libraries were used as inspiration for approaches to solving these problems.
+These will be reviewed below.
+
+\section{Relating unknowns to mesh topology: DMPlex}
+
+To tackle the problem of composability - sets discarding information about mesh topology - we look to DMPlex, an abstraction for unstructured meshes.
+% * DMPlex is part of PETSc, a toolkit for...
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics{two_cell_mesh.pdf}
+  \end{subfigure}
+  %
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics{dmplex_hasse.pdf}
+  \end{subfigure}
+  \caption{TODO, mention Hasse diagram}
+  \label{fig:dmplex_hasse}
+\end{figure}
+
+With DMPlex, an unstructured mesh is represented as a \gls{dag} (\cref{fig:dmplex_hasse}).
+All topological entities are referred to as \textit{points}, with each entity type belonging to a particular \textit{strata} of the overall \gls{dag}.
+By treating all entities as points, DMPlex is capable of expressing unstructured meshes of any dimension.
+
+% rich query language
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics{dmplex_hasse_cone.pdf}
+    \caption{$\cone(0) = \{6,7,8\}$}
+  \end{subfigure}
+  %
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics{dmplex_hasse_support.pdf}
+    \caption{$\support(8) = \{0,1\}$}
+  \end{subfigure}
+
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics{dmplex_hasse_closure.pdf}
+    \caption{$\closure(0) = \{0,6,7,8,2,3,4\}$}
+  \end{subfigure}
+  %
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics{dmplex_hasse_star.pdf}
+    \caption{$\plexstar(3) = \{3,7,8,9,0,1\}$}
+  \end{subfigure}
+
+  \caption{
+    The possible DMPlex covering queries applied to the Hasse diagram from Figure~\ref{fig:dmplex_hasse}.
+  }
+  \label{fig:dmplex_queries}
+\end{figure}
 
 % TODO: MUST talk about mesh renumbering here, also parallel stuff (SF)
 % No, parallel can be later, just mention here that the mesh is distributed and
 % point to the parallel chapter.
 % Numbering can reference the FEM pseudo-code - we need cellwise data to be "close"
 
-% \subsubsection{Representing data layouts with DMPlex}
+\subsection{Representing data layouts with DMPlex}
+% * DMPlex
+  % * layouts with petscsection
+
+% data layouts on meshes
+  % stencils
+    % stencils in dmplex, topological query language
 %
-% DMPlex represents a mesh as a set of points where the points are divided into \textit{strata} (cells, edges, vertices, etc).
-% These points are connected in a graph (Hasse diagram) and a rich set of queries can be used to determine the right adjacencies needed for things like the finite element method.
 %
 % In order to associated data with these mesh points, a typical PETSc application will construct a PETSc \ccode{Section}.
 % These are simple CSR-like (?) data structures that encode a data layout by associating a particular number of DoFs with each mesh point.
@@ -155,7 +266,7 @@ Once a \pycode{LoopKernel} has been created, loopy also provides a wealth of dif
 
 % End the section by showing some pseudocode for FEM assembly
 
-\section{numpy}
+\section{A language for structured data: numpy}
 
 % (cite paper, search for "citing numpy")
 % although not a JIT, numpy is important for introducing ergonomic ways of

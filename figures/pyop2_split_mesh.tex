@@ -2,7 +2,7 @@
 \input{figures/common/preamble}
 
 \begin{document}
-\begin{tikzpicture}
+\begin{tikzpicture}[scale=1.5]
 
 \newcommand{\defMeshOne}{
   \tkzDefPoint(0,0){p1v0}
@@ -148,7 +148,7 @@
   \drawEdgeOne{p1v3}{p1v7}
   \drawEdgeOne{p1v7}{p1v11}
   \drawEdgeOneGhost{p1v11}{p1v15}
-  \drawEdgeTwoGhost{p1v8}{p1v12}
+  \drawEdgeOneGhost{p1v8}{p1v12}
   % \drawEdgeTwoGhost{p1v9}{p1v13}
   \drawEdgeTwoGhost{p1v10}{p1v14}
 
@@ -239,7 +239,7 @@
   \drawEdgeTwo{p2v9}{p2v10}
   \drawEdgeTwo{p2v10}{p2v11}
 
-  \drawEdgeTwoGhost{p2v0}{p2v4}
+  % \drawEdgeTwoGhost{p2v0}{p2v4}
   \drawEdgeTwo{p2v4}{p2v8}
   \drawEdgeTwo{p2v8}{p2v12}
   \drawEdgeTwoGhost{p2v1}{p2v5}
@@ -271,7 +271,7 @@
   \drawVertTwoGhost{p2v5}
   \drawVertTwoGhost{p2v6}
   \drawVertTwoGhost{p2v7}
-  \drawVertOneGhost{p2v0}
+  % \drawVertOneGhost{p2v0}
   \drawVertOneGhost{p2v1}
   \drawVertOneGhost{p2v2}
   % \drawVertOneGhost{p2v3}

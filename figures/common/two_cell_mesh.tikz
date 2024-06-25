@@ -33,3 +33,19 @@
   \tkzLabelPoint[below](v2){$v_2$}
   \tkzLabelPoint[right](v3){$v_3$}
 }
+
+\newcommand{\labelTwoCellMeshPlex}{%
+  \tkzLabelPoint[left](c0){0}
+  \tkzLabelPoint[right](c1){1}
+
+  \tkzLabelPoint[above left](e0){6}
+  \tkzLabelPoint[below left](e1){7}
+  \tkzLabelPoint[left](e2){8}
+  \tkzLabelPoint[above right](e3){9}
+  \tkzLabelPoint[below right](e4){10}
+
+  \tkzLabelPoint[left](v0){2}
+  \tkzLabelPoint[above](v1){3}
+  \tkzLabelPoint[below](v2){4}
+  \tkzLabelPoint[right](v3){5}
+}

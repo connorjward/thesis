@@ -13,7 +13,7 @@
   \newacronym{pde}{PDE}{partial differential equation}
   % \newacronym[shortplural={FLOPs},longplural={floating-point operations}]
   %   {flop}{FLOP}{floating-point operation}
-  % \newacronym{dag}{DAG}{directed acyclic graph}
+  \newacronym{dag}{DAG}{directed acyclic graph}
   % \newacronym{dg}{DG}{discontinous Galerkin}
   % \newacronym{poset}{poset}{partially-ordered set}
   % \newacronym{rcm}{RCM}{reverse Cuthill-McKee}
@@ -26,6 +26,9 @@
 % ============================== MATHS ==============================
 
 % DMPlex
+% source: https://tex.stackexchange.com/questions/650034/mathbb-font-for-lowercase-letters
+\usepackage[bb=libus]{mathalpha}
+
 \newcommand{\closure}{\mathbb{cl}}
 \newcommand{\support}{\mathbb{supp}}
 \newcommand{\plexstar}{\mathbb{st}}

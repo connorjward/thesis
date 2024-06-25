@@ -1,0 +1,57 @@
+\newcommand{\drawHasse}{
+
+\tikzmath{
+  \width = 7cm;
+}
+
+\begin{scope}[auto,every node/.style={circle,minimum size=20pt,draw,color=black,fill=white}]
+  \begin{scope}[yshift=0cm]
+    \node (0) [xshift={1*\width/3}] {0};
+    \node (1) [xshift={2*\width/3}] {1};
+  \end{scope}
+
+  \begin{scope}[yshift=2cm]
+    \node (6) [xshift={1*\width/6}] {6};
+    \node (7) [xshift={2*\width/6}] {7};
+    \node (8) [xshift={3*\width/6}] {8};
+    \node (9) [xshift={4*\width/6}] {9};
+    \node (10) [xshift={5*\width/6}] {10};
+  \end{scope}
+
+  \begin{scope}[yshift=4cm]
+    \node (2) [xshift={1*\width/5}] {2};
+    \node (3) [xshift={2*\width/5}] {3};
+    \node (4) [xshift={3*\width/5}] {4};
+    \node (5) [xshift={4*\width/5}] {5};
+  \end{scope}
+
+  \draw [-Stealth] (0) -- (6);
+  \draw [-Stealth] (0) -- (7);
+  \draw [-Stealth] (0) -- (8);
+  \draw [-Stealth] (1) -- (8);
+  \draw [-Stealth] (1) -- (9);
+  \draw [-Stealth] (1) -- (10);
+  \draw [-Stealth] (6) -- (2);
+  \draw [-Stealth] (6) -- (3);
+  \draw [-Stealth] (7) -- (2);
+  \draw [-Stealth] (7) -- (4);
+  \draw [-Stealth] (8) -- (3);
+  \draw [-Stealth] (8) -- (4);
+  \draw [-Stealth] (9) -- (3);
+  \draw [-Stealth] (9) -- (5);
+  \draw [-Stealth] (10) -- (4);
+  \draw [-Stealth] (10) -- (5);
+\end{scope}
+
+}
+
+\def\drawWrapper#1,#2;{
+  \begin{pgfonlayer}{background}
+      \filldraw[line width=28,join=round](#1.center)foreach\A in{#2}{--(\A.center)}--cycle;
+      \filldraw[line width=27,join=round,blue!10](#1.center)foreach\A in{#2}{--(\A.center)}--cycle;
+  \end{pgfonlayer}
+}
+
+\newcommand{\drawDashedCircle}[1]{
+  \draw [dashed] #1 circle [radius=15pt];
+}
