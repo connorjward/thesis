@@ -1,0 +1,300 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\newcommand{\defMeshOne}{
+  \tkzDefPoint(0,0){p1v0}
+  \tkzDefPoint(.1,1.1){p1v1}
+  \tkzDefPoint(0,1.9){p1v2}
+  \tkzDefPoint(.2,3.1){p1v3}
+  \tkzDefPoint(1.1,0){p1v4}
+  \tkzDefPoint(1,1){p1v5}
+  \tkzDefPoint(.9,2){p1v6}
+  \tkzDefPoint(1,3){p1v7}
+  \tkzDefPoint(2,0){p1v8}
+  \tkzDefPoint(2.1,1){p1v9}
+  \tkzDefPoint(2,2.1){p1v10}
+  \tkzDefPoint(1.9,3.2){p1v11}
+  \tkzDefPoint(3,-.1){p1v12}
+  \tkzDefPoint(3.1,.9){p1v13}
+  \tkzDefPoint(3,2.1){p1v14}
+  \tkzDefPoint(3.1,3.1){p1v15}
+}
+
+\newcommand{\defMeshTwo}{
+  \tkzDefPoint(0,0){p2v0}
+  \tkzDefPoint(.1,1){p2v1}
+  \tkzDefPoint(0,2.1){p2v2}
+  \tkzDefPoint(-.1,3.2){p2v3}
+  \tkzDefPoint(1,-.1){p2v4}
+  \tkzDefPoint(1.1,.9){p2v5}
+  \tkzDefPoint(1,2.1){p2v6}
+  \tkzDefPoint(1.1,3.1){p2v7}
+  \tkzDefPoint(2,-.1){p2v8}
+  \tkzDefPoint(2,1.1){p2v9}
+  \tkzDefPoint(2.1,2){p2v10}
+  \tkzDefPoint(2,2.9){p2v11}
+  \tkzDefPoint(3,.1){p2v12}
+  \tkzDefPoint(3.1,1){p2v13}
+  \tkzDefPoint(2.9,2){p2v14}
+  \tkzDefPoint(2.9,3.1){p2v15}
+}
+
+\newcommand{\drawCell}[4]{
+  \tkzDrawPolygon[draw=white,line width=5,fill=#4](#1,#2,#3)
+}
+
+\newcommand{\drawCellOne}[3]{
+  \drawCell{#1}{#2}{#3}{red!68}
+}
+
+\newcommand{\drawCellOneGhost}[3]{
+  \drawCell{#1}{#2}{#3}{red!34}
+}
+
+\newcommand{\drawCellTwo}[3]{
+  \drawCell{#1}{#2}{#3}{blue!68}
+}
+
+\newcommand{\drawCellTwoGhost}[3]{
+  \drawCell{#1}{#2}{#3}{blue!34}
+}
+
+\newcommand{\drawEdge}[3]{
+  \tkzDrawSegments[line width=2,shorten >=.2cm,shorten <=.2cm,draw=#3](#1,#2)
+}
+
+\newcommand{\drawEdgeOne}[2]{
+  \drawEdge{#1}{#2}{red!80}
+}
+
+\newcommand{\drawEdgeOneGhost}[2]{
+  \drawEdge{#1}{#2}{red!40}
+}
+
+\newcommand{\drawEdgeTwo}[2]{
+  \drawEdge{#1}{#2}{blue!80}
+}
+
+\newcommand{\drawEdgeTwoGhost}[2]{
+  \drawEdge{#1}{#2}{blue!40}
+}
+
+\newcommand{\drawVert}[2]{
+  \tkzDrawPoints[draw=#2,fill=#2,size=4](#1)
+}
+
+\newcommand{\drawVertOne}[1]{
+  \drawVert{#1}{red!80}
+}
+
+\newcommand{\drawVertOneGhost}[1]{
+  \drawVert{#1}{red!40}
+}
+
+\newcommand{\drawVertTwo}[1]{
+  \drawVert{#1}{blue!80}
+}
+
+\newcommand{\drawVertTwoGhost}[1]{
+  \drawVert{#1}{blue!40}
+}
+
+\tkzSetUpStyle[densely dashed,shorten >=.1cm,shorten <=.1cm,line width=.5]{connector}
+
+% process 
+\begin{scope}
+  \defMeshOne
+
+  % cells
+  \drawCellOne{p1v0}{p1v1}{p1v4}
+  \drawCellOne{p1v1}{p1v4}{p1v5}
+  \drawCellOne{p1v1}{p1v5}{p1v6}
+  \drawCellOne{p1v1}{p1v2}{p1v6}
+  \drawCellOne{p1v2}{p1v3}{p1v6}
+  \drawCellOne{p1v3}{p1v6}{p1v7}
+  \drawCellOne{p1v4}{p1v8}{p1v9}
+  \drawCellOne{p1v4}{p1v5}{p1v9}
+  \drawCellOne{p1v5}{p1v9}{p1v10}
+  \drawCellOne{p1v5}{p1v6}{p1v10}
+  \drawCellOne{p1v6}{p1v7}{p1v10}
+  \drawCellOne{p1v7}{p1v10}{p1v11}
+  \drawCellOneGhost{p1v8}{p1v9}{p1v12}
+  \drawCellOneGhost{p1v9}{p1v10}{p1v14}
+  \drawCellOneGhost{p1v10}{p1v11}{p1v15}
+  % \drawCellTwoGhost{p1v9}{p1v12}{p1v13}
+  % \drawCellTwoGhost{p1v9}{p1v13}{p1v14}
+  % \drawCellTwoGhost{p1v10}{p1v14}{p1v15}
+
+  % edges
+  \drawEdgeOne{p1v4}{p1v5}
+  \drawEdgeOne{p1v5}{p1v6}
+  \drawEdgeOne{p1v6}{p1v7}
+  \drawEdgeOneGhost{p1v8}{p1v9}
+  \drawEdgeOneGhost{p1v9}{p1v10}
+  \drawEdgeOneGhost{p1v10}{p1v11}
+  % \drawEdgeTwoGhost{p1v12}{p1v13}
+  % \drawEdgeTwoGhost{p1v13}{p1v14}
+  % \drawEdgeTwoGhost{p1v14}{p1v15}
+
+  \drawEdgeOne{p1v0}{p1v4}
+  \drawEdgeOne{p1v4}{p1v8}
+  \drawEdgeOne{p1v1}{p1v5}
+  \drawEdgeOne{p1v5}{p1v9}
+  \drawEdgeOne{p1v2}{p1v6}
+  \drawEdgeOne{p1v6}{p1v10}
+  \drawEdgeOne{p1v3}{p1v7}
+  \drawEdgeOne{p1v7}{p1v11}
+  \drawEdgeOneGhost{p1v11}{p1v15}
+  \drawEdgeTwoGhost{p1v8}{p1v12}
+  % \drawEdgeTwoGhost{p1v9}{p1v13}
+  \drawEdgeTwoGhost{p1v10}{p1v14}
+
+  \drawEdgeOne{p1v1}{p1v4}
+  \drawEdgeOne{p1v1}{p1v6}
+  \drawEdgeOne{p1v3}{p1v6}
+  \drawEdgeOne{p1v4}{p1v9}
+  \drawEdgeOne{p1v5}{p1v10}
+  \drawEdgeOne{p1v7}{p1v10}
+  \drawEdgeTwoGhost{p1v9}{p1v12}
+  \drawEdgeTwoGhost{p1v9}{p1v14}
+  \drawEdgeTwoGhost{p1v10}{p1v15}
+
+  % vertices
+  \drawVertOne{p1v4}
+  \drawVertOne{p1v5}
+  \drawVertOne{p1v6}
+  \drawVertOne{p1v7}
+  \drawVertOneGhost{p1v8}
+  \drawVertOneGhost{p1v9}
+  \drawVertOneGhost{p1v10}
+  \drawVertOneGhost{p1v11}
+  \drawVertTwoGhost{p1v12}
+  % \drawVertTwoGhost{p1v13}
+  \drawVertTwoGhost{p1v14}
+  \drawVertTwoGhost{p1v15}
+
+  % debugging
+  % \tkzLabelPoints[anchor=south,font=\tiny](p1v0,p1v1,p1v2,p1v3,p1v4,p1v5,p1v6,p1v7,p1v8,p1v9,p1v10,p1v11,p1v12,p1v13,p1v14,p1v15)
+
+  % draw a sample patch
+  % \tkzDefShiftPoint[p1v7](-.2,.2){p1v7patch}
+  % \tkzDefShiftPoint[p1v11](0,.2){p1v11patch}
+  % \tkzDefShiftPoint[p1v15](.2,.2){p1v15patch}
+  % \tkzDefShiftPoint[p1v14](.2,-.1){p1v14patch}
+  % \tkzDefShiftPoint[p1v9](.1,-.2){p1v9patch}
+  % \tkzDefShiftPoint[p1v5](-.2,-.2){p1v5patch}
+  % \tkzDefShiftPoint[p1v6](-.2,0){p1v6patch}
+  % \filldraw[draw=black,fill=black,fill opacity=.1,rounded corners=3]
+  % % \filldraw[draw=none,fill=blue,fill opacity=.4,rounded corners=2]
+  % % \filldraw[pattern={Hatch[distance=3mm,angle=45]},draw=black,rounded corners=2]
+  %   (p1v7patch) -- (p1v11patch) -- (p1v15patch) -- (p1v14patch) -- (p1v9patch) --
+  %   (p1v5patch) -- (p1v6patch) -- cycle;
+  % \draw (p1v10) circle [radius=5pt];
+  % \tkzDrawPoint[size=1pt](p1v10)
+
+  % label "core" and "owned"
+  % \node (p1core) [inner sep=0pt,xshift=-20pt,yshift=20pt] at (p1v7) {\footnotesize core};
+  % \node (p1owned) [inner sep=0pt,xshift=-10pt,yshift=20pt] at (p1v11) {\footnotesize owned};
+  % \draw [-{stealth},shorten >=4pt,shorten <=2pt] (p1core.south) -- (p1v7.north);
+  % \draw [-{stealth},shorten >=4pt,shorten <=2pt] (p1owned.south) -- (p1v11.north);
+\end{scope}
+
+\draw [dashed] (3.5,-.4) -- (3.5,3.5);
+
+% process 2
+\begin{scope}[xshift=4cm]
+  \defMeshTwo
+
+  % cells
+  % \drawCellOneGhost{p2v0}{p2v1}{p2v4}
+  % \drawCellOneGhost{p2v1}{p2v2}{p2v6}
+  % \drawCellOneGhost{p2v2}{p2v3}{p2v7}
+  \drawCellTwoGhost{p2v1}{p2v4}{p2v5}
+  \drawCellTwoGhost{p2v1}{p2v5}{p2v6}
+  \drawCellTwoGhost{p2v2}{p2v6}{p2v7}
+  \drawCellTwo{p2v4}{p2v5}{p2v8}
+  \drawCellTwo{p2v5}{p2v8}{p2v9}
+  \drawCellTwo{p2v5}{p2v6}{p2v9}
+  \drawCellTwo{p2v6}{p2v9}{p2v10}
+  \drawCellTwo{p2v6}{p2v10}{p2v11}
+  \drawCellTwo{p2v6}{p2v7}{p2v11}
+  \drawCellTwo{p2v8}{p2v9}{p2v12}
+  \drawCellTwo{p2v9}{p2v12}{p2v13}
+  \drawCellTwo{p2v9}{p2v10}{p2v13}
+  \drawCellTwo{p2v10}{p2v13}{p2v14}
+  \drawCellTwo{p2v10}{p2v14}{p2v15}
+  \drawCellTwo{p2v10}{p2v11}{p2v15}
+
+  % edges
+  % \drawEdgeOneGhost{p2v0}{p2v1}
+  % \drawEdgeOneGhost{p2v1}{p2v2}
+  % \drawEdgeOneGhost{p2v2}{p2v3}
+  \drawEdgeTwoGhost{p2v4}{p2v5}
+  \drawEdgeTwoGhost{p2v5}{p2v6}
+  \drawEdgeTwoGhost{p2v6}{p2v7}
+  \drawEdgeTwo{p2v8}{p2v9}
+  \drawEdgeTwo{p2v9}{p2v10}
+  \drawEdgeTwo{p2v10}{p2v11}
+
+  \drawEdgeTwoGhost{p2v0}{p2v4}
+  \drawEdgeTwo{p2v4}{p2v8}
+  \drawEdgeTwo{p2v8}{p2v12}
+  \drawEdgeTwoGhost{p2v1}{p2v5}
+  \drawEdgeTwo{p2v5}{p2v9}
+  \drawEdgeTwo{p2v9}{p2v13}
+  \drawEdgeTwoGhost{p2v2}{p2v6}
+  \drawEdgeTwo{p2v6}{p2v10}
+  \drawEdgeTwo{p2v10}{p2v14}
+  \drawEdgeTwo{p2v7}{p2v11}
+  \drawEdgeTwo{p2v11}{p2v15}
+  % \drawEdgeOneGhost{p2v3}{p2v7}
+
+  \drawEdgeTwoGhost{p2v1}{p2v4}
+  \drawEdgeTwoGhost{p2v1}{p2v6}
+  \drawEdgeTwoGhost{p2v2}{p2v7}
+  \drawEdgeTwo{p2v5}{p2v8}
+  \drawEdgeTwo{p2v6}{p2v9}
+  \drawEdgeTwo{p2v6}{p2v11}
+  \drawEdgeTwo{p2v9}{p2v12}
+  \drawEdgeTwo{p2v10}{p2v13}
+  \drawEdgeTwo{p2v10}{p2v15}
+
+  % vertices
+  \drawVertTwo{p2v8}
+  \drawVertTwo{p2v9}
+  \drawVertTwo{p2v10}
+  \drawVertTwo{p2v11}
+  \drawVertTwoGhost{p2v4}
+  \drawVertTwoGhost{p2v5}
+  \drawVertTwoGhost{p2v6}
+  \drawVertTwoGhost{p2v7}
+  \drawVertOneGhost{p2v0}
+  \drawVertOneGhost{p2v1}
+  \drawVertOneGhost{p2v2}
+  % \drawVertOneGhost{p2v3}
+
+  % label "core" and "owned"
+  % \node (p2core) [inner sep=0pt,xshift=15pt,yshift=20pt] at (p2v11) {\footnotesize core};
+  % \node (p2owned) [inner sep=0pt,xshift=10pt,yshift=20pt] at (p2v7) {\footnotesize owned};
+  % \draw [-{stealth},shorten >=4pt,shorten <=2pt] (p2core.south) -- (p2v11.north);
+  % \draw [-{stealth},shorten >=4pt,shorten <=2pt] (p2owned.south) -- (p2v7.north);
+
+  % debugging
+  % \tkzLabelPoints[anchor=south,font=\tiny](p2v0,p2v1,p2v2,p2v3,p2v4,p2v5,p2v6,p2v7,p2v8,p2v9,p2v10,p2v11,p2v12,p2v13,p2v14,p2v15)
+\end{scope}
+
+% connect (sample of) equivalent points
+% \draw [-{stealth},connector,shorten >=4pt,shorten <=4pt] (p1v11) to [bend left=45] (p2v3);
+% \draw [{stealth}-,connector,shorten >=4pt,shorten <=4pt] (p1v15) to [bend left=45] (p2v7);
+% \draw [-{stealth},connector,shorten >=4pt,shorten <=4pt] (p1v8) to [bend right=45] (p2v0);
+% \draw [{stealth}-,connector,shorten >=4pt,shorten <=4pt] (p1v12) to [bend right=45] (p2v4);
+
+% label processes
+% \node (p1name) at (1.5,4.2) {Process 1};
+% \node (p2name) at (6.5,4.2) {Process 2};
+
+\end{tikzpicture}
+\end{document}
