@@ -19,7 +19,7 @@
 \coordinate (aright) at ($(origin)+(2,0)$);
 
 % middle left
-\coordinate (origin) at ($(amid)+(-2.5,-2)$);
+\coordinate (origin) at ($(amid)+(-3,-2)$);
 \drawWhiteDof{(origin)}{$b_0$};
 \drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
 
@@ -31,7 +31,7 @@
 \coordinate (b02) at ($(origin)+(2,0)$);
 
 % middle right
-\coordinate (origin) at ($(amid)+(.5,-2)$);
+\coordinate (origin) at ($(amid)+(1,-2)$);
 \drawWhiteDof{(origin)}{$b_0$};
 \drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
 
@@ -43,13 +43,13 @@
 \coordinate (b12) at ($(origin)+(2,0)$);
 
 % bottom p0 (1)
-\coordinate (origin) at ($(b00)+(-.25,-2)$);
+\coordinate (origin) at ($(b00)+(0,-2)$);
 \drawWhiteDof{(origin)}{$c_0$};
 \draw [connector] (b00) -- ($(origin)+(0,1)$);
 \draw [connector] (b01) -- ($(origin)+(1,1)$);
 
 % bottom p1 (0)
-\coordinate (origin) at ($(b01)+(-.25,-2)$);
+\coordinate (origin) at ($(b01)+(0,-2)$);
 \draw ($(origin)+(.5,.5)$) node[cross] {};
 \draw [connector] ($(b01)+(.5,0)$) -- ($(origin)+(.5,.5)$);
 

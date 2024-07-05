@@ -1,0 +1,127 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/data_layout.tikz}
+
+\newcommand{\drawMeshAxis}{
+  \drawVertDof{(origin)}{$v_0$}
+  \drawVertDof{($(origin)+(1,0)$)}{$v_1$}
+  \drawVertDof{($(origin)+(2,0)$)}{$v_2$}
+  \drawEdgeDof{($(origin)+(3,0)$)}{$e_0$}
+  \drawEdgeDof{($(origin)+(4,0)$)}{$e_1$}
+  \drawEdgeDof{($(origin)+(5,0)$)}{$e_2$}
+  \drawCellDof{($(origin)+(6,0)$)}{$c_0$}
+}
+
+% spaces
+\coordinate (origin) at (6.5,6);
+
+\drawWhiteDof{(origin)}{$V_h$}
+\drawWhiteDof{($(origin)+(1,0)$)}{$Q_h$}
+
+\coordinate (space0) at (origin);
+\coordinate (space1) at ($(origin)+(1,0)$);
+\coordinate (space2) at ($(origin)+(2,0)$);
+
+% Vh mesh
+\coordinate (origin) at (0,4);
+\drawMeshAxis
+\draw [connector] (space0) -- ($(origin)+(0,1)$);
+\draw [connector] (space1) -- ($(origin)+(7,1)$);
+\coordinate (vh0) at (origin);
+\coordinate (vh1) at ($(origin)+(1,0)$);
+\coordinate (vh2) at ($(origin)+(3,0)$);
+\coordinate (vh3) at ($(origin)+(4,0)$);
+\coordinate (vh4) at ($(origin)+(6,0)$);
+\coordinate (vh5) at ($(origin)+(7,0)$);
+
+% Qh mesh
+\coordinate (origin) at (8,4);
+\drawMeshAxis
+\draw [connector] (space1) -- ($(origin)+(0,1)$);
+\draw [connector] (space2) -- ($(origin)+(7,1)$);
+\coordinate (qh0) at (origin);
+\coordinate (qh1) at ($(origin)+(1,0)$);
+\coordinate (qh2) at ($(origin)+(3,0)$);
+\coordinate (qh3) at ($(origin)+(4,0)$);
+\coordinate (qh4) at ($(origin)+(6,0)$);
+\coordinate (qh5) at ($(origin)+(7,0)$);
+
+% Vh vertex nodes
+\coordinate (origin) at (0,2);
+\drawWhiteDof{(origin)}{$n_0$}
+\draw [connector] (vh0) -- ($(origin)+(0,1)$);
+\draw [connector] (vh1) -- ($(origin)+(1,1)$);
+\coordinate (vhv0) at (origin);
+\coordinate (vhv1) at ($(origin)+(1,0)$);
+
+% Vh edge nodes
+\coordinate (origin) at (2.5,2);
+\drawWhiteDof{(origin)}{$n_0$}
+\drawWhiteDof{($(origin)+(1,0)$)}{$n_1$}
+\draw [connector] (vh2) -- ($(origin)+(0,1)$);
+\draw [connector] (vh3) -- ($(origin)+(2,1)$);
+\coordinate (vhe0) at (origin);
+\coordinate (vhe1) at ($(origin)+(1,0)$);
+
+% Vh cell nodes
+\coordinate (origin) at (6,2);
+\drawWhiteDof{(origin)}{$n_0$}
+\draw [connector] (vh4) -- ($(origin)+(0,1)$);
+\draw [connector] (vh5) -- ($(origin)+(1,1)$);
+\coordinate (vhc0) at (origin);
+\coordinate (vhc1) at ($(origin)+(1,0)$);
+
+% Vh vertex vec
+\coordinate (origin) at (-.5,0);
+\drawWhiteDof{(origin)}{$d_0$}
+\drawWhiteDof{($(origin)+(1,0)$)}{$d_1$}
+\draw [connector] (vhv0) -- ($(origin)+(0,1)$);
+\draw [connector] (vhv1) -- ($(origin)+(2,1)$);
+
+% Vh edge vec
+\coordinate (origin) at (2,0);
+\drawWhiteDof{(origin)}{$d_0$}
+\drawWhiteDof{($(origin)+(1,0)$)}{$d_1$}
+\draw [connector] (vhe0) -- ($(origin)+(0,1)$);
+\draw [connector] (vhe1) -- ($(origin)+(2,1)$);
+
+% Vh cell vec
+\coordinate (origin) at (5.5,0);
+\drawWhiteDof{(origin)}{$d_0$}
+\drawWhiteDof{($(origin)+(1,0)$)}{$d_1$}
+\draw [connector] (vhc0) -- ($(origin)+(0,1)$);
+\draw [connector] (vhc1) -- ($(origin)+(2,1)$);
+
+% Qh vertex nodes
+\coordinate (origin) at (8,2);
+\drawCross{($(origin)+(.5,.5)$)}
+\draw [connector] ($(qh0)+(.5,0)$) -- ($(origin)+(.5,.5)$);
+
+% Qh edge nodes
+\coordinate (origin) at (11,2);
+\drawCross{($(origin)+(.5,.5)$)}
+\draw [connector] ($(qh2)+(.5,0)$) -- ($(origin)+(.5,.5)$);
+
+% Qh cell nodes
+\coordinate (origin) at (12.5,2);
+\drawWhiteDof{(origin)}{$n_0$}
+\drawWhiteDof{($(origin)+(1,0)$)}{$n_1$}
+\drawWhiteDof{($(origin)+(2,0)$)}{$n_2$}
+\drawWhiteDof{($(origin)+(3,0)$)}{$n_3$}
+\drawWhiteDof{($(origin)+(4,0)$)}{$n_4$}
+\drawWhiteDof{($(origin)+(5,0)$)}{$n_5$}
+\draw [connector] (qh4) -- ($(origin)+(0,1)$);
+\draw [connector] (qh5) -- ($(origin)+(6,1)$);
+
+% labels
+\node [ptlabel] at (-2,6.5) {Spaces};
+\node [ptlabel] at (-2,4.5) {Points};
+\node [ptlabel] at (-2,2.5) {Nodes};
+\node [ptlabel] at (-2,.5) {Components};
+
+\end{tikzpicture}
+\end{document}

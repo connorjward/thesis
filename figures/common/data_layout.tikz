@@ -65,3 +65,7 @@
 \newcommand{\drawConnector}[2]{
   \draw [connector] #1 -- #2;
 }
+
+\newcommand{\labelLayoutAxis}[1]{
+  \node [at={(-1.8,\yshift+.5)},fill=none] {#1};
+}

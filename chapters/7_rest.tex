@@ -30,16 +30,25 @@
 % all about minimising memory bandwidth, aim for roofline peak at all points
 % I need to implement the map compression algorithm (generically)
 
+\chapter{Performance results}
+
+% Run on Pyramus or Thisbe
+% There are 3 possible performance bottlenecks in assembly: payload transfer (pyop3) and the computation and matrix insertion (neither pyop3)
+% so we want to check only the first of these
+
+% experiment 1: assemble((f0+f1+f2+f3+...)*v*dx)
+% * stresses memory bandwidth (minimal computational payload)
+% * we are memory bound but ought to be near roofline
+% * can compare with and without additional map payload
+
+% experiment 2: slope limiter style problem
+% * DG0 -> CG1, set vertex to max of surrounding cells
+% * shows off ragged behaviour as patches are ragged
+
+% NOTE: Could possibly include scaling plots but these need to trigger a halo update every step as otherwise
+% worthless. Hard to prove that strong-scaling is relevant/might be slow elsewhere.
+
 \chapter{Summary}
-
-% NOTE: Probably best to put elsewhere to be honest - can reference elements when they become relevant
-% NOTE: What makes pyop3 really stand out here is the amount of code reuse it achieves - PETSc stuff and loopy.
-\section{Comparison to related work}
-
-% NOTE: I think a comparison to Simit, Ebb and Liszt would be geniunely useful here, as they perform 
-% effectively the same job:
-% NOTE: Not sure about this now. I think my introduction gives me scope to differentiate
-% pyop3 at an earlier point.
 
 %pyop3 is like Ebb and Simit, but the data model is chosen to truly unify PETSc and N-dim arrays. We get maths-y optimisations that the others don't have, like mesh numbering and storing edge and vertex data together and mixed-type things. (plus obvs distributed parallel)
 %
@@ -55,6 +64,7 @@
 \section{Future work}
 \label{sec:future_work}
 
+% sparse data structures - already done a proof of concept, provide index array, we are already CSR so this is straightforward to do
 % GPUs, vectorisation (\cref{sec:codegen_loopy_kernel})
 % Hanging nodes: AMR? hp-adaptivity
 % orientations?

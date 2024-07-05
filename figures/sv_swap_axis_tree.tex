@@ -1,0 +1,63 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}[remember picture]
+
+\input{figures/common/tree.tikz}
+
+\drawTreeNode{(field)}{(5,6)}{
+  \pycode{"space"}: \{ \component{field0}{\pycode{"Vh"}: \pycode{1}}, \component{field1}{\pycode{"Qh"}: \pycode{1}} \}
+};
+
+
+\drawTreeNode{(vhdim)}{(4,4)}{\pycode{"component"}: \{ \component{vhdimp0}{\pycode{2}} \}};
+\underlineComponent{field}{field0};
+\drawTreeConnector{field}{field0}{(vhdim)};
+
+\drawTreeNode{(qhdim)}{(8,4)}{\pycode{"component"}: \{ \component{qhdimp0}{\pycode{1}} \}};
+\underlineComponent{field}{field1};
+\drawTreeConnector{field}{field1}{(qhdim)};
+
+\drawTreeNode{(mesh0)}{(0,2)}{
+  \pycode{"mesh"}: \{ \component{mesh00}{\pycode{"vertex"}: \pycode{3}}, \component{mesh01}{\pycode{"edge"}: \pycode{3}}, \component{mesh02}{\pycode{"cell"}: \pycode{1}} \}
+};
+\underlineComponentNarrow{vhdim}{vhdimp0};
+\drawTreeConnector{vhdim}{vhdimp0}{(mesh0)};
+
+\drawTreeNode{(vdof0)}{(-.2,0)}{\pycode{"node"}: \{ \component{vdofp0}{\pycode{1}} \}};
+\underlineComponent{mesh0}{mesh00};
+\drawTreeConnector{mesh0}{mesh00}{(vdof0)};
+
+\drawTreeNode{(edof0)}{(2.6,0)}{\pycode{"node"}: \{ \component{edofp0}{\pycode{2}} \}};
+\underlineComponent{mesh0}{mesh01};
+\drawTreeConnector{mesh0}{mesh01}{(edof0)};
+
+\drawTreeNode{(cdof0)}{(5.4,0)}{\pycode{"node"}: \{ \component{cdofp0}{\pycode{1}} \}};
+\underlineComponent{mesh0}{mesh02};
+\drawTreeConnector{mesh0}{mesh02}{(cdof0)};
+
+\drawTreeNode{(mesh1)}{(8.5,2)}{
+  \pycode{"mesh"}: \{ \component{mesh10}{\pycode{"vertex"}: \pycode{3}}, \component{mesh11}{\pycode{"edge"}: \pycode{3}}, \component{mesh12}{\pycode{"cell"}: \pycode{1}} \}
+};
+\underlineComponentNarrow{qhdim}{qhdimp0};
+\drawTreeConnector{qhdim}{qhdimp0}{(mesh1)};
+
+\coordinate (origin) at (8.5,0);
+
+\drawTreeNode{(vdof1)}{(origin)}{\pycode{"node"}: \{ \pycode{0} \}};
+\underlineComponent{mesh1}{mesh10};
+\drawTreeConnector{mesh1}{mesh10}{(vdof1)};
+
+\drawTreeNode{(edof1)}{($(origin)+(2.8,0)$)}{\pycode{"node"}: \{ \pycode{0} \}};
+\underlineComponent{mesh1}{mesh11};
+\drawTreeConnector{mesh1}{mesh11}{(edof1)};
+
+\drawTreeNode{(cdof1)}{($(origin)+(2*2.8,0)$)}{\pycode{"node"}: \{ \pycode{6} \}};
+\underlineComponent{mesh1}{mesh12};
+\drawTreeConnector{mesh1}{mesh12}{(cdof1)};
+
+\end{tikzpicture}
+\end{document}

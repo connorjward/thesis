@@ -57,3 +57,10 @@
 
 % https://tex.stackexchange.com/questions/33486/aligning-inside-tabular-environment-specific-cell
 \newcommand{\tableDash}{\multicolumn{1}{c|}{\pycode{-}}}
+
+% checkbox
+% source https://tex.stackexchange.com/questions/16000/creating-boxed-check-mark
+\usepackage{amssymb}
+\newcommand{\unchecked}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}$\quad$}}
+\newcommand{\checked}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}$\checkmark$}}
+\newcommand{\maybe}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}?}}

@@ -1,0 +1,50 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/star_forest_abstract.tikz}
+
+% -------------------------------------
+
+\tkzDefPoint(0,0){root}
+\node [rootpoint] at (root) {};
+\labelPoint{root}{2}{.3}{.05}
+
+\tkzDefShiftPoint[root](125:2){leaf}
+\draw [arrow] (leaf) -- (root);
+\node [ghostpoint] at (leaf) {};
+\labelPoint{leaf}{0}{-.3}{.05}
+
+\tkzDefShiftPoint[root](65:2){leaf}
+\draw [arrow] (leaf) -- (root);
+\node [ghostpoint] at (leaf) {};
+\labelPoint{leaf}{1}{.3}{.05}
+
+% -------------------------------------
+
+\tkzDefPoint(2,-.3){root}
+\node [rootpoint] at (root) {};
+\labelPoint{root}{0}{.3}{.05}
+
+\tkzDefShiftPoint[root](80:2){leaf}
+\draw [arrow] (leaf) -- (root);
+\node [ghostpoint] at (leaf) {};
+\labelPoint{leaf}{1}{.3}{.05}
+
+% -------------------------------------
+
+\tkzDefPoint(4.1,.1){root}
+\node [rootpoint] at (root) {};
+\labelPoint{root}{0}{.3}{.05}
+
+\tkzDefShiftPoint[root](105:2){leaf}
+\draw [arrow] (leaf) -- (root);
+\node [ghostpoint] at (leaf) {};
+\labelPoint{leaf}{1}{.3}{.05}
+
+% -------------------------------------
+
+\end{tikzpicture}
+\end{document}

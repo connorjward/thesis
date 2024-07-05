@@ -48,6 +48,7 @@ Currently \pycode{Dats} use numpy arrays as the underlying data storage mechanis
 They rely on PETSc \ccode{Mat} objects for the underlying data storage.
 To improve performance one should preallocate the matrix by constructing a \pycode{Sparsity} object and doing a simulated run of all the loop expressions so that non-zeros are put in the right places.
 
+% NOTE: This sort of thing needs to be clearer - we index axis trees, so they have two...
 Since \pycode{Mats} have two axis trees, two indices are needed when indexing.
 
 \section{The domain-specific language}

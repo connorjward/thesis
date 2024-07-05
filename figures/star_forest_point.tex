@@ -1,18 +1,10 @@
 \documentclass[tikz]{standalone}
-
-\usepackage{tkz-euclide}
-\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+\input{figures/common/preamble}
 
 \begin{document}
-
 \begin{tikzpicture}
 
 \input{figures/common/star_forest.tikz}
-
-\tikzstyle {eghost} = [edge,dashed];
-\tikzstyle {divider} = [dashed];
-
-\tikzstyle {arrow} = [line width=.8pt,-{Stealth[sep=4pt]}];
 
 % specific to point SF
 \tikzstyle {point} = [minimum size=7pt,draw=black,line width=1pt];
@@ -28,7 +20,7 @@
 \end{scope}
 
 % unified
-\begin{scope}[xshift=7.8cm,yshift=0.4cm]
+\begin{scope}[xshift=7.8cm]
   \defSplitMesh
   \drawSplitMesh
 
@@ -48,5 +40,4 @@
 \end{scope}
 
 \end{tikzpicture}
-
 \end{document}

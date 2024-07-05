@@ -1,0 +1,23 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/star_forest_abstract.tikz}
+
+\tkzDefPoint(0,0){root}
+\node [rootpoint] at (root) {};
+\labelPoint{root}{0}{-.15}{-.15}
+
+\def\angles{{0,30,70,120,195,290}}
+
+\foreach \rank in {1,...,6} {
+  \tkzDefShiftPoint[root](\angles[\rank-1]:2){leaf}
+  \draw [arrow] (leaf) -- (root);
+  \node [ghostpoint] at (leaf) {};
+  \labelPoint{leaf}{\rank}{.3}{.05}
+}
+
+\end{tikzpicture}
+\end{document}

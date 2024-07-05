@@ -3,6 +3,7 @@
 \tikzstyle {edge} = [draw=black,line width=1pt];
 \tikzstyle {eghost} = [edge,dashed];
 \tikzstyle {divider} = [dashed];
+\tikzstyle {arrow} = [line width=.8pt,-{Stealth[sep=4pt]}];
 
 \newcommand{\drawTwoCellMeshDivider}{%
   % dividing lines

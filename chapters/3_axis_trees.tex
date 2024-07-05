@@ -2,207 +2,201 @@
 
 \begin{document}
 
-\chapter{Mesh-like data layouts}
-\label{chapter:mesh_data_layouts}
+\chapter{Describing mesh-like data layouts}
+\label{chapter:axis_trees}
 
-% TODO: mention taichi in this chapter somewhere as a similar project, maybe also TACO (and SPF?)
-
-% % AoS-SoA etc? (taichi)
-% \textbf{Taichi} is a programming language embedded in C\+\+ for operating on complex data structures~\cite{huTaichiLanguageHighperformance2019}.
-% Just like \pyop3, Taichi declares data structures hierarchically and the data layout is kept distinct from the operations applied to them.
-% Taichi has no concept of a mesh, and it does not work on distributed machines.
-% https://www.taichi-lang.org/
-% very successful!
-
-
-\pyop3 was created to provide a richer abstraction than \pyop2 for describing stencil-like operations over unstructured meshes.
-Most of the innovation in \pyop3 stems from its novel data model.
-Data structures associated with a mesh are created using more information about the mesh topology.
-This lays the groundwork for a much more expressive DSL since more of the semantics are captured/represented.
-
-% TODO: Also discuss the data model which is DMPlex + Section. It's ragged
-% and cannot tell if things are cells or edges etc. Supports renumbering.
-% Both DMPlex and PyOP2 are not able to flexibly add further shape.
-% Maybe this section needs a bit of a reordering, do we introduce axis trees and then compare
-% to PyOP2/DMPlex or do we introduce the latter two and describe their shortcomings?
-
-\begin{figure}
-  \centering
-  \includegraphics{two_cell_mesh_lagrange.pdf}
-  \caption{TODO}
-  \label{fig:two_cell_mesh_lagrange}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \includegraphics{two_cell_mesh_lagrange_nodal.pdf}
-  \caption{TODO}
-  \label{fig:two_cell_mesh_lagrange_nodal}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \includegraphics{two_cell_mesh_lagrange_data_layout_flat.pdf}
-  \caption{TODO}
-  \label{fig:two_cell_mesh_lagrange_data_layout_flat}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \includegraphics{two_cell_mesh_lagrange_data_layout_flat_nodal.pdf}
-  \caption{TODO}
-  \label{fig:two_cell_mesh_lagrange_data_layout_flat_nodal}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \includegraphics{two_cell_mesh_lagrange_data_layout_nested.pdf}
-  \caption{TODO}
-  \label{fig:two_cell_mesh_lagrange_data_layout_nested}
-\end{figure}
-
-The semantics for data kept on a mesh are not accurately captured by existing array abstractions.
-
-% TODO does this go here? background?
-Classic existing abstractions include N-dimensional array, ragged arrays and struct-of-arrays.
-
-To provide a motivating example, consider the mesh shown in \cref{fig:two_cell_mesh_lagrange}. % P3 quad would look good
-Degree 3 Lagrange elements have been used and these have 1 DoF per vertex, 2 per edge and 1 per cell.
-DoFs are always stored contiguously per mesh point, and so the data layout for this mesh would look something like that shown in \cref{fig:YYY}.  % data layout of the mesh
-It is clear that, due to the variable step size for each mesh point, an N-dimensional array (with N > 1) is a poor fit for describing the layout.
-One could also view the data as just a flat array (figure ZZZ), but this loses the information about the mesh points.  % just show a diagram where nodes are indistinguishable
-We can therefore conclude that mesh data layouts require a new abstraction for comprehensively describing their semantics: \textit{axis trees}.
+As we have seen thus far, existing software abstractions for mesh-like data layouts are limited by their ability to describe complex layouts without discarding important topological information.
+\pyop3 addresses this by introducing a new data layout abstraction: \textit{axis trees}.
 
 \section{Axis trees}
+\label{sec:axis_trees}
 
 \begin{figure}
   \centering
-  %
-  \begin{subfigure}{.6\textwidth}
+  \includegraphics{sv_data_tree.pdf}
+  \caption{Tree-like representation of the data layout shown in \cref{fig:scott_vogelius_dof_layout}.}
+  \label{fig:sv_data_tree}
+\end{figure}
+
+If we again consider the data layout for the Scott-Vogelius element (\cref{fig:scott_vogelius_dof_layout}) it can be observed that the data layout naturally decomposes into a tree-like structure.
+This is shown in \cref{fig:sv_data_tree}.
+
+% Needs more
+Using an axis tree, \pyop3 is capable of capturing this structure entirely (\cref{fig:axis_tree}).
+
+\begin{itemize}
+  \item
+    An axis tree is composed of a hierarchy of \textit{axes}.
+
+  \item
+    Each axis has one or more \textit{axis components}.
+
+  \item
+    Each axis may either be the \textit{root} axis, or have a \textit{parent} consisting of the 2-tuple (parent axis, parent component).
+
+  \item
+    Both axes and components are equipped with a \textit{label}.
+    If an axis only has a single component then the component's label may be omitted.
+
+  \item
+    With these labels, one can uniquely describe a particular \textit{path} going down the tree from root to leaf.
+    To give an example from \cref{fig:two_cell_mesh_lagrange_axis_tree}, one could select the DoFs associated with the edges by passing the path (as a mapping): \pycode{{ "mesh": "edge", "dof": None }}.
+
+  \item
+    Axis component labels must be unique within an axis, and axis labels must be unique within each possible path leading from root to leaf.
+
+  \item
+    Axis trees are immutable. Applying transformations to an existing tree always returns a new object.
+\end{itemize}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{.49\textwidth}
     \centering
-    \includegraphics{two_cell_mesh_lagrange_axis_tree.pdf}
-    \caption{
-      TODO.
-      For simplicity the component labels for the \textit{dof} subaxes have been omitted.
-    }
-    \label{fig:two_cell_mesh_lagrange_axis_tree}
+    \includegraphics{linear_data_tree.pdf}
   \end{subfigure}
-  %
-  \vspace{1em}
-  %
-  \begin{subfigure}{\textwidth}
+  \begin{subfigure}{.49\textwidth}
     \centering
-    \begin{minted}{python}
-axes = AxisTree.from_nest({
-  Axis({"cell": 2, "vertex": 4, "edge": 5}, "mesh"): [
-    Axis(1, "dof"),  # cell DoFs
-    Axis(1, "dof"),  # vertex DoFs
-    Axis(2, "dof"),  # edge DoFs
-  ]
-})
-    \end{minted}
-    \caption{TODO}
-    \label{fig:two_cell_mesh_lagrange_code}
+    \includegraphics{linear_axis_tree.pdf}
   \end{subfigure}
-  %
   \caption{
-    The axis tree representing the data layout for mesh data corresponding to that shown in \cref{fig:two_cell_mesh_lagrange}.
-    Note that the data has not been reordered here (see \cref{sec:renumbering}).
+    Data layout (left) and axis tree (right) equivalent to a numpy array with shape \pycode{(2, 3, 2)}.
+    The axes have been given the arbitrary labels $a$, $b$ and $c$ that correspond to axes 0, 1 and 2 of the equivalent numpy array respectively.
+    Axis component labels have been omitted as there is only a single component per axis and hence there is no ambiguity.
   }
-  \label{fig:two_cell_mesh_lagrange_pyop3}
+  \label{fig:numpy_axis_tree}
 \end{figure}
 
-From \cref{fig:YYY} it can be observed that the data layout naturally decomposes into a tree-like structure.
-For every class of topological entity (i.e. vertex, edge or cell) there is a distinct number of DoFs associated with it.
+In the same way as numpy, \pyop3 uses the term \textit{axis} to refer to a particular dimension of an array.
+Indeed, it is straightforward to construct an axis tree equivalent to a numpy \pycode{ndarray} (\cref{fig:numpy_axis_tree}).
+The axes in such axis trees are only permitted to have a single component, and hence they are referred to as \textit{linear} axis trees.
 
-Typically, this structural information is discarded.
-\pyop3, however, is capable of capturing this information through using the concept of an \textit{axis tree}.
-
-And axis tree is composed of a hierarchy of \textit{axes}, and each axis has one or more \textit{axis components}.
-Each axis may either be the \textit{root} axis, with no parent, or it has a parent consisting of the 2-tuple $(\textrm{parent axis}, \textrm{parent component})$.
-In other words each subaxis is attached to a particular axis, component pair like, say, the cells of a mesh.
-
-To uniquely identify axes and components, they are both equipped with a \textit{label}.
-With these labels, one can uniquely describe a particular \textit{path} going down the tree from root to leaf.
-To give an example from \cref{fig:two_cell_mesh_lagrange_axis_tree}, one could select the DoFs associated with the edges by passing the path (as a mapping): \pycode{{ "mesh": "edge", "dof": None }}.
-The keys of the mapping are the axis labels and the values are the component labels.
-\pycode{None} is permissible for the \pycode{"dof"} axis because there is only a single component, and hence no ambiguity.
-Axis component labels must be unique within an axis, and axis labels must be unique within each possible path leading from root to leaf.
-
-% not sure where this goes.
-The notion of an \textit{axis} has already been well established by numpy.
-If we consider a 3-dimensional numpy array with shape \pycode{(3, 4, 5)}, each dimension of the array is considered to be an axis.
-One can for instance change the order in which the array is traversed by specifying the axes via a \pycode{transpose} call (e.g. \pycode{numpy.transpose(array, (2, 0, 1))}).
-
-\subsection{Examples}
-\label{sec:axis_tree_examples}
-
-\subsubsection{Vector-valued function spaces}
-
-\begin{figure}
-  \centering
-  %
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics{vector_axis_tree.pdf}
-    \caption{TODO}
-    \label{fig:vector_axis_tree}
-  \end{subfigure}
-  %
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics{vector_data_tree.pdf}
-    \caption{TODO}
-    \label{fig:vector_data_tree}
-  \end{subfigure}
-  %
-  \caption{TODO}
-  \label{fig:vector_axis_data_tree}
-\end{figure}
-
-% show tree and dof layout for mesh coordinates (2D) truncated
-% can change dof ordering to make vec outer
-
-This approach naturally extends to tensor-valued function spaces, where the multiple inner axes may be provided to represent, for example, a small $3 \times 3$ matrix stored for every mesh point.
-
-\subsubsection{Mixed function spaces}
-
-% show tree and dof layout (truncated) perhaps use a common finite element pair
-% Scott-Vogelius FE pair, used for Stokes (see defelement for refs)
 \begin{figure}
   \centering
   %
   \begin{subfigure}{\textwidth}
     \centering
     \includegraphics{mixed_axis_tree.pdf}
-    \caption{TODO}
-    \label{fig:mixed_axis_tree}
+    \caption{
+      Abstract representation of the axis tree.
+      For simplicity the component labels for the \textit{dof} subaxes have been omitted.
+    }
+    \label{fig:axis_tree_abstract}
   \end{subfigure}
 
+  \vspace{1em}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{minipage}{.8\textwidth}
+      % TODO: Use some predefined env
+      \begin{minted}[frame=single,autogobble]{python}
+        mesh_axis = Axis({"vertex": 3, "edge": 3, "cell": 1}, "mesh")
+        axes = AxisTree.from_nest({
+          Axis({"Vh": 1, "Qh": 1}, "space"): [
+            {
+              mesh_axis: [  # Vh space
+                {Axis(1, "node"): Axis(2, "component")},  # vertices
+                {Axis(2, "node"): Axis(2, "component")},  # edges
+                {Axis(1, "node"): Axis(2, "component")},  # cells
+              ]
+            },
+            {
+              mesh_axis: [  # Qh space
+                Axis(0, "node"),  # vertices
+                Axis(0, "node"),  # edges
+                Axis(6, "node"),  # cells
+              ]
+            },
+          ]
+        })
+      \end{minted}
+    \end{minipage}
+    \caption{
+      \pyop3 code that constructs the axis tree shown in \cref{fig:axis_tree_abstract}.
+      The tree structure is represented by a nested collection of Python dictionaries and lists.
+      Axis components are implicitly constructed by the \pycode{Axis} constructor.
+      \pycode{Axis(2, "mylabel")} creates an axis labelled \pycode{"mylabel"} with a single anonymous component of size 2, and \pycode{Axis({"x": 2, "y": 3}, "mylabel")} creates a similarly labelled axis but with two components labelled \pycode{"x"} and \pycode{"y"}.
+    }
+    \label{fig:axis_tree_code}
+  \end{subfigure}
+  %
+  \caption{
+    The axis tree representing the data layout shown in \cref{fig:sv_data_tree}.
+  }
+  \label{fig:axis_tree}
 \end{figure}
 
-% nesting mixed things!
+% put into a bullet-ed list?
+Where \pyop3 differs from numpy is the fact that axes are permitted to have more than one component, and hence more than one subaxis.
+This enables one to express data layouts resembling DMPlex: all mesh points belong to the same axis but one can distinguish the different entity types by considering them separate axis components.
+Mixed function spaces are also natural to express as one-sized multi-component axes, as are vector-valued spaces with a single component subaxis of the correct dimension.
+These can all be seen in \cref{fig:axis_tree}.
 
-In exactly the same way as for vector-/tensor-valued function spaces, the order in which the axes are declared is flexible...
+By default, when constructing an axis with multiple components the components are stored as contiguous blocks with all entries from the first component preceding the second and so on.
+This is incompatible with the renumbering data locality optimisation described in \cref{sec:intro_mesh_numbering} and \cref{sec:dmplex_data_layout} and so more is required for that to work.
+This is described in \cref{chapter:indexing}.
 
-\section{Renumbering for data locality}
-\label{sec:renumbering}
+\section{Alternative data layouts}
 
-For memory-bound codes, performance is synonymous with data locality.
-In the case of stencil codes like finite element assembly, one should aim to arrange the data such that the data required for a single stencil calculation is contiguous in memory and can be read from memory into cache with only a single instruction.
+\begin{figure}
+  \centering
+  \includegraphics{sv_swap_axis_tree.pdf}
+  \caption{
+    Axis tree for the alternative data layout in \cref{fig:scott_vogelius_element_dof_layout_swap}.
+  }
+  \label{fig:axis_tree_swap}
+\end{figure}
 
-For simulations involving unstructured meshes, data reorderings that provide perfect streaming access to memory are not possible and so renumbering strategies have been developed to try and maximise locality.
-For example, the data layout shown in \cref{fig:two_cell_mesh_lagrange_data_layout_flat} approximates the strategy taken by \pyop2, cells are traversed according to some RCM ordering and the cell closures are packed next to the cell~\cite{langeEfficientMeshManagement2016}.
-The is effective for finite element codes because finite element assembly (usually) involves iterating over cells and accessing the data in their closures.
+One consequence of using axis trees to define data layouts is that it becomes very straightforward to express alternative data layouts for storing the same data simply by reordering the axes in the tree.
+Using the example from \cref{sec:intro_mesh_numbering} we can easily build an appropriate axis tree describing this layout (\cref{fig:axis_tree_swap}).
+Since the axis labels are preserved by this transformation the rest of the code can still be used unchanged from before (e.g. see \cref{sec:indexing_data_layout_transformations}).
 
-In \pyop3, we choose a simple approach and defer to PETSc to provide us with an appropriate RCM numbering for the points.
-This is communicated to the axis tree by giving an axis, in this case the \pycode{"mesh"} one, a \pycode{numbering} argument.
-This numbering consists of the flat indices of the axis and is exactly the object given to us from PETSc.
-This is not quite the case in parallel (see \cref{chapter:parallel}).
+\section{Ragged data layouts}
 
-\section{Ragged arrays}
+\begin{figure}
+  \centering
+  \begin{subfigure}{.4\textwidth}
+    \centering
+    \includegraphics{ragged_data_tree.pdf}
+  \end{subfigure}
+  \begin{subfigure}{.4\textwidth}
+    \centering
+    \includegraphics{ragged_axis_tree.pdf}
+  \end{subfigure}
+  %
+  \caption{
+    A nested ragged data layout (left) and its axis tree representation (right).
+    The cross indicates that no values exist for the multi-index $\{a_0, b_1\}$.
+  }
+  \label{fig:ragged_axis_tree}
+\end{figure}
 
-% comes after ragged arrays since they impact this
+So far we have only considered data layouts where the axis components have constant sizes.
+However, there are circumstances where one needs arrays where the inner component sizes depend on the specific outer component.
+Such arrays are described as \textit{ragged}.
+The need for ragged arrays can occur with a number of DMPlex queries (\cref{sec:dmplex}).
+$\support(p)$, with $p$ a vertex, is an example since the number of edges incident upon a vertex is not constant across the mesh.
+
+In \pyop3, ragged axis trees are created by passing an array (specifically a \pycode{Dat}, \cref{sec:data_structures}) as the size of the axis component instead of an integer.
+This is shown in \cref{fig:ragged_axis_tree}.
+The axis tree has 3 axes, labelled $a$, $b$ and $c$.
+Axes $a$ and $b$ both have size 2, but $c$, the innermost axis, has size \pycode{[[1, 0], [2, 1]]}.
+This means that the size of $c$ is effectively determined by the function
+
+\begin{equation*}
+  \textnormal{size}(i_a, i_b) = 
+  \begin{cases}
+    1 & \textnormal{if}\ i_a = 0\ \textnormal{and}\ i_b = 0, \\
+    0 & \textnormal{if}\ i_a = 0\ \textnormal{and}\ i_b = 1, \\
+    2 & \textnormal{if}\ i_a = 1\ \textnormal{and}\ i_b = 0, \\
+    1 & \textnormal{if}\ i_a = 1\ \textnormal{and}\ i_b = 1.
+  \end{cases}
+\end{equation*}
+
+The size array here is dependent upon both $i_a$ and $i_b$.
+Depending on the labels used for the array it would also be possible to make the size depend on just $i_a$ or $i_b$ separately.
+
 \section{Computing offsets}
 
 \begin{figure}
@@ -234,23 +228,24 @@ This is not quite the case in parallel (see \cref{chapter:parallel}).
       \hline
     \end{tabular}
     \caption{TODO}
-    \label{fig:multi_component_layouts}
+    \label{fig:linear_layouts}
   \end{subfigure}
   \caption{TODO}
   \label{fig:linear_axis_data_tree}
 \end{figure}
 
-In the same way that the shape of a numpy array decribes how to stride over a flat array, axis trees are simply data layout descriptors that declare how one accesses an ultimately flat array.
-Indeed, in \pyop3 (flat) numpy arrays are used as the underlying data structure.
+In the same way that the headers of numpy arrays (\cref{sec:numpy}) decribe how to stride over a flat array, axis trees are simply data layout descriptors that declare how one accesses a flat array.
 It is the job of the axis tree to provide the right expression that can be evaluated giving the correct offset into the flat array.
+In \pyop3, these offset expressions are termed \textit{layout functions}.
 
-In \pyop3, axis trees are traversed to produce \textit{layout functions}.
-These are symbolic expressions of zero or more indices that can be evaluated to give the correct offset into the underlying array.
-Layout functions, expressed in the symbolic maths package \textit{pymbolic}\footnote{https://documen.tician.de/pymbolic/index.html}, may either be evaluated given a set of indices or used during code generation.
+% 5/7 this is where I got to
 
 To give a simple example, consider the axis tree and corresponding data layout shown in \cref{fig:linear_axis_data_tree}.
 The tree shown here is equivalent to a numpy array with shape \pycode{(2, 3, 2)} with the numpy axes 0, 1 and 2 given the labels \textit{a}, \textit{b} and \textit{c} respectively.
 Given a multi-index of the form $(i_a, i_b, i_c)$ the correct offset into the array may be calculated with the layout function $6 i_a + 2 i_b + i_c$.
+
+Layout functions, expressed in the symbolic maths package \textit{pymbolic}\footnote{https://documen.tician.de/pymbolic/index.html}, may either be evaluated given a set of indices or used during code generation.
+
 
 \subsection{The layout algorithm, step by step}
 
@@ -430,14 +425,14 @@ These core changes are:
   \centering
   \begin{subfigure}{.3\textwidth}
     \centering
-    \includegraphics{ragged_axis_tree}
+    \includegraphics{ragged_axis_tree.pdf}
     \caption{TODO}
     \label{fig:ragged_axis_tree}
   \end{subfigure}
   %
   \begin{subfigure}{.58\textwidth}
     \centering
-    \includegraphics{ragged_data_tree}
+    \includegraphics{ragged_data_tree.pdf}
     \caption{TODO}
     \label{fig:ragged_data_tree}
   \end{subfigure}

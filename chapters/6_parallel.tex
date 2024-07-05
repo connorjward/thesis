@@ -11,60 +11,7 @@ Just like Firedrake (e.g.~\cite{betteridgeCodeGenerationProductive2021}) and PET
 Accordingly, \pyop3 is designed to work SPMD with MPI/distributed memory.
 As with Firedrake and PETSc, MPI is chosen as the sole parallel abstraction; hybrid models also using shared memory libraries like OpenMP (cite) are not used because the posited performance advantages are contentious \parencite{knepleyExascaleComputingThreads2015} and would increase the complexity of the code.
 
-\section{Message passing with star forests}
-
-\begin{figure}
-  \centering
-  %
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{star_forest_point.pdf}
-    \caption{TODO}
-    \label{fig:star_forest_point}
-  \end{subfigure}
-  %
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{star_forest_dof.pdf}
-    \caption{TODO}
-    \label{fig:star_forest_dof}
-  \end{subfigure}
-  %
-  \caption{TODO}
-  \label{fig:star_forest}
-\end{figure}
-
-Almost all message passing in \pyop3 is handled by star forests, specifically by PETSc star forests (\ccode{PetscSF}) \parencite{zhangPetscSFScalableCommunication2021}.
-
-A star forest is defined as a collection of stars, where a star is defined as a tree with a single root and potentially many leaves.
-Star forests are effective for describing point-to-point MPI operations because they naturally encode the source and destination nodes as roots and leaves of the stars.
-They can flexibly describe a range of different communication patterns.
-% TODO ref figure
-For example, a value shared globally across $n$ ranks can be represented as a star forest containing a single star with the root node on rank 0 and $n-1$ leaves, 1 for each other rank.
-This is shown in Figure~\ref{fig:???}.
-Star forests are also suitable for describing the overlap between parts of a distributed mesh.
-In this case, each star in the forest represents a single point (cell, edge, vertex) in the mesh with the root on the ``owning" rank and leaves on the ranks where the point appears as a ``ghost".
-An example of such a distribution is shown in Figure~\ref{???}.
-
-\begin{figure}
-
-% subfigure: global SF pattern
-
-% 1.
-% x
-% 
-% 2. (with arrows)
-%  p0   |  p1
-%    x  |   o
-%      / \
-%     / o \
-%    /  p2 \
-
-% subfigure: mesh-like SF pattern
-% do the same thing as for globals, but use a 1-cell triangular mesh
-
-\end{figure}
-
+% NOTE: ref sec:dmplex_parallel to talk about star forests
 \textbf{Some terminology}
 
 \begin{itemize}
@@ -260,11 +207,5 @@ This is shown, alongside the rest in Algorithm~\ref{alg:???}.
 
 % where does this comment live? I like it at the end
 \pyop2 is able to track leaf validity, but does not have a transparent solution for commuting reductions.
-
-% --------------------------------------------------------------------------------
-
-\section{Performance results}
-
-% show some simple scaling data
 
 \end{document}

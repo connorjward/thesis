@@ -11,12 +11,10 @@
 %   * fluids...
 %   * ???
 
+% use the term "STENCIL"
 % mesh iteration crops up all over the place
 
-% TODO: delete this, move everything up a step
-\section{The problem domain: calculations involving mesh iteration}
-
-\subsection{A motivating example: solving the Stokes equations using the finite element method}
+\section{A motivating example: solving the Stokes equations using the finite element method}
 \label{sec:stokes_equations}
 
 As an introductory example to a calculation requiring iterating over a mesh, we consider solving the Stokes equations using the \gls{fem}.
@@ -41,7 +39,7 @@ with $u$ the fluid velocity and $p$ the pressure.
 We also prescribe Dirichlet boundary conditions for the velocity across the entire boundary, setting $u$ to the value of function $g$.
 Since we have a coupled system of two variables ($u$ and $p$), we refer to the Stokes system as being a \textit{mixed} problem.
 
-\subsubsection{Deriving a weak formulation}
+\subsection{Deriving a weak formulation}
 
 % TODO: Add a forcing term $f$ so the RHS is non-zero so we can happily show the assembly diagram
 
@@ -116,7 +114,7 @@ Find $(u, p) \in V \times Q$ such that
   \label{eq:weak_stokes}
 \end{subequations}
 
-\subsubsection{Discretising the system of equations}
+\subsection{Discretising the system of equations}
 
 In order to solve this weak formulation using the finite element method we discretise the function spaces in use by replacing them with a finite dimensional equivalent:
 
@@ -158,7 +156,7 @@ Find $(\hat u, \hat p)$ such that
   \label{eq:weak_stokes_discrete}
 \end{subequations}
 
-This can be reformulated as the (saddle point) linear system
+This can be reformulated as the saddle point linear system
 
 \begin{equation}
   \left (
@@ -191,42 +189,18 @@ This can be reformulated as the (saddle point) linear system
 
 Solving the Stokes equations using the finite element method therefore boils down to constructing, or \textit{assembling}, the left-hand-side matrix and the, here trivial, right-hand-side vector before solving for the coefficients $\hat u$ and $\hat p$.
 
-\subsubsection{The assembly algorithm}
+\subsection{Choosing a basis}
 
-% TODO: I reckon that this would look better if it output a small matrix which was inserted into a larger one - might be overkill though
 \begin{figure}
   \centering
-  \includegraphics{fem_assembly.pdf}
-  \caption{TODO}
-  \label{fig:fem_assembly}
-\end{figure}
-
-% TODO: Decide on a consistent algorithm format
-\begin{algorithm}
-  \begin{verbatim}
-    FOR EACH cell IN mesh.cells:
-      FOR EACH coefficient IN expression:
-        collect the coefficients of basis functions that have non-zero support over cell
-      compute the integral numerically
-      scatter the values of the computed integrals into the global matrix or vector
-  \end{verbatim}
-  \caption{TODO}
-  \label{alg:fem_assembly}
-\end{algorithm}
-
-In order to assemble such a system, the integrals must be evaluated numerically for each pair of basis functions in the two function spaces.
-In the finite element method this process can be done efficiently because the basis functions are defined to have \textit{local support}, that is, they are defined to be zero across almost the entire domain.
-This means that, instead of iterating over all pairs of basis functions, the cells of the mesh may be visited in turn and only the basis functions with non-zero support on that cell are computed with.
-These cell-wise contributions are then accumulated to form the global matrix.
-Since most of the basis functions have zero overlap the resultant matrix is \textit{sparse}.
-
-\begin{figure}
   \begin{subfigure}{.3\textwidth}
+    \centering
     \includegraphics{lagrange_element_2.pdf}
     \caption{P2, TODO}
     \label{fig:lagrange_element_2}
   \end{subfigure}
   \begin{subfigure}{.68\textwidth}
+    \centering
     \begin{tabular}{c c c}
       \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof0.pdf}
       &
@@ -245,14 +219,17 @@ Since most of the basis functions have zero overlap the resultant matrix is \tex
     \label{fig:lagrange_element_2_basis}
   \end{subfigure}
   %
-  \caption{TODO, \cite{defelement}}
+  \caption{The $P_2$ (Lagrange, degree 2) finite element, \cite{defelement}}
 \end{figure}
 
-The basis functions are derived from a finite element definition.
+% TODO: Resolve \hatV_h vs V_h, think one goes away...
+In order to numerically evaluate the integrals in \cref{eq:stokes_linear_system} the basis functions $\psi^{V_h}$ and $\psi^Q$ must be known.
+In the finite element method these are discovered from the choice of \textit{finite element}.
+
 First formalised by Ciarlet~\parencite{ciarletElement2002}, a finite element is the triple $(K, P, N)$, where:
 
 \begin{itemize}
-  \item $K$ is a cell in the mesh with non-empty interior and piecewise smooth boundary,
+  \item $K$ is a bounded closed set, or \textit{cell}, with non-empty interior and piecewise smooth boundary,
   \item $P$ is a finite-dimensional space of functions on $K$, and
   \item $N$ is a set of linear functionals that form a basis for the dual space of $P$.
 \end{itemize}
@@ -267,28 +244,44 @@ For this element $K$ (the cell) is a triangle, $P$ (the function space) is the s
 
 where $l_i$ is the linear functional associated with node $i$, $v$ is some function in $P$ and $x_i$ are the coordinates of the $i$-th node.
 
-From these attributes, it is possible to determine a \textit{nodal basis} for $P$ by imposing that
+From these attributes, it is possible to determine a basis for $P$ by imposing that
 
 % TODO: define n_k
 \begin{equation*}
   l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, n_k.
 \end{equation*}
 
-In the case of the degree 2 Lagrange element this yields the basis functions
+In the case of the $P_2$ element this yields the basis functions (\cref{fig:lagrange_element_2_basis})
 
 % see https://defelement.com/elements/examples/triangle-lagrange-equispaced-2.html
 \begin{align*}
-  &\psi_0 = 2x^2 + 4xy - 3x + 2y^2-3y+1, \\
-  &\psi_1 = x(2x-1), \\
-  &\psi_2 = y(2y-1), \\
+  &\psi_0 = 2x^2 + 4xy - 3x + 2y^2-3y+1,
+  &
   &\psi_3 = 4xy, \\
+  %
+  &\psi_1 = x(2x-1),
+  &
   &\psi_4 = 4y(-x-y+1), \\
-  &\psi_5 = 4x(-x-y+1),
+  %
+  &\psi_2 = y(2y-1),
+  &
+  &\psi_5 = 4x(-x-y+1).
 \end{align*}
 
-shown in \cref{fig:lagrange_element_2_basis}.
+% TODO: reword this, all the right content but can't decide on the phrasing/order.
+% * we have a mesh, made of lots of elements
+% * elements -> basis functions
+% * basis functions have local support (maybe mention continuity)
+In the finite element method, the problem domain is broken apart into a \textit{mesh}, composed of many such cells.
+Basis functions on the vertices and edges are shared between elements.
 
-\subsubsection{Data structures for the finite element method}
+From \cref{fig:lagrange_element_2_basis} it can be seen that the basis functions only have \textit{local support}.
+That is, they are restricted to be zero except for some small region ``close" to the node.
+
+Nodes are restricted to particular topological entities and this imposes different continuity behaviour.
+Vertex nodes are shared by multiple cells whereas edge nodes just couple two cells together.
+Cell nodes (not shown in \cref{fig:lagrange_element_2_basis}) are only non-zero in the cell interior and hence do not couple to adjacent cells.
+It is for this reason that finite elements with only cell nodes are called \textit{discontinuous}.
 
 \begin{figure}
   \centering
@@ -308,7 +301,7 @@ shown in \cref{fig:lagrange_element_2_basis}.
   %
   \hfill
   %
-  \caption{Scott-Vogelius element (degree 3?)}
+  \caption{Scott-Vogelius element (degree 3?), $[P_3]^2 \oplus P_2^\mathrm{disc}$}
   \label{fig:scott_vogelius_element}
 \end{figure}
 
@@ -316,6 +309,48 @@ The choice of basis functions used by the function spaces has significant implic
 For the Stokes equations in 2D, a common choice of element pair, or \textit{mixed} element, with properties matching the constraints given in \cref{eq:stokes_velocity_space} and \cref{eq:stokes_pressure_space} is the Scott-Vogelius element~\cite{scottNormEstimatesMaximal1985}.
 Shown in \cref{fig:scott_vogelius_element}, the element consists of a continuous vector-valued degree $k$ Lagrange element for the velocity space, and a discontinuous Lagrange element of degree $k-1$.
 Note that the Scott-Vogelius element is known to be inf-sup stable for degree $\geq 4$ but we only show degree 3 here for brevity~\cite{guzmanScottVogeliusFiniteElements2018}.
+
+% NOTE: Potentially a bad name, want to talk about "making this happen in software"
+% I think that this is really a subsection of the other "FEM" bit since the whole point is that
+% we motivate stencil calculations
+\section{Finite element assembly}
+
+\begin{figure}
+  \centering
+  \includegraphics{fem_assembly.pdf}
+  \caption{TODO}
+  \label{fig:fem_assembly}
+\end{figure}
+
+% TODO: Decide on a consistent algorithm format
+% TODO: I should introduce the term "stencil"
+\begin{algorithm}
+  \begin{verbatim}
+    FOR EACH cell IN mesh.cells:
+      FOR EACH coefficient IN expression:
+        collect the coefficients of basis functions that have non-zero support over cell
+      compute the integral numerically
+      add the values of the computed integrals into the global matrix or vector
+  \end{verbatim}
+  \caption{TODO}
+  \label{alg:fem_assembly}
+\end{algorithm}
+
+If we consider one of the integrals in \cref{eq:stokes_linear_system}
+
+\begin{equation*}
+  \forall i, j,
+\end{equation*}
+
+numerically evaluating all possible pairs of $i$ and $j$ is inefficient because, due to the local support property of the basis, the majority would evaluate to zero.
+This means that, instead of iterating over all pairs of basis functions, the cells of the mesh may be visited in turn and only the basis functions with non-zero support on that cell are computed with.
+These cell-wise contributions are then accumulated to form the global matrix.
+Since most of the basis functions have zero overlap the resultant matrix is \textit{sparse}.
+
+% TODO: Reference the algorithm and diagram! Also describe "stencil"
+% "A similar process is followed for RHS (if nonzero)"
+
+\subsection{Data layouts}
 
 \begin{figure}
   \centering
@@ -332,59 +367,12 @@ In \cref{eq:stokes_linear_system} the different function spaces have been partit
 Naturally the choice of how to lay these values out in memory is arbitrary, but a common approach is to split them by function space, then by topological entity, and then by vector component (\cref{fig:scott_vogelius_element_dof_layout})
 % This choice of finite element pair means that one would have, for a single element mesh, 26 (?) unknown basis coefficients (DoFs), and the matrix would have 26 rows and 26 columns (and would in fact be dense)
 
-\section{Performance considerations}
+\section{Execution models for mesh stencil calculations}
 
-% NOTE: Talk about GPU too?
-
-\subsection{Distributed memory parallelism}
-
-% On massively parallel machines we parallelise our computation by partitioning the mesh between processes
-% * Basis functions whose support crosses into another process are stored in that processes "halo"
-% * Show a simple diagram - continue to use triangles (and basis functions)
-% * The global matrix is also partitioned, usually by row, so each process only sees a portion of it
-
-% mention MPI
-
-\subsection{Mesh renumbering}
-
-% cite PyOP2 paper, also perhaps extruded paper
-
-% "put closure data close together"
-
-\subsection{Data layout transformations}
-
-\begin{figure}
-  \centering
-  \includegraphics{scott_vogelius_element_dof_layout_swap.pdf}
-  \caption{
-    TODO
-  }
-  \label{fig:scott_vogelius_element_dof_layout_swap}
-\end{figure}
-
-% many packages "commit early" to a particular representation, potentially sacrificing performance
-
-% TODO: cite AoS/SoA performance paper or something.
-
-% Lastly, OP2 and \pyop2 both commit eagerly to storing the data in a particular format.
-% Depending on the problem at hand, better performance may be achieved by rearranging the way in which DoFs are stored such that data is streamed from memory in the most efficient manner possible.
-% An example demonstrating a different data layout for the data shown in \cref{fig:scott_vogelius_element_dof_layout} is shown in \cref{fig:scott_vogelius_element_dof_layout_swap}.
-% In the latter the vector component part of the data layout has been ``lifted" such that, for the $V_h$ function space, all \glspl{dof} corresponding with the 0th component are stored before all \glspl{dof} for the 1st component.
-% This is equivalent to transforming from an ``array-of-structs" (AoS) layout to a ``struct-of-arrays" (SoA) layout.
-% Neither layout is inherently faster than the other and different applications may want to use one over another.
-% Both OP2 and \pyop2 only support storing data in the AoS format (\cref{fig:scott_vogelius_element_dof_layout_pyop2}) and so cannot do this.
-
-
-\subsection{Interoperability with existing software}
-
-% high level algorithmic changes are essential for performance (JB paper) - want to use top quality solvers
-
-% also, need to reimplement a lot of things best done by existing packages (partitioning, I/O etc)
-
-% certainly hard to do in parallel, sparse matrices etc
-% PETSc is great, name check
-
-\section{Execution models for unstructured meshes}
+% TODO: start with "so this is the algorithm we want to execute, we want to automate its
+% application"
+% this crops up with subtle variations all over the place, changes to multitude of variables constitute a rewrite - also cannot layer UFL on top?
+% BECAUSE PRODUCTIVITY!
 
 % TODO:: cite dune, deal.ii, Firedrake, FENIcs, devito...?
 At this point we have established, excluding the local kernels and global solve, the algorithms and data structures necessary to solve a finite element problem.
@@ -417,6 +405,10 @@ Further, having a high-level representation of the problem enables optimisations
 % DSLs help a lot to implement this sort of thing because transformations can be a lot easier to
 % express using a high-level representation.
 
+\subsection{Design requirements}
+
+% NOTE: This needs a rewrite, key idea is to enumerate interface choices that impact productivity
+% Mention expressivity power?
 For the unstructured mesh traversal operation we are interested in, we need an abstraction that:
 
 \begin{itemize}
@@ -424,52 +416,118 @@ For the unstructured mesh traversal operation we are interested in, we need an a
     Expresses operations in terms of loops, compact kernels and restricted data structures,
   \item
     Supports the indirection mappings necessary for unstructured meshes (e.g. the map from cells to supported DoFs), and
-  \item
-    Is backend agnostic: the same code should be able to target different architectures with almost no changes.
 \end{itemize}
 
-% NOTE: badly written, combine with the above into a single set of requirements
-Along with these hard requirements we also have a number of strongly desirable features.
-The software should:
 
-\begin{itemize}
-  \item
-    Be composable: support nested loops, multiple kernels and map composition,
+% we want things to be both performant and expressive - here we care about performance really
 
-  \item
-    Interoperate with external packages (PETSc),
+% assembly can be a bottleneck (when?)
+% can be slow because of: data movement, payload or matrix insertion.
 
-  \item
-    Support distributed memory parallelism (i.e. MPI).
-\end{itemize}
+\subsubsection{Distributed memory parallelism}
+\label{sec:intro_mpi}
+
+% large scale simulations need to be run on massively parallel machines, necessitates dist. memory (MPI)
+
+In order to run simulations at scale global data structures are broken apart and each process stores and operates on its own local piece.
+
+% TODO: I think it is better to not bother talking about "closed" meshes here. Then can move
+% some things back to DMPlex section. Hmm but overlap is important for PyOP2 exposition!
+% Can phrase as "local computations may require adjacent DoFs that "belong" on other processes - these are called "ghost" points and care must be taken to ensure that the values are kept up-to-date across processes.
+
+For unstructured meshes and vectors of mesh data it is usual to \textit{partition} the mesh.
+Since one needs all DoFs incident on the cell to compute things (need a closed local mesh) boundary values may be duplicated on adjacent processes (\cref{fig:star_forest}).
+These are termed \textit{ghost} points.
+The amount of overlap required depends on both the stencil and also the amount of redundant computation/frequency of transfers (look into this, Fabio's thesis, Devito?).
+
+The global matrix is also partitioned, usually by row, so each process only sees a portion of it
+
+% Now how to get good performance? reduce amount of communication + overlap computation and communication (non-blocking), avoid expensive comm patterns (like all to one rank)
+
+\subsubsection{Performance portability}
+
+% ie GPUs - they are now in the biggest supercomputers, good energy efficiency, bandwidth, FLOP/s
+
+% potentially very effective for this sort of work - very parallel
+
+% challenging programming model, different programming languages (and vendor specific) (apart from Kokkos etc), kernels need to be launched (can be slow, latency), memory transers between host and device
+
+\subsubsection{Interoperability with existing software}
+
+% PETSc is used in MFEM, FEniCS, MOOSE, deal.ii? so many, definitely a "standard"
+
+% high level algorithmic changes are essential for performance (JB paper) - want to use top quality solvers
+
+% also, need to reimplement a lot of things best done by existing packages (partitioning, I/O etc)
+
+% certainly hard to do in parallel, sparse matrices etc
+% PETSc is great, name check
+
+\subsubsection{Data locality optimisations}
+\label{sec:intro_mesh_numbering}
+
+% mesh numbering
+% --------------
+% cite PyOP2 paper, also perhaps extruded paper
+
+% Numbering can reference the FEM pseudo-code - we need cellwise data to be "close"
+% "put closure data close together"
+
+% \subsubsection{Data layout transformations}
+
+\begin{figure}
+  \centering
+  \includegraphics{scott_vogelius_element_dof_layout_swap.pdf}
+  \caption{
+    TODO
+  }
+  \label{fig:scott_vogelius_element_dof_layout_swap}
+\end{figure}
+
+% many packages "commit early" to a particular representation, potentially sacrificing performance
+
+% TODO: cite AoS/SoA performance paper or something.
+
+% NOTE: do not talk about OP2/PyOP2 here, mentioned first below
+
+% Lastly, OP2 and \pyop2 both commit eagerly to storing the data in a particular format.
+% Depending on the problem at hand, better performance may be achieved by rearranging the way in which DoFs are stored such that data is streamed from memory in the most efficient manner possible.
+% An example demonstrating a different data layout for the data shown in \cref{fig:scott_vogelius_element_dof_layout} is shown in \cref{fig:scott_vogelius_element_dof_layout_swap}.
+% In the latter the vector component part of the data layout has been ``lifted" such that, for the $V_h$ function space, all \glspl{dof} corresponding with the 0th component are stored before all \glspl{dof} for the 1st component.
+% This is equivalent to transforming from an ``array-of-structs" (AoS) layout to a ``struct-of-arrays" (SoA) layout.
+% Neither layout is inherently faster than the other and different applications may want to use one over another.
+% Both OP2 and \pyop2 only support storing data in the AoS format (\cref{fig:scott_vogelius_element_dof_layout_pyop2}) and so cannot do this.
+
+% TODO: mention taichi in this chapter somewhere as a similar project, maybe also TACO (and SPF?)
+
+% % AoS-SoA etc? (taichi)
+% \textbf{Taichi} is a programming language embedded in C\+\+ for operating on complex data structures~\cite{huTaichiLanguageHighperformance2019}.
+% Just like \pyop3, Taichi declares data structures hierarchically and the data layout is kept distinct from the operations applied to them.
+% Taichi has no concept of a mesh, and it does not work on distributed machines.
+% https://www.taichi-lang.org/
+% very successful!
+
+% TODO: This should actually be covered in the indexing chapter.
+% \section{Renumbering for data locality}
+% \label{sec:renumbering}
+%
+% For memory-bound codes, performance is synonymous with data locality.
+% In the case of stencil codes like finite element assembly, one should aim to arrange the data such that the data required for a single stencil calculation is contiguous in memory and can be read from memory into cache with only a single instruction.
+%
+% For simulations involving unstructured meshes, data reorderings that provide perfect streaming access to memory are not possible and so renumbering strategies have been developed to try and maximise locality.
+% For example, the data layout shown in \cref{fig:two_cell_mesh_lagrange_data_layout_flat} approximates the strategy taken by \pyop2, cells are traversed according to some RCM ordering and the cell closures are packed next to the cell~\cite{langeEfficientMeshManagement2016}.
+% The is effective for finite element codes because finite element assembly (usually) involves iterating over cells and accessing the data in their closures.
+%
+% In \pyop3, we choose a simple approach and defer to PETSc to provide us with an appropriate RCM numbering for the points.
+% This is communicated to the axis tree by giving an axis, in this case the \pycode{"mesh"} one, a \pycode{numbering} argument.
+% This numbering consists of the flat indices of the axis and is exactly the object given to us from PETSc.
+% This is not quite the case in parallel (see \cref{chapter:parallel}).
 
 \subsection{Existing software}
 
-% Checklist comparing the features of the libraries, must include mesh numbering or similar
-% include sparse matrices? (not for OP2!)
-% include flexible data layouts? this is DIFFERENT to mesh numbering (PyOP2 is not flexible but can do mesh numbering via node sets)
-% swap rows and cols?
-% \begin{table}
-%   \begin{tabular}{|l|l|}
-%     \hline
-%     % Flexible? Support for numbering?
-%     Software & Distributed memory & GPU support \\
-%     \hline
-%     Liszt \\
-%     \hline
-%     Simit \\
-%     \hline
-%     Ebb \\
-%     \hline
-%     OP2 \\
-%     \hline
-%     \pyop2 \\
-%     \hline
-%   \end{tabular}
-%
-%   \caption{TODO}
-%   \label{tab:capabilities}
-% \end{table}
+% NOTE: A checklist comparing different packages was considered but I think it
+% shouldn't be included because there are too many unknowns. I don't know enough
+% about Liszt, Simit or Ebb and it makes things a bit more complicated to explain.
 
 A number of packages exist that already meet most or all of these requirements:
 
@@ -520,9 +578,19 @@ A number of packages exist that already meet most or all of these requirements:
   \includegraphics{scott_vogelius_element_dof_layout_pyop2.pdf}
   \caption{
     The data layout matching \cref{fig:scott_vogelius_element_dof_layout} as it would be stored by \pyop2.
-    Data for each function space ($V_h$ and $Q_h$) is stored in a separate array.
+    Data for each function space ($V_h$ and $Q_h$) are stored in separate arrays.
   }
   \label{fig:scott_vogelius_element_dof_layout_pyop2}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics{scott_vogelius_element_dof_layout_topological.pdf}
+  \caption{
+    The closest possible data layout for \cref{fig:scott_vogelius_element_dof_layout} for a library that associates unknowns with topological entities.
+    Data for each topological entity are stored in separate arrays.
+  }
+  \label{fig:scott_vogelius_element_dof_layout_topological}
 \end{figure}
 
 % * Liszt, Simit and Ebb are very flexible but they all tie data structures to topological entities. Data layouts
@@ -543,6 +611,7 @@ A number of packages exist that already meet most or all of these requirements:
 
 \subsection{The missing abstraction}
 
+% This mostly belongs in chapter 3
 Clearly, there is something missing here.
 The designs of the existing libraries all require that one either use topological information in a simplified way - associating data with particular mesh entities only - or that one take ownership of the data, discarding topological information that is helpful for having a composable abstraction.
 To get around this difficulty we have developed a new abstraction for data layouts, termed \textit{axis trees}, that bridges the gap between these worlds.

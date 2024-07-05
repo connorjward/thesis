@@ -175,8 +175,11 @@ These will be reviewed below.
 
 \section{Relating unknowns to mesh topology: DMPlex}
 
-To tackle the problem of composability - sets discarding information about mesh topology - we look to DMPlex, an abstraction for unstructured meshes.
-% * DMPlex is part of PETSc, a toolkit for...
+% NOTE: Where is PETSc first mentioned? Possibly here is a good place for more detail about it.
+% Should be mentioned in the introduction
+To tackle the problem of composability - sets discarding information about mesh topology - we look to DMPlex~\cite{knepleyMeshAlgorithmsPDE2009,langeEfficientMeshManagement2016,knepleyUnstructuredOverlappingMesh2015}.
+DMPlex is an abstraction for unstructured meshes bundled with PETSc, a scientific software toolkit providing implementations of parallel vectors and matrices as well as a plethora of linear and non-linear solvers~\cite{petsc-web-page,petsc-user-ref,petsc-efficient}.
+It has support for a range of complex mesh operations such as mesh refinement, I/O~\cite{hamEfficientNtoMCheckpointing2024}, all in parallel (\cref{sec:dmplex_parallel}).  % TODO: needs more...
 
 \begin{figure}
   \centering
@@ -193,11 +196,11 @@ To tackle the problem of composability - sets discarding information about mesh 
   \label{fig:dmplex_hasse}
 \end{figure}
 
-With DMPlex, an unstructured mesh is represented as a \gls{dag} (\cref{fig:dmplex_hasse}).
+With DMPlex, the unstructured mesh is represented as a \gls{dag} (\cref{fig:dmplex_hasse}).
 All topological entities are referred to as \textit{points}, with each entity type belonging to a particular \textit{strata} of the overall \gls{dag}.
+\textit{Arrows} connect points between strata to represent the connectivity of the different entities.
+For example every edge in a mesh (depth 1) has two arrows pointing at its two \textit{covered} vertices (depth 0).
 By treating all entities as points, DMPlex is capable of expressing unstructured meshes of any dimension.
-
-% rich query language
 
 \begin{figure}
   \centering
@@ -231,42 +234,176 @@ By treating all entities as points, DMPlex is capable of expressing unstructured
   \label{fig:dmplex_queries}
 \end{figure}
 
-% TODO: MUST talk about mesh renumbering here, also parallel stuff (SF)
-% No, parallel can be later, just mention here that the mesh is distributed and
-% point to the parallel chapter.
-% Numbering can reference the FEM pseudo-code - we need cellwise data to be "close"
+DMPlex has a simple query language that can be used to traverse the \gls{dag} and build appropriate stencils.
+It consists of two core operations: \textit{cone} and \textit{support}.
+The cone of a point, written $\cone(p)$, is the set of points that are pointed to from $p$.
+The support of a point, written $\support(p)$, is the dual of cone and yields the set of points that point to $p$.
+Transitive closures for both of these operations, where the operation is applied repeatedly and all points are accumulated, are also supplied by DMPlex.
+The transitive closure of cone is termed the \textit{closure} ($\closure(p)$) and the transitive closure of support is called the \textit{star} ($\plexstar(p)$).
+These operations are shown in \cref{fig:dmplex_queries}.
 
-\subsection{Representing data layouts with DMPlex}
-% * DMPlex
-  % * layouts with petscsection
+It is possible to compose these operations to yield larger stencils.
+For instance $\support(\cone(p))$ with $p$ a cell produces the set of cells sharing an edge with $p$ (and $p$ itself).
+Likewise, $\closure(\star(p))$ is the \textit{adjacency} relation for finite element calculations: basis functions on points within this stencil have non-zero support with the basis functions on $p$.
 
-% data layouts on meshes
-  % stencils
-    % stencils in dmplex, topological query language
-%
-%
-% In order to associated data with these mesh points, a typical PETSc application will construct a PETSc \ccode{Section}.
-% These are simple CSR-like (?) data structures that encode a data layout by associating a particular number of DoFs with each mesh point.
-% Sections are a powerful tool for describing data layouts but they have a number of limitations:
-%
-% \begin{itemize}
-%   \item
-%     Sections are fully ragged.
-%     They only store DoF information per point in a completely unstructured way and are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
-%     This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) that it would have been able to do were it to know of a constant loop extent.
-%     Additionally, this variable size increases memory pressure as redundant arrays of constant sizes need to be streamed through memory.
-%
-%   \item
-%     DoFs per point are treated as a flat array.
-%     This means that shape information is lost for, say, vector-valued functions.
-% \end{itemize}
-%
-% With PETSc/DMPlex, the P3 DoF layout would be represented as shown in Figure~\ref{???}.
-% % figure showing PetscSection info
+\subsection{Representing data layouts}
+\label{sec:dmplex_data_layout}
 
-% End the section by showing some pseudocode for FEM assembly
+\begin{figure}
+  \begin{clisting}
+    // set cell DoFs
+    DMPlexGetDepthStratum(dmplex, 2, &start, &end);
+    for (int cell=start; cell<end; cell++)
+      PetscSectionSetDof(section, cell, 2);
+
+    // set edge DoFs
+    DMPlexGetDepthStratum(dmplex, 1, &start, &end);
+    for (int edge=start; edge<end; edge++)
+      PetscSectionSetDof(section, edge, 4);
+
+    # set vertex DoFs
+    DMPlexGetDepthStratum(dmplex, 0, &start, &end);
+    for (int vertex=start; vertex<end; vertex++)
+      PetscSectionSetDof(section, vertex, 2);
+
+    PetscSectionSetUp(section);
+  \end{clisting}
+
+  \caption{
+    C code constructing an appropriate \ccode{Section} for a $[P_3]^2$ finite element (\cref{fig:scott_vogelius_element_P3}).
+    Some boilerplate code is omitted.
+  }
+  \label{fig:section_p3}
+\end{figure}
+
+\begin{algorithm}
+  \begin{verbatim}
+counter = 0
+offset = 0
+FOR EACH point IN chart
+  renumbered_point = renumber(point)
+  offsets[counter] = offset
+  counter += 1
+  offset += PetscSectionGetDof(renumbered_point)
+  \end{verbatim}
+
+  \caption{
+    The tabulation algorithm that determines the right offsets from a \ccode{Section}.
+    This code is executed during \ccode{PetscSectionSetUp()}.
+  }
+  \label{alg:petsc_section_tabulate}
+\end{algorithm}
+
+In order to associate data with these mesh points, a user typical constructs a \ccode{Section} object.
+These are simple CSR-like data structures that associate mesh points with offsets into an array.
+
+\ccode{Sections} are constructed by assigning a number of \glspl{dof} with each mesh point (\cref{fig:section_p3}).
+Once the number of \glspl{dof} has been specified, calling \ccode{PetscSectionSetUp()} traverses the input points and accumulates the offset for each point.
+As a simple example, given the \gls{dof} count \ccode{[1, 0, 3, 2, 0, 1]} the \ccode{Section} would tabulate the following offsets: \ccode{[0, 1, 1, 4, 6, 6]} (\cref{alg:petsc_section_tabulate}).
+
+\ccode{Sections} are also able to express the sorts of renumbering locality optimisations described in \cref{sec:intro_mesh_numbering}.
+One simply provides the \ccode{Section} with a \textit{permutation} that is accounted for during set up (\cref{alg:petsc_section_tabulate}).
+
+Whilst a powerful tool for describing data layouts, \ccode{Sections} have a number of limitations:
+
+\begin{itemize}
+  \item
+    \textbf{They are fully ragged}\\
+    \ccode{Sections} do not distinguish between different types of topological entity and so important structure cannot be represented.
+    They only store DoF information per point in a completely unstructured way and are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
+    This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) that it would have been able to do were it to know of a constant loop extent.
+    Additionally, this variable size increases memory pressure as redundant arrays of constant sizes need to be streamed through memory.
+
+  \item
+    \textbf{Shape information is lost}\\
+    Though \ccode{Sections} allow one to directly associate \glspl{dof} with mesh entities of different dimension, they still lose information about the structure of the function space.
+    For instance, to a \ccode{Section}, a point with a single vector-valued node is indistinguishable from a point with multiple nodes.
+\end{itemize}
+
+These limitations prevent \pyop3 from directly using \ccode{Sections} to describe its data layouts, but it takes a similar approach:
+
+\begin{itemize}
+  \item All topological entities in the mesh should be equivalent,
+  \item Interleaved points require one to tabulate an array of offsets (\cref{alg:petsc_section_tabulate}).
+\end{itemize}
+
+\subsection{Parallel}
+\label{sec:dmplex_parallel}
+
+As touched upon in \cref{sec:intro_mpi}, DMPlex works in parallel by partitioning the entire ``global" mesh into local pieces that are kept on each process.
+Each local piece of the mesh is \textit{closed}, meaning that all points in the cell closures are represented locally.
+This means that there are \textit{ghost} points kept on each process that are owned by other processes.
+
+\subsubsection{Star forests}
+
+\begin{figure}
+  \centering
+  %
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{star_forest_point.pdf}
+    \caption{TODO}
+    \label{fig:star_forest_point}
+  \end{subfigure}
+  %
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{star_forest_dof.pdf}
+    \caption{TODO}
+    \label{fig:star_forest_dof}
+  \end{subfigure}
+  %
+  \caption{TODO}
+  \label{fig:star_forest}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{.6\textwidth}
+    \centering
+    \includegraphics{star_forest_abstract_mesh.pdf}
+    \caption{Star forest suitable for describing the point sharing in \cref{fig:star_forest_point}.}
+  \end{subfigure}
+  %
+  \begin{subfigure}{.39\textwidth}
+    \centering
+    \includegraphics{star_forest_abstract_global.pdf}
+    \caption{Star forest appropriate for storing the communication pattern of a globally consistent value.}
+  \end{subfigure}
+  \caption{
+    Common star forest patterns.
+    Each point is labelled with its owning process and root and leaf points are shown in black and white respectively.
+  }
+  \label{fig:star_forest_abstract}
+\end{figure}
+
+% supports broadcasts from the root and reductions from the leaves
+
+Parallel communication in DMPlex is handled by \textit{star forest} objects (\ccode{PetscSF}) \parencite{zhangPetscSFScalableCommunication2021}.
+Star forests relate equivalent points across processes as a collection - or ``forest" - of ``stars".
+A ``star" is a directed graph with depth 1 and a single root.
+
+Star forests are effective for describing point-to-point MPI operations because they naturally encode the source and destination nodes as roots and leaves of the stars.
+They can flexibly describe a range of different communication patterns.
+For example, a value shared globally across $n$ ranks can be represented as a star forest containing a single star with the root node on rank 0 and $n-1$ leaves, 1 for each other rank.
+This is shown in Figure~\ref{fig:???}.
+Star forests are also suitable for describing the overlap between parts of a distributed mesh.
+In this case, each star in the forest represents a single point (cell, edge, vertex) in the mesh with the root on the ``owning" rank and leaves on the ranks where the point appears as a ``ghost".
+An example of such a distribution is shown in Figure~\ref{???}.
+
+% Because local numbers on one process are related to local numbers on other processes no global enumeration of points is strictly required.
+
+Upon construction a DMPlex holds a \textit{point star forest} that stores the information about ghost points (\cref{fig:star_forest_point}).
+This is insufficient for function data to be communicated correctly though because the number of \glspl{dof} associated with each entity can change.
+To transfer function data, PETSc composes the point star forest with a \ccode{Section} to produce a new star forest (\cref{fig:star_forest_dof}).
 
 \section{A language for structured data: numpy}
+
+numpy is ...
+
+numpy has established itself as the de-facto approach for high level libraries to...
+
+Much of the following thesis can be viewed as a generalisation of numpy-like abstractions, and so it is useful to establish the relevant terminology now.
 
 % (cite paper, search for "citing numpy")
 % although not a JIT, numpy is important for introducing ergonomic ways of
@@ -276,14 +413,16 @@ By treating all entities as points, DMPlex is capable of expressing unstructured
 \subsection{N-dimensional arrays}
 
 The key abstraction introduced by numpy is the \textit{N-dimensional array}, or \pycode{ndarray}.
+It is an intuitive and widely used interface for operating on multi-dimensional data.
+
+% not suitable for pyop3 because we have more heterogeneous data layouts (but works for pyop2 node sets)
 
 % shape
-% broadcast operations
+% broadcast/vectorised operations
 
 % implemented as a header and a buffer
 % stride information (for views)
 
-%TODO: cleanup
 \subsection{Indexing arrays}
 \label{sec:numpy_indexing_arrays}
 
@@ -332,6 +471,8 @@ Some of the ways that a numpy array may be indexed are shown in \cref{tab:numpy_
 
 \end{itemize}
 
+% These operations work together with the header specs to figure out the right offsets.
+
 Although the examples provided are all for a 1-dimensional array, it is completely permissible to index N-dimensional arrays with a collection of these indexing operations, one per axis of the array.
 This collection of indices is termed a \textit{multi-index}.
 
@@ -339,6 +480,8 @@ numpy draws a distinction between ``basic" indexing, single element indexing and
 For the former, the array returned from the indexing operation is a \textit{view}, whereas for the latter a \textit{copy} is returned.
 Alongside the obvious memory advantages, views are also preferable to copies because they are \textit{composable}.
 One can take views of views repeatedly without triggering a copy, allowing for changes to the indexed array to be propagated back to the original.
-In \pyop3, as well as generalising the indexing operations above to axis trees, we overcome this shortcoming of numpy's advanced indexing such that views are always used regardless of the indexing method used.
+
+% mention in chapter 4!
+% In \pyop3, as well as generalising the indexing operations above to axis trees, we overcome this shortcoming of numpy's advanced indexing such that views are always used regardless of the indexing method used.
 
 \end{document}

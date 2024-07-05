@@ -1,0 +1,184 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}[xscale=.6,yscale=-.75]
+
+\input{figures/common/data_layout.tikz}
+
+\tikzmath{
+  \yshift = 0;
+}
+
+\newcommand{\drawGuideLines}{
+  \foreach \x in {1,...,5} {
+    \draw [dotted] (\x,\yshift) -- ++ (0,1);
+  }
+
+  \foreach \x in {7,...,18} {
+    \draw [dotted] (\x,\yshift) -- ++ (0,1);
+  }
+
+  \foreach \x in {21,...,27} {
+    \draw [dotted] (\x,\yshift) -- ++ (0,1);
+  }
+}
+
+% points
+\labelLayoutAxis{Points}
+
+\drawBoxNew{(0,\yshift)}{(2,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(2,\yshift)}{(4,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(4,\yshift)}{(6,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(7,\yshift)}{(11,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(11,\yshift)}{(15,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(15,\yshift)}{(19,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(20,\yshift)}{(28,\yshift+1)}{bgcelldofcolor}
+
+\drawGuideLines
+
+\labelBox{(1,\yshift+.5)}{$v_0$}{bgvertdofcolor}
+\labelBox{(3,\yshift+.5)}{$v_1$}{bgvertdofcolor}
+\labelBox{(5,\yshift+.5)}{$v_2$}{bgvertdofcolor}
+\labelBox{(9,\yshift+.5)}{$e_0$}{bgedgedofcolor}
+\labelBox{(13,\yshift+.5)}{$e_1$}{bgedgedofcolor}
+\labelBox{(17,\yshift+.5)}{$e_2$}{bgedgedofcolor}
+\labelBox{(24,\yshift+.5)}{$c_0$}{bgcelldofcolor}
+
+\tikzmath{
+  \yshift = \yshift + 2;
+}
+
+% spaces
+\labelLayoutAxis{Spaces};
+
+\drawBoxNew{(0,\yshift)}{(2,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(2,\yshift)}{(4,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(4,\yshift)}{(6,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(7,\yshift)}{(11,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(11,\yshift)}{(15,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(15,\yshift)}{(19,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(20,\yshift)}{(22,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(22,\yshift)}{(28,\yshift+1)}{bgcelldofcolor}
+
+\drawGuideLines
+
+\labelBox{(1,\yshift+.5)}{$V_h$}{bgvertdofcolor}
+\labelBox{(3,\yshift+.5)}{$V_h$}{bgvertdofcolor}
+\labelBox{(5,\yshift+.5)}{$V_h$}{bgvertdofcolor}
+\labelBox{(9,\yshift+.5)}{$V_h$}{bgedgedofcolor}
+\labelBox{(13,\yshift+.5)}{$V_h$}{bgedgedofcolor}
+\labelBox{(17,\yshift+.5)}{$V_h$}{bgedgedofcolor}
+\labelBox{(21,\yshift+.5)}{$V_h$}{bgcelldofcolor}
+\labelBox{(24,\yshift+.5)}{$Q_h$}{bgcelldofcolor}
+
+\tikzmath{
+  \yshift = \yshift + 2;
+}
+
+% nodes
+\labelLayoutAxis{Nodes};
+
+\drawBoxNew{(0,\yshift)}{(2,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(2,\yshift)}{(4,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(4,\yshift)}{(6,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(7,\yshift)}{(9,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(9,\yshift)}{(11,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(11,\yshift)}{(13,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(13,\yshift)}{(15,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(15,\yshift)}{(17,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(17,\yshift)}{(19,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(20,\yshift)}{(22,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(22,\yshift)}{(23,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(23,\yshift)}{(24,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(24,\yshift)}{(25,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(25,\yshift)}{(26,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(26,\yshift)}{(27,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(27,\yshift)}{(28,\yshift+1)}{bgcelldofcolor}
+
+\drawGuideLines
+
+\labelBox{(1,\yshift+.5)}{\textbf{0}}{bgvertdofcolor}
+\labelBox{(3,\yshift+.5)}{\textbf{1}}{bgvertdofcolor}
+\labelBox{(5,\yshift+.5)}{\textbf{2}}{bgvertdofcolor}
+\labelBox{(8,\yshift+.5)}{\textbf{3}}{bgedgedofcolor}
+\labelBox{(10,\yshift+.5)}{\textbf{4}}{bgedgedofcolor}
+\labelBox{(12,\yshift+.5)}{\textbf{5}}{bgedgedofcolor}
+\labelBox{(14,\yshift+.5)}{\textbf{6}}{bgedgedofcolor}
+\labelBox{(16,\yshift+.5)}{\textbf{7}}{bgedgedofcolor}
+\labelBox{(18,\yshift+.5)}{\textbf{8}}{bgedgedofcolor}
+\labelBox{(21,\yshift+.5)}{\textbf{9}}{bgcelldofcolor}
+\labelBox{(22.5,\yshift+.5)}{\textbf{0}}{bgcelldofcolor}
+\labelBox{(23.5,\yshift+.5)}{\textbf{1}}{bgcelldofcolor}
+\labelBox{(24.5,\yshift+.5)}{\textbf{2}}{bgcelldofcolor}
+\labelBox{(25.5,\yshift+.5)}{\textbf{3}}{bgcelldofcolor}
+\labelBox{(26.5,\yshift+.5)}{\textbf{4}}{bgcelldofcolor}
+\labelBox{(27.5,\yshift+.5)}{\textbf{5}}{bgcelldofcolor}
+
+% components
+\newcommand{\labelComponent}[1]{
+  \textbf{x$_#1$}
+}
+
+\tikzmath{
+  \yshift = \yshift + 2;
+}
+
+\labelLayoutAxis{Components};
+
+\drawBoxNew{(0,\yshift)}{(1,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(1,\yshift)}{(2,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(2,\yshift)}{(3,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(3,\yshift)}{(4,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(4,\yshift)}{(5,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(5,\yshift)}{(6,\yshift+1)}{bgvertdofcolor}
+\drawBoxNew{(7,\yshift)}{(8,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(8,\yshift)}{(9,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(9,\yshift)}{(10,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(10,\yshift)}{(11,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(11,\yshift)}{(12,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(12,\yshift)}{(13,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(13,\yshift)}{(14,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(14,\yshift)}{(15,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(15,\yshift)}{(16,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(16,\yshift)}{(17,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(17,\yshift)}{(18,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(18,\yshift)}{(19,\yshift+1)}{bgedgedofcolor}
+\drawBoxNew{(20,\yshift)}{(21,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(21,\yshift)}{(22,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(22,\yshift)}{(23,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(23,\yshift)}{(24,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(24,\yshift)}{(25,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(25,\yshift)}{(26,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(26,\yshift)}{(27,\yshift+1)}{bgcelldofcolor}
+\drawBoxNew{(27,\yshift)}{(28,\yshift+1)}{bgcelldofcolor}
+
+\labelBox{(.5,\yshift+.5)}{\labelComponent{0}}{bgvertdofcolor}
+\labelBox{(1.5,\yshift+.5)}{\labelComponent{1}}{bgvertdofcolor}
+\labelBox{(2.5,\yshift+.5)}{\labelComponent{0}}{bgvertdofcolor}
+\labelBox{(3.5,\yshift+.5)}{\labelComponent{1}}{bgvertdofcolor}
+\labelBox{(4.5,\yshift+.5)}{\labelComponent{0}}{bgvertdofcolor}
+\labelBox{(5.5,\yshift+.5)}{\labelComponent{1}}{bgvertdofcolor}
+\labelBox{(7.5,\yshift+.5)}{\labelComponent{0}}{bgedgedofcolor}
+\labelBox{(8.5,\yshift+.5)}{\labelComponent{1}}{bgedgedofcolor}
+\labelBox{(9.5,\yshift+.5)}{\labelComponent{0}}{bgedgedofcolor}
+\labelBox{(10.5,\yshift+.5)}{\labelComponent{1}}{bgedgedofcolor}
+\labelBox{(11.5,\yshift+.5)}{\labelComponent{0}}{bgedgedofcolor}
+\labelBox{(12.5,\yshift+.5)}{\labelComponent{1}}{bgedgedofcolor}
+\labelBox{(13.5,\yshift+.5)}{\labelComponent{0}}{bgedgedofcolor}
+\labelBox{(14.5,\yshift+.5)}{\labelComponent{1}}{bgedgedofcolor}
+\labelBox{(15.5,\yshift+.5)}{\labelComponent{0}}{bgedgedofcolor}
+\labelBox{(16.5,\yshift+.5)}{\labelComponent{1}}{bgedgedofcolor}
+\labelBox{(17.5,\yshift+.5)}{\labelComponent{0}}{bgedgedofcolor}
+\labelBox{(18.5,\yshift+.5)}{\labelComponent{1}}{bgedgedofcolor}
+\labelBox{(20.5,\yshift+.5)}{\labelComponent{0}}{bgcelldofcolor}
+\labelBox{(21.5,\yshift+.5)}{\labelComponent{1}}{bgcelldofcolor}
+\labelBox{(22.5,\yshift+.5)}{\labelComponent{0}}{bgcelldofcolor}
+\labelBox{(23.5,\yshift+.5)}{\labelComponent{0}}{bgcelldofcolor}
+\labelBox{(24.5,\yshift+.5)}{\labelComponent{0}}{bgcelldofcolor}
+\labelBox{(25.5,\yshift+.5)}{\labelComponent{0}}{bgcelldofcolor}
+\labelBox{(26.5,\yshift+.5)}{\labelComponent{0}}{bgcelldofcolor}
+\labelBox{(27.5,\yshift+.5)}{\labelComponent{0}}{bgcelldofcolor}
+
+\end{tikzpicture}
+\end{document}

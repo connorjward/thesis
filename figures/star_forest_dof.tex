@@ -1,15 +1,10 @@
 \documentclass[tikz]{standalone}
-
-\usepackage{tkz-euclide}
-\usetikzlibrary{arrows,calc,graphs,graphdrawing,positioning,tikzmark,shapes.geometric,patterns.meta,decorations.pathreplacing}
+\input{figures/common/preamble}
 
 \begin{document}
-
 \begin{tikzpicture}
 
 \input{figures/common/star_forest.tikz}
-
-\tikzstyle {arrow} = [line width=.8pt,-{Stealth[sep=4pt]}];
 
 \tikzstyle {eghostdof} = [edgedof,fill=white];
 \tikzstyle {vghostdof} = [vertdof,fill=white];
@@ -22,7 +17,7 @@
 \end{scope}
 
 % split
-\begin{scope}[xshift=7.8cm,yshift=0.4cm]
+\begin{scope}[xshift=7.8cm]
   \defSplitMeshLagrange
   \drawSplitMesh
 

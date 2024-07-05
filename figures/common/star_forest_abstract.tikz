@@ -1,0 +1,10 @@
+\input{figures/common/star_forest.tikz}
+
+\tikzstyle {point} = [dof,circle,draw=black];
+\tikzstyle {rootpoint} = [point,fill=black];
+\tikzstyle {ghostpoint} = [point,fill=white];
+\tikzstyle {arrow} = [line width=.8pt,-{Stealth[sep=6pt]}];
+
+\newcommand{\labelPoint}[4]{
+  \tkzLabelPoint[xshift=#3cm,yshift=#4cm](#1){\textbf{#2}}
+}
