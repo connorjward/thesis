@@ -1,0 +1,29 @@
+Old code for labelling code.
+  % https://tex.stackexchange.com/questions/287549/is-it-possible-to-use-tikzmark-inside-minted
+  % \begin{tikzpicture}[remember picture]
+    % \node [circle,overlay,fill=white,draw=black,minimum width=12pt,inner sep=0,font=\footnotesize,anchor=center,align=center] (alabel) at ($(pic cs:a)+(\textwidth+12,.1)$) {A};
+    % \node [circle,overlay,fill=white,draw=black,minimum width=12pt,inner sep=0,font=\footnotesize,anchor=center,align=center] (blabel) at ($(pic cs:b)+(\textwidth+12,-.1)$) {B};
+    % \node [circle,overlay,fill=white,draw=black,minimum width=12pt,inner sep=0,font=\footnotesize,anchor=center,align=center] (clabel) at ($(pic cs:c)+(\textwidth+12,-.1)$) {C};
+    % \node [circle,overlay,fill=white,draw=black,minimum width=12pt,inner sep=0,font=\footnotesize,anchor=center,align=center] (dlabel) at ($(pic cs:d)+(\textwidth+12,-.1)$) {D};
+
+    % alternative with braces, unsure which is better
+    % \coordinate (alabelbottom) at ($(pic cs:a)+(\textwidth,-4pt)$);
+    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (alabelbottom) -- node [right=10pt] {A} ++ (0,13pt);
+    %
+    % \coordinate (blabelbottom) at ($(pic cs:b)+(\textwidth,-16pt)$);
+    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (blabelbottom) -- node [right=10pt] {B} ++ (0,25pt);
+    %
+    % \coordinate (clabelbottom) at ($(pic cs:c)+(\textwidth,-16pt)$);
+    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (clabelbottom) -- node [right=10pt] {C} ++ (0,25pt);
+    %
+    % \coordinate (dlabelbottom) at ($(pic cs:d)+(\textwidth,-16pt)$);
+    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (dlabelbottom) -- node [right=10pt] {D} ++ (0,25pt);
+
+  %   \coordinate (alabeltop) at ($(pic cs:a)+(\textwidth,8pt)$);
+  %   \coordinate (alabelbottom) at ($(pic cs:b)+(\textwidth,-16pt)$);
+  %   \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (alabelbottom) -- node [right=10pt] {A} (alabeltop);
+  %
+  %   \coordinate (blabeltop) at ($(pic cs:c)+(\textwidth,8pt)$);
+  %   \coordinate (blabelbottom) at ($(pic cs:d)+(\textwidth,-16pt)$);
+  %   \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (blabelbottom) -- node [right=10pt] {B} (blabeltop);
+  % \end{tikzpicture}
