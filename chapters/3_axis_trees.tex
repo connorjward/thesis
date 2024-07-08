@@ -201,36 +201,29 @@ Depending on the labels used for the array it would also be possible to make the
 
 \begin{figure}
   \centering
-  %
-  \begin{subfigure}{.3\textwidth}
-    \centering
-    \includegraphics{linear_axis_tree.pdf}
-    \caption{TODO}
-    \label{fig:linear_axis_tree}
-  \end{subfigure}
-  %
-  \begin{subfigure}{.58\textwidth}
+
+  \begin{subfigure}{.5\textwidth}
     \centering
     \includegraphics{linear_data_tree.pdf}
-    \caption{TODO}
-    \label{fig:linear_data_tree}
   \end{subfigure}
 
   \vspace{1em}
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{|c|c|}
+    \begin{tabular}{|l|l|l|}
       \hline
-      \textbf{Path} & \textbf{Layout function} \\
+      \textbf{Path} & \textbf{Partial layout function} & \textbf{Full layout function} \\
       \hline
-      \{$a$, $b$, $c$\} & $6 i_a + 2 i_b + i_c$ \\
+      $\{a\}$ & $\textnormal{offset}(i_a) = 6 i_a$ & $\textnormal{offset}(i_a) = 6 i_a$ \\
+      $\{a, b\}$ & $\textnormal{offset}(i_b) = 2 i_b$ & $\textnormal{offset}(i_a, i_b) = 6 i_a + 2 i_b$ \\
+      $\{a, b, c\}$ & $\textnormal{offset}(i_c) = i_c$ & $\textnormal{offset}(i_a, i_b, i_c) = 6 i_a + 2 i_b + i_c$ \\
       \hline
     \end{tabular}
-    \caption{TODO}
-    \label{fig:linear_layouts}
   \end{subfigure}
-  \caption{TODO}
+  \caption{
+    Partial and full layout functions (bottom) for the different axes of the linear axis tree (top).
+  }
   \label{fig:linear_axis_data_tree}
 \end{figure}
 
@@ -238,187 +231,196 @@ In the same way that the headers of numpy arrays (\cref{sec:numpy}) decribe how 
 It is the job of the axis tree to provide the right expression that can be evaluated giving the correct offset into the flat array.
 In \pyop3, these offset expressions are termed \textit{layout functions}.
 
-% 5/7 this is where I got to
+Layout functions are computed in two stages:
+
+\begin{enumerate}
+  \item
+    A layout function is determined per axis component.
+    This is termed the \textit{partial layout function}.
+
+  \item
+    The \textit{full layout function} is determined by summing partial layout functions down the tree.
+\end{enumerate}
 
 To give a simple example, consider the axis tree and corresponding data layout shown in \cref{fig:linear_axis_data_tree}.
 The tree shown here is equivalent to a numpy array with shape \pycode{(2, 3, 2)} with the numpy axes 0, 1 and 2 given the labels \textit{a}, \textit{b} and \textit{c} respectively.
-Given a multi-index of the form $(i_a, i_b, i_c)$ the correct offset into the array may be calculated with the layout function $6 i_a + 2 i_b + i_c$.
+Given a multi-index of the form $(i_a, i_b, i_c)$ the correct offset into the array may be calculated with the layout function $\textrm{offset}(i_a, i_b, i_c) = 6 i_a + 2 i_b + i_c$.
 
-Layout functions, expressed in the symbolic maths package \textit{pymbolic}\footnote{https://documen.tician.de/pymbolic/index.html}, may either be evaluated given a set of indices or used during code generation.
+\pyop3 uses pymbolic\footnote{https://documen.tician.de/pymbolic/index.html} to store and manipulate the symbolic expressions.
 
+% should explain in more detail (use example) the difference between partial and full layout functions
+% also explain the path!
 
-\subsection{The layout algorithm, step by step}
+% Of these, the former stage is by far the most complex and is the one that will be explained in more detail below.
+%
+% In the following we will incrementally describe the algorithm for determining the right layout function for a given axis tree.
+%
+% There are additional considerations in parallel that are discussed later in \cref{chapter:parallel}.
 
-The algorithm can be deconstructed into two stages:
-\begin{enumerate}
-  \item
-    Determine the right expression for describing the layout of each axis component separately.
-    For the linear axis tree shown in \cref{fig:linear_axis_data_tree} this corresponds to determining the expressions $6 i_a$, $2 i_b$ and $i_c$.
-  \item
-    Add the component-wise layout expressions together.
-\end{enumerate}
-Of these, the former stage is by far the most complex and is the one that will be explained in more detail below.
+\subsection{Intermediate algorithm 1: Linear axis trees}
 
-In the following we will incrementally describe the algorithm for determining the right layout function for a given axis tree.
-
-There are additional considerations in parallel that are discussed later in \cref{chapter:parallel}.
-
-\subsubsection{Linear axis trees}
+To simplify exposition, we begin bt determining the right layout functions for a simple linear, non-ragged axis tree, such as that shown in \cref{fig:linear_axis_data_tree}.
+Since the trees are not ragged no tabulation need occur and the layout functions will simply be weighted sums of the input indices.
 
 \begin{algorithm}
-  \begin{minted}[linenos]{python}
-def tabulate_layouts_linear(axis: Axis):
-  layouts = {}
+  \begin{center}
+    \begin{minipage}{.9\textwidth}
+      \begin{pyalg2}
+        def tabulate_layouts_linear(axis: Axis):
+          layouts = {}
 
-  # post-order traversal
-  if has_subaxis(axis): 
-    subaxis = get_subaxis(axis)
-    layouts |= tabulate_layouts_linear(subaxis)
+          # post-order traversal
+          if has_subaxis(axis): 
+            subaxis = get_subaxis(axis)
+            sublayouts = tabulate_layouts_linear(subaxis)?\label{code:linear_sublayouts}?
+            layouts.update(sublayouts)
 
-  # layout expression for this axis
-  if has_subaxis(axis):
-    step = get_subaxis_size(axis)
-  else:
-    step = 1
-  layouts[axis] = AxisVar(axis) * step
+          # partial layout for the current axis
+          if has_subaxis(axis):
+            subaxis = get_subaxis(axis)
+            step = get_axis_size(subaxis)
+          else:
+            step = 1
+          layouts[axis] = AxisVar(axis.label) * step?\label{code:linear_layout}?
 
-  return layouts
-  \end{minted}
-  %
+          return layouts
+      \end{pyalg2}
+    \end{minipage}
+  \end{center}
+
   \caption{
-    Algorithm for computing the layout functions of a linear (single component) axis tree such as that shown in \cref{fig:linear_axis_tree}.
+    Algorithm for computing the partial layout functions of a linear, non-ragged axis tree such as that shown in \cref{fig:linear_axis_data_tree}.
     The function is initially invoked by passing the root axis of the tree.
   }
   \label{alg:tabulate_layouts_linear}
 \end{algorithm}
 
-We begin our exposition with the simplest possible case: ``linear" axis trees.
-A ``linear" tree means that the axes in the tree are restricted to be single component.
-Such trees are directly equivalent to numpy-like N-dimensional arrays or \textit{tensor} objects in many domain-specific programming languages.
-An example of such a tree and data layout is shown in \cref{fig:linear_axis_data_tree}.
+Pseudocode for determining the right partial layout functions for such an axis tree is shown in \cref{alg:tabulate_layouts_linear}.
+The function \pycode{tabulate_layouts_linear} is invoked passing the root (top) axis of the axis tree, which is then traversed in a post-order fashion with subaxes handled first (line \ref{code:linear_sublayouts}).
+For each axis in the tree, the partial layout function is simply the symbolic expression \pycode{AxisVar(axis.label) * step} (line \ref{code:linear_layout}).
+\pycode{AxisVar(axis.label)} is equivalent to the indices $i_a$, $i_b$ or $i_c$ found in \cref{fig:linear_axis_data_tree}, and \pycode{step} is an integer storing the size of all the subaxes, and hence the stride of the current axis.
+If there are no subaxes then the \pycode{step} must be 1.
 
-Pseudocode for determining the right layout function for a linear axis tree is shown in \cref{alg:tabulate_layouts_linear}.
-The axis tree is traversed in a post-order fashion with subaxes handled first (the reason for this is made clear in \cref{sec:layout_alg_ragged}).
-At each axis, since we only require affine expressions, the layout function is simply the symbolic expression \pycode{AxisVar(axis) * step}, where \pycode{AxisVar(axis)} is a pymbolic \pycode{Variable} object and step is an integer corresponding to the size of the subtree as seen from that axis.
-
-\subsubsection{Multi-component axis trees}
+\subsection{Intermediate algorithm 2: Multi-component axis trees}
 \label{sec:layout_alg_multi_component}
+
+% TODO: Explain how the path differs here, has superscript.
 
 \begin{figure}
   \centering
-  \begin{subfigure}{.3\textwidth}
+  \begin{subfigure}{.4\textwidth}
     \centering
     \includegraphics{multi_component_axis_tree}
-    \caption{TODO}
+    \caption{A simple multi-component axis tree.}
     \label{fig:multi_component_axis_tree}
   \end{subfigure}
   %
   \begin{subfigure}{.5\textwidth}
     \centering
     \includegraphics{multi_component_data_tree}
-    \caption{TODO}
-    \label{fig:multi_component_data_tree}
+    \caption{Data layout for the axis tree shown in \cref{fig:multi_component_axis_tree}.}
   \end{subfigure}
 
   \vspace{1em}
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{|c|c|}
+    \begin{tabular}{|l|l|l|}
       \hline
-      \textbf{Path} & \textbf{Layout function} \\
+      \textbf{Path} & \textbf{Partial layout function} & \textbf{Full layout function} \\
       \hline
-      \{$(a, x)$, $b$\} & $3 i_a + i_b$ \\
+      $\{ a^x \}$ & $\textnormal{offset}(i_a) = 3 i_a$ & $\textnormal{offset}(i_a) = 3 i_a$ \\
       \hline
-      \{$(a, y)$, $c$\} & $2 i_a + i_c + 6$ \\
+      $\{ a^x, b \}$ & $\textnormal{offset}(i_b) = i_b$ & $\textnormal{offset}(i_a, i_b) = 3 i_a + i_b$ \\
+      \hline
+      $\{ a^y \}$ & $\textnormal{offset}(i_a) = 2 i_a + 6$ & $\textnormal{offset}(i_a) = 2 i_a + 6$ \\
+      \hline
+      $\{ a^y, c \}$ & $\textnormal{offset}(i_c) = i_c$ & $\textnormal{offset}(i_a, i_c) = 2 i_a + 6 + i_c$ \\
       \hline
     \end{tabular}
-    \caption{TODO}
+    \caption{
+      The layout functions.
+    }
     \label{fig:multi_component_layouts}
   \end{subfigure}
-  %
-  \caption{TODO}
+
+  \caption{Partial and full layout functions for a multi-component axis tree.}
   \label{fig:multi_component_axis_tree_all}
 \end{figure}
 
+% don't say "things"
+When multi-component axis trees are introduced, a number of things change:
+
+\begin{itemize}
+  \item
+    There is no longer a single partial layout function per axis, instead there is a partial layout function \textit{per axis component}.
+
+  \item
+    In addition to having weighted sums of indices, one can now also have \textit{scalar offsets} between axis components.
+\end{itemize}
+
+These modifications are demonstrated in \cref{fig:multi_component_axis_tree_all}.
+The axis $a$ has two components, $x$ and $y$, that are shown in red and blue.
+All elements of the $x$ component are stored contiguously before those of $y$.
+
+If we inspect the layout functions in \cref{fig:multi_component_layouts} we can see that the paths are now partitioned by component: $a^x$ and $a^y$ are considered distinct.
+Further, a scalar offset of 6 is needed for the $a^y$ partial layout function.
+This is included so the expression can step over all the preceding elements of $a^x$.
+
+For simplicity we omit component labels for the single-component axes $b$ and $c$.
+
 \begin{algorithm}
-  \begin{minted}[linenos,highlightlines={5-7,11-12,17-18},highlightcolor=red!30,escapeinside=??]{python}
-def tabulate_layouts_multi_component(axis: Axis):
-  layouts = {}
+  \begin{center}
+    \begin{minipage}{.9\textwidth}
+      \begin{pyalg2*}{highlightlines={5,12-13,19-20}}
+        def tabulate_layouts_multi_component(axis: Axis):
+          layouts = {}
 
-  # post-order traversal
-?\tikzmark{a}?  for component in axis.components:
-?\tikzmark{b}?    if has_subaxis(axis, component): 
-      subaxis = get_subaxis(axis, component)
-      layouts |= tabulate_layouts_multi_component(subaxis)
+          # post-order traversal
+          for component in axis.components:?\label{code:mc_loop1}?
+            if has_subaxis(axis, component): 
+              subaxis = get_subaxis(axis, component)
+              sublayouts = tabulate_layouts_multi_component(subaxis)
+              layouts.update(sublayouts)
 
-  # layout expressions for this axis
-?\tikzmark{c}?  start = 0
-  for component in axis.components:
-    if has_subaxis(axis, component):
-      step = get_subaxis_size(axis, component)
-    else:
-      step = 1
-?\tikzmark{d}?    layouts[(axis, component)] = AxisVar(axis) * step + start
-    start += step
+          # partial layouts for the current axis
+          start = 0
+          for component in axis.components:?\label{code:mc_loop2}?
+            if has_subaxis(axis, component):
+              subaxis = get_subaxis(axis, component)
+              step = get_axis_size(subaxis)
+            else:
+              step = 1
+              layouts[(axis, component)] = AxisVar(axis.label) * step + start?\label{code:mc_layout_store}?
+            start += step
 
-  return layouts
-  \end{minted}
-
-  % https://tex.stackexchange.com/questions/287549/is-it-possible-to-use-tikzmark-inside-minted
-  \begin{tikzpicture}[remember picture]
-    % \node [circle,overlay,fill=white,draw=black,minimum width=12pt,inner sep=0,font=\footnotesize,anchor=center,align=center] (alabel) at ($(pic cs:a)+(\textwidth+12,.1)$) {A};
-    % \node [circle,overlay,fill=white,draw=black,minimum width=12pt,inner sep=0,font=\footnotesize,anchor=center,align=center] (blabel) at ($(pic cs:b)+(\textwidth+12,-.1)$) {B};
-    % \node [circle,overlay,fill=white,draw=black,minimum width=12pt,inner sep=0,font=\footnotesize,anchor=center,align=center] (clabel) at ($(pic cs:c)+(\textwidth+12,-.1)$) {C};
-    % \node [circle,overlay,fill=white,draw=black,minimum width=12pt,inner sep=0,font=\footnotesize,anchor=center,align=center] (dlabel) at ($(pic cs:d)+(\textwidth+12,-.1)$) {D};
-
-    % alternative with braces, unsure which is better
-    % \coordinate (alabelbottom) at ($(pic cs:a)+(\textwidth,-4pt)$);
-    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (alabelbottom) -- node [right=10pt] {A} ++ (0,13pt);
-    %
-    % \coordinate (blabelbottom) at ($(pic cs:b)+(\textwidth,-16pt)$);
-    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (blabelbottom) -- node [right=10pt] {B} ++ (0,25pt);
-    %
-    % \coordinate (clabelbottom) at ($(pic cs:c)+(\textwidth,-16pt)$);
-    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (clabelbottom) -- node [right=10pt] {C} ++ (0,25pt);
-    %
-    % \coordinate (dlabelbottom) at ($(pic cs:d)+(\textwidth,-16pt)$);
-    % \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (dlabelbottom) -- node [right=10pt] {D} ++ (0,25pt);
-
-    \coordinate (alabeltop) at ($(pic cs:a)+(\textwidth,8pt)$);
-    \coordinate (alabelbottom) at ($(pic cs:b)+(\textwidth,-16pt)$);
-    \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (alabelbottom) -- node [right=10pt] {A} (alabeltop);
-
-    \coordinate (blabeltop) at ($(pic cs:c)+(\textwidth,8pt)$);
-    \coordinate (blabelbottom) at ($(pic cs:d)+(\textwidth,-16pt)$);
-    \draw[overlay,decoration={brace,mirror,raise=5pt,amplitude=5pt},decorate,line width=.8pt] (blabelbottom) -- node [right=10pt] {B} (blabeltop);
-  \end{tikzpicture}
+          return layouts
+      \end{pyalg2*}
+    \end{minipage}
+  \end{center}
 
   \caption{
     Algorithm for computing the layout functions of an axis tree where any of the contained axes may have multiple components.
+    Some lines are highlighted to emphasise differences with \cref{alg:tabulate_layouts_linear}.
   }
   \label{alg:tabulate_layouts_multi_component}
 \end{algorithm}
 
-When multi-component axis trees are introduced, a number of things change:
-First, there are now multiple layout functions per axis.
-This is one per \pycode{(axis, component)} pair.
-Second, the affine indexing used in the linear case above must now also include offsets.
+Regarding the previous algorithm for determining layout functions (\cref{alg:tabulate_layouts_linear}), a number of changes are now required to capture this additional information (\cref{alg:tabulate_layouts_multi_component}):
 
-This is shown in \cref{fig:multi_component_axis_tree_all}.
-The root axis of the axis tree now has two components, given the labels $x$ and $y$, each with their own subaxis (labelled $b$ and $c$).
-The layouts of the $(a, x)$ part of the tree are effectively unchanged from the linear case, but the $y$ component of axis $a$ now clearly carries an offset.
-This is shown in the layout functions in \cref{fig:multi_component_layouts}.
-
-The modifications from \cref{alg:tabulate_layouts_linear} required to determine the right layout function for a multi-component axis tree are relatively straightforward.
-The modified algorithm is shown in \cref{alg:tabulate_layouts_multi_component} with the core changes labelled and highlighted in red.
-These core changes are:
 \begin{itemize}
-  \item[\textbf{A}] The post-order traversal must now be over \textit{per-component} subaxes, so a loop over axis components is required.
-  \item[\textbf{B}] The layout functions are now stored per \pycode{(axis, component)} pair, and an additional offset, named \pycode{start}, is added.
+  \item
+    The post-order traversal must now be over \textit{per component} subaxes.
+    This means that additional loops over \pycode{axis.components} are required (lines~\ref{code:mc_loop1},~\ref{code:mc_loop2}) and that \pycode{has_subaxis()} and \pycode{get_subaxis()} now need to pass both \pycode{axis} and \pycode{component}.
+
+  \item
+    Similarly, since separate partial layouts are required for each axis component, the \pycode{layouts} dictionary now stores values per \pycode{(axis, component)} pair (line~\ref{code:mc_layout_store}).
+
+  \item
+    The scalar offset between axis components is tracked by the \pycode{start} variable and the per-component expression is now \pycode{AxisVar(axis.label) * step + start} (line~\ref{code:mc_layout_store}).
 \end{itemize}
 
-\subsubsection{Ragged axis trees}
+\subsection{Final algorithm: Including ragged axis trees}
 \label{sec:layout_alg_ragged}
 
 \begin{figure}
