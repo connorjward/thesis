@@ -1,3 +1,8 @@
+# import os
+#
+# os.environ["PYOP3_USE_LIKWID"] = "1"
+
+
 import argparse
 
 import numpy as np
@@ -23,5 +28,7 @@ if __name__ == "__main__":
     else:
         form = np.prod([Function(V) for _ in range(args.nfuncs)]) * v * dx
 
-    with PETSc.Log.Event("run experiment")
-        assemble(form)
+    with PETSc.Log.Event("run experiment"):
+        assemble(form, pyop3_compiler_parameters={"add_likwid_markers": True})
+
+    print("complete")
