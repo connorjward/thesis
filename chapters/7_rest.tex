@@ -32,7 +32,7 @@
 
 \chapter{Performance results}
 
-% Run on Pyramus or Thisbe
+% Run on Pyramus
 % There are 3 possible performance bottlenecks in assembly: payload transfer (pyop3) and the computation and matrix insertion (neither pyop3)
 % so we want to check only the first of these
 
@@ -41,9 +41,19 @@
 % * we are memory bound but ought to be near roofline
 % * can compare with and without additional map payload
 
+% * show a plot of FLOP/s vs AI and demonstrate near roofline
+% * we can assume optimal caching by computing the streamed memory by adding the
+%   number of DoFs together, could also have a pessimal case where we just multiply the local
+%   kernel by the number of cells.
+% * we can play with number of functions and degree to shift the AI
+
 % experiment 2: slope limiter style problem
 % * DG0 -> CG1, set vertex to max of surrounding cells
 % * shows off ragged behaviour as patches are ragged
+% * ideally have good roofline behaviour as before, not much else to see
+
+% experiment 3: strong scaling (could be part of exp. 1)
+% * just show assembly performance
 
 % NOTE: Could possibly include scaling plots but these need to trigger a halo update every step as otherwise
 % worthless. Hard to prove that strong-scaling is relevant/might be slow elsewhere.

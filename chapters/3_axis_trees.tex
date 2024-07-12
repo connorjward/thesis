@@ -182,22 +182,28 @@ In \pyop3, ragged axis trees are created by passing an array (specifically a \py
 This is shown in \cref{fig:ragged_axis_tree}.
 The axis tree has 3 axes, labelled $a$, $b$ and $c$.
 Axes $a$ and $b$ both have size 2, but $c$, the innermost axis, has size \pycode{[[1, 0], [2, 1]]}.
-This means that the size of $c$ is effectively determined by the function
+This means that the size of $c$ is effectively determined by the table
 
-\begin{equation*}
-  \textnormal{size}(i_a, i_b) = 
-  \begin{cases}
-    1 & \textnormal{if}\ i_a = 0\ \textnormal{and}\ i_b = 0, \\
-    0 & \textnormal{if}\ i_a = 0\ \textnormal{and}\ i_b = 1, \\
-    2 & \textnormal{if}\ i_a = 1\ \textnormal{and}\ i_b = 0, \\
-    1 & \textnormal{if}\ i_a = 1\ \textnormal{and}\ i_b = 1.
-  \end{cases}
-\end{equation*}
-
-The size array here is dependent upon both $i_a$ and $i_b$.
-Depending on the labels used for the array it would also be possible to make the size depend on just $i_a$ or $i_b$ separately.
+\begin{center}
+  \begin{tblr}{|[1pt] X[1.2cm,c] |[1pt] X[1.2cm,c] |[1pt] c |[1pt]}
+    \hline[1pt]
+    $i_a$ & $i_b$ & $\textnormal{sizes}(i_a, i_b)$ \\
+    \hline[1pt]
+    0 & 0 & 1 \\
+    \hline
+    0 & 1 & 0 \\
+    \hline
+    1 & 0 & 2 \\
+    \hline
+    1 & 1 & 1 \\
+    \hline[1pt]
+  \end{tblr}
+\end{center}
 
 \section{Computing offsets}
+\label{sec:axis_tree_layouts}
+
+% NOTE: avoid any mention of the post-order traversal - isn't right or useful
 
 \begin{figure}
   \centering
@@ -266,14 +272,8 @@ Since the trees are not ragged no tabulation need occur and the layout functions
   \begin{center}
     \begin{minipage}{.9\textwidth}
       \begin{pyalg2}
-        def tabulate_layouts_linear(axis: Axis):
+        def collect_layouts_linear(axis: Axis):
           layouts = {}
-
-          # post-order traversal
-          if has_subaxis(axis): 
-            subaxis = get_subaxis(axis)
-            sublayouts = tabulate_layouts_linear(subaxis)?\label{code:linear_sublayouts}?
-            layouts.update(sublayouts)
 
           # partial layout for the current axis
           if has_subaxis(axis):
@@ -282,6 +282,12 @@ Since the trees are not ragged no tabulation need occur and the layout functions
           else:
             step = 1
           layouts[axis] = AxisVar(axis.label) * step?\label{code:linear_layout}?
+
+          # traverse subtree
+          if has_subaxis(axis): 
+            subaxis = get_subaxis(axis)
+            sublayouts = collect_layouts_linear(subaxis)?\label{code:linear_sublayouts}?
+            layouts.update(sublayouts)
 
           return layouts
       \end{pyalg2}
@@ -292,11 +298,11 @@ Since the trees are not ragged no tabulation need occur and the layout functions
     Algorithm for computing the partial layout functions of a linear, non-ragged axis tree such as that shown in \cref{fig:linear_axis_data_tree}.
     The function is initially invoked by passing the root axis of the tree.
   }
-  \label{alg:tabulate_layouts_linear}
+  \label{alg:collect_layouts_linear}
 \end{algorithm}
 
-Pseudocode for determining the right partial layout functions for such an axis tree is shown in \cref{alg:tabulate_layouts_linear}.
-The function \pycode{tabulate_layouts_linear} is invoked passing the root (top) axis of the axis tree, which is then traversed in a post-order fashion with subaxes handled first (line \ref{code:linear_sublayouts}).
+Pseudocode for determining the right partial layout functions for such an axis tree is shown in \cref{alg:collect_layouts_linear}.
+The function \pycode{collect_layouts_linear} is invoked passing the root (top) axis of the axis tree, which is then traversed in a post-order fashion with subaxes handled first (line \ref{code:linear_sublayouts}).
 For each axis in the tree, the partial layout function is simply the symbolic expression \pycode{AxisVar(axis.label) * step} (line \ref{code:linear_layout}).
 \pycode{AxisVar(axis.label)} is equivalent to the indices $i_a$, $i_b$ or $i_c$ found in \cref{fig:linear_axis_data_tree}, and \pycode{step} is an integer storing the size of all the subaxes, and hence the stride of the current axis.
 If there are no subaxes then the \pycode{step} must be 1.
@@ -372,20 +378,14 @@ For simplicity we omit component labels for the single-component axes $b$ and $c
 \begin{algorithm}
   \begin{center}
     \begin{minipage}{.9\textwidth}
+      % FIXME: not right anymore
       \begin{pyalg2*}{highlightlines={5,12-13,19-20}}
-        def tabulate_layouts_multi_component(axis: Axis):
+        def collect_layouts_multi_component(axis: Axis):
           layouts = {}
-
-          # post-order traversal
-          for component in axis.components:?\label{code:mc_loop1}?
-            if has_subaxis(axis, component): 
-              subaxis = get_subaxis(axis, component)
-              sublayouts = tabulate_layouts_multi_component(subaxis)
-              layouts.update(sublayouts)
 
           # partial layouts for the current axis
           start = 0
-          for component in axis.components:?\label{code:mc_loop2}?
+          for component in axis.components:?\label{code:mc_loop1}?
             if has_subaxis(axis, component):
               subaxis = get_subaxis(axis, component)
               step = get_axis_size(subaxis)
@@ -394,6 +394,13 @@ For simplicity we omit component labels for the single-component axes $b$ and $c
               layouts[(axis, component)] = AxisVar(axis.label) * step + start?\label{code:mc_layout_store}?
             start += step
 
+          # traverse subtree
+          for component in axis.components:?\label{code:mc_loop1}?
+            if has_subaxis(axis, component): 
+              subaxis = get_subaxis(axis, component)
+              sublayouts = collect_layouts_multi_component(subaxis)
+              layouts.update(sublayouts)
+
           return layouts
       \end{pyalg2*}
     \end{minipage}
@@ -401,12 +408,12 @@ For simplicity we omit component labels for the single-component axes $b$ and $c
 
   \caption{
     Algorithm for computing the layout functions of an axis tree where any of the contained axes may have multiple components.
-    Some lines are highlighted to emphasise differences with \cref{alg:tabulate_layouts_linear}.
+    Some lines are highlighted to emphasise differences with \cref{alg:collect_layouts_linear}.
   }
-  \label{alg:tabulate_layouts_multi_component}
+  \label{alg:collect_layouts_multi_component}
 \end{algorithm}
 
-Regarding the previous algorithm for determining layout functions (\cref{alg:tabulate_layouts_linear}), a number of changes are now required to capture this additional information (\cref{alg:tabulate_layouts_multi_component}):
+Regarding the previous algorithm for determining layout functions (\cref{alg:collect_layouts_linear}), a number of changes are now required to capture this additional information (\cref{alg:collect_layouts_multi_component}):
 
 \begin{itemize}
   \item
@@ -425,69 +432,171 @@ Regarding the previous algorithm for determining layout functions (\cref{alg:tab
 
 \begin{figure}
   \centering
-  \begin{subfigure}{.3\textwidth}
+  \begin{subfigure}{.4\textwidth}
     \centering
     \includegraphics{ragged_axis_tree.pdf}
-    \caption{TODO}
-    \label{fig:ragged_axis_tree}
   \end{subfigure}
-  %
-  \begin{subfigure}{.58\textwidth}
+  \begin{subfigure}{.4\textwidth}
     \centering
     \includegraphics{ragged_data_tree.pdf}
-    \caption{TODO}
-    \label{fig:ragged_data_tree}
   \end{subfigure}
 
   \vspace{1em}
 
   \begin{subfigure}{\textwidth}
     \centering
-    %
-    \begin{tabular}{|c|c|}
+    \begin{tabular}{|l|l|}
       \hline
       \textbf{Path} & \textbf{Layout function} \\
       \hline
-      \{$a$, $b$, $c$\} & $\pycode{[[0, 1], [1, 3]]}_{i_a,i_b} + i_c$ \\
+      \hline
+      $\{a\}$ & $\textnormal{offset}(i_a) = \pycode{[0, 1][?$i_a$?]}$ \\
+      \hline
+      $\{b\}$ & $\textnormal{offset}(i_a, i_b) = \pycode{[[0, 1], [0, 2]][?$i_a$?, ?$i_b$?]}$ \\
+      \hline
+      $\{c\}$ & $\textnormal{offset}(i_c) = i_c$ \\
+      \hline
+      \hline
+      $\{a, b, c\}$ & $\textnormal{offset}(i_a,i_b,i_c) = \pycode{[0, 1][?$i_a$?]} + \pycode{[[0, 1], [0, 2]][?$i_a$?, ?$i_b$?]} + i_c$ \\
       \hline
     \end{tabular}
-    \caption{TODO}
-    \label{fig:ragged_layouts}
   \end{subfigure}
-  %
-  \caption{TODO}
-  \label{fig:ragged_axis_tree_all}
+
+  \caption{Data layout and tabulated layout functions for a ragged axis tree.}
+  \label{fig:ragged_axis_tree_layout}
 \end{figure}
 
-% TODO: Once things have been cleaned up, redo this.
+% NOTE: mention that ragged + multi-component is not yet supported!
+
+For ragged axis trees a new approach is needed.
+Since the strides between entries are no longer uniform it is no longer sufficient for layout functions to be expressed as a simple affine function, and instead the offsets must be tabulated into some array.
+This is demonstrated in \cref{fig:ragged_axis_tree_layout}.
+Both axes $a$ and $b$ have non-uniform strides resulting in offset functions $\pycode{[0, 1][?$i_a$?]}$ and $\pycode{[[0, 1], [0, 2]][?$i_a$?, ?$i_b$?]}$ respectively.
+Axis $c$, being the leaf axis, has a uniform stride of 1 and so the layout function is trivial.
+As before the complete layout function is the sum of the partial functions and is given by
+
+\begin{equation*}
+  \textnormal{offset}(i_a,i_b,i_c) = \pycode{[0, 1][?$i_a$?]} + \pycode{[[0, 1], [0, 2]][?$i_a$?, ?$i_b$?]} + i_c,
+\end{equation*}
+
+which is equivalent to the table
+
+\begin{center}
+  \begin{tblr}{|[1pt] X[1.2cm,c] |[1pt] X[1.2cm,c] |[1pt] X[1.2cm,c] |[1pt] c |[1pt]}
+    \hline[1pt]
+    $i_a$ & $i_b$ & $i_c$ & $\textnormal{offset}(i_a, i_b, i_c)$ \\
+    \hline[1pt]
+    0 & 0 & 0 & 0 \\
+    \hline
+    1 & 0 & 0 & 1 \\
+    \hline
+    1 & 0 & 1 & 2 \\
+    \hline
+    1 & 1 & 0 & 3 \\
+    \hline[1pt]
+  \end{tblr}
+\end{center}
+
+For axis $b$, it is important to note that its stride depends upon both the indices $i_a$ and $i_b$, and hence its partial layout is 2 dimensional.
+Since axis $b$ relies on axis $a$ for tabulation we say that axis $a$ is a \textit{dependent} axis for axis $b$.
+
+% TODO: describe tabulate_offsets in some way.
+% TODO: highlight the right lines
 \begin{algorithm}
-  \begin{minted}[linenos,highlightlines={},highlightcolor=red!30,escapeinside=??]{python}
-def tabulate_layouts_ragged(axis: Axis):
-  layouts = {}
+  \begin{center}
+    \begin{minipage}{.9\textwidth}
+      \begin{pyalg2*}{highlightlines={6,11}}
+        def collect_layouts_ragged(axis: Axis):
+          layouts = {}
 
-  # post-order traversal
-  for component in axis.components:
-    if has_subaxis(axis, component): 
-      subaxis = get_subaxis(axis, component)
-      sublayouts, subtree = tabulate_layouts_ragged(subaxis)
-      layouts |= sublayouts
+          # partial layouts for the current axis
+          for component in axis.components:
+            if has_constant_step(axis, component):?\label{code:has_constant_step}?
+              # affine case, see earlier algorithms
+              ...
+            else:
+              # axis component has a ragged subaxis
+              layouts[(axis, component)] = tabulate_offsets(axis, component)?\label{code:call_tabulate_offsets}?
 
-  # layout expressions for this axis
-?\tikzmark{c}?  start = 0
-  for component in axis.components:
-    if has_subaxis(axis, component):
-      step = get_subaxis_size(axis, component)
-    else:
-      step = 1
-?\tikzmark{d}?    layouts[(axis, component)] = AxisVar(axis) * step + start
-    start += step
+          # traverse subtree
+          for component in axis.components:
+            if has_subaxis(axis, component): 
+              subaxis = get_subaxis(axis, component)
+              sublayouts = collect_layouts_ragged(subaxis)
+              layouts.update(sublayouts)
 
-  return layouts
-  \end{minted}
+          return layouts
+      \end{pyalg2*}
+    \end{minipage}
+  \end{center}
 
   \caption{
     Algorithm for computing the layout functions of an axis tree where any of the contained axes may be ragged.
   }
-  \label{alg:tabulate_layouts_ragged}
+  \label{alg:collect_layouts_ragged}
 \end{algorithm}
+
+\begin{algorithm}
+  \begin{center}
+    \begin{minipage}{.9\textwidth}
+      \begin{pyalg2*}{highlightlines={}}
+        def tabulate_offsets(axis: Axis, component: AxisComponent):
+          dependent_axes = collect_dependent_axes(axis, component)?\label{code:collect_dependent_axes}?
+
+          offset_axes = AxisTree.from_iterable([dependent_axes, axis])?\label{code:offset_axes}?
+          offset_dat = Dat(offset_axes\label{code:offset_dat})
+
+          # perform the tabulation
+          for dep_indices in dependent_axes.iter():?\label{code:loop_dependent_axes}?
+            offset = 0
+            for axis_indices in axis.iter():?\label{code:loop_current_axis}?
+              indices = dep_indices | axis_indices
+
+              offset_dat.set_value(indices, offset)
+              offset += step_size(axis, component, indices)
+
+          return offset_dat
+      \end{pyalg2*}
+    \end{minipage}
+  \end{center}
+
+  \caption{
+    Code that tabulates the offsets for an axis with non-uniform strides.
+  }
+  \label{alg:tabulate_offsets}
+\end{algorithm}
+
+To determine the partial layouts for such a tree we must make a handful of changes to \cref{alg:collect_layouts_multi_component}.
+Shown in \cref{alg:collect_layouts_ragged}, these are:
+
+\begin{itemize}
+  \item
+    An additional check is added to distinguish between the affine case (described in \cref{sec:layout_alg_multi_component}) and the case with non-uniform strides (line~\ref{code:has_constant_step}).
+
+  \item
+    If non-uniform strides are detected then an array containing the correct offsets is tabulated (line~\ref{code:call_tabulate_offsets}).
+\end{itemize}
+
+To tabulate the offsets an additional function \pycode{tabulate_offsets} is used.
+Summarised in \cref{alg:tabulate_offsets} it does the following:
+
+\begin{enumerate}
+  \item
+    First the dependent axes are discovered (line~\ref{code:collect_dependent_axes}).
+    These are the additional axes that must be walked over to tabulate the offsets (line~\ref{code:loop_dependent_axes}).
+    Dependent axes are only required in cases with more complex ragged structures such as with axis $b$ in \cref{fig:ragged_axis_tree_layout}.
+
+  \item
+    Then, a new array, or \pycode{Dat} (\cref{sec:data_structures}), is constructed to store the offsets (lines~\ref{code:offset_axes} and~\ref{code:offset_dat}) .
+    The required axis tree (\pycode{offset_axes}) is linear and is the concatenation of the dependent axes with the current axis.
+    In the example of \cref{fig:ragged_axis_tree_layout} this produces an offset axis tree just containing axis $a$ when tabulating axis $a$, and one containing both axes $a$ and $b$ when tabulating axis $b$.
+
+  \item
+    Lastly, both the dependent axes and current axis are looped over, incrementing and storing the offset in \pycode{offset_dat} each time.
+    This process is equivalent to that used by a PETSc \ccode{Section} during \ccode{PetscSectionSetUp()} (\cref{alg:petsc_section_tabulate}).
+\end{enumerate}
+
+It is significant to note that the loops over axes using the \pycode{iter()} method (lines~\ref{code:loop_dependent_axes} and~\ref{code:loop_current_axis}) are implemented in Python and hence are relatively slow to evaluate.
+It is our present assumption that such setup costs are amortized over the duration of the program, though future work to transition to an implementation in Cython or C is likely.
+
 \end{document}

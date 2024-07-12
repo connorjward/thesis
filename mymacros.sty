@@ -44,7 +44,7 @@
 % source: https://tex.stackexchange.com/questions/13290/how-to-define-macros-with-numbers-in-them
 \def\pyop#1{\ifnum#1=2 {PyOP2}\else \ifnum#1=3 {\texttt{pyop3}}\fi \fi}
 
-\newcommand{\pycode}{\mintinline{python}}
+\newcommand{\pycode}{\mintinline[escapeinside=??]{python}}
 \newcommand{\ccode}{\mintinline{c}}
 
 \newcommand{\pycodemini}{\mintinline[fontsize=\footnotesize]{python}}
@@ -54,6 +54,10 @@
 \newcommand{\rbrac}{\pmb{\bigr]}}
 
 % ============================== TABLES ==============================
+
+% more control of table appearance
+% https://tex.stackexchange.com/questions/10243/tabular-border-style
+\usepackage{tabularray}
 
 % https://tex.stackexchange.com/questions/33486/aligning-inside-tabular-environment-specific-cell
 \newcommand{\tableDash}{\multicolumn{1}{c|}{\pycode{-}}}
