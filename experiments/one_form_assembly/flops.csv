@@ -1,0 +1,19 @@
+# The values here are determined by running
+#
+#     likwid-perfctr -C S0:0 -g FLOPS_DP -m python one_form_assembly/run.py --nfuncs <N>
+#
+# This gives us a table of metrics and we want to record
+#
+#     FP_ARITH_INST_RETIRED_SCALAR_DOUBLE + 2*FP_ARITH_INST_RETIRED_128B_PACKED_DOUBLE
+#
+# Note that this should be divided by the number of cells in the mesh as we want a
+# per-cell FLOP count.
+nfuncs,degree,flops_per_cell
+0,1,17
+1,1,41
+2,1,41
+3,1,45
+4,1,52
+5,1,52
+6,1,55
+7,1,63

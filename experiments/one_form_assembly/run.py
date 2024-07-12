@@ -1,19 +1,14 @@
-# import os
-#
-# os.environ["PYOP3_USE_LIKWID"] = "1"
-
-
 import argparse
 
-import numpy as np
 from firedrake import *
 
 
+# TODO: Accept likwid option, otherwise do a loop, hot start etc
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--nfuncs", type=int, default=0)
     parser.add_argument("--degree", type=int, default=1)
-    return parser.parse_args()
+    return parser.parse_known_args()[0]
 
 
 if __name__ == "__main__":
@@ -26,9 +21,7 @@ if __name__ == "__main__":
     if args.nfuncs == 0:
         form = v * dx
     else:
-        form = np.prod([Function(V) for _ in range(args.nfuncs)]) * v * dx
+        form = sum(Function(V) for _ in range(args.nfuncs)) * v * dx
 
     with PETSc.Log.Event("run experiment"):
-        assemble(form, pyop3_compiler_parameters={"add_likwid_markers": True})
-
-    print("complete")
+        assemble(form, form_compiler_parameters={"add_likwid_markers": True})

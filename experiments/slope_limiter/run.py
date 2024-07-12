@@ -9,19 +9,20 @@ from firedrake import *
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--degree", type=int, default=1)
-    return parser.parse_args()
+    return parser.parse_known_args()
 
 
 # NOTE: This could be integrated into pyop3 more directly as a scalar function
 def make_max_kernel():
     lpy_kernel = lp.make_kernel(
-        "{ [i]: 0 <= i < 1 }",
-        "out[0] = max(out[0], in[0])",
+        [],
+        "out[0] = out[0] if out[0] > in[0] else in[0]",
         [
             lp.GlobalArg("in", shape=(1,), dtype=ScalarType),
             lp.GlobalArg("out", shape=(1,), dtype=ScalarType),
         ],
         target=lp.CTarget(),
+        lang_version=(2018,2),
     )
     return op3.Function(lpy_kernel, [op3.READ, op3.RW])
 
@@ -36,6 +37,9 @@ def make_loop_expr():
     dg = Function(V_dg)
 
     max_ = make_max_kernel()
+
+    # currently this fails because I have disabled loops over maps.
+    # need to remedy this! also index has been reused to mean the input index...
 
     return op3.loop(
         v := mesh.vertices.index(),
