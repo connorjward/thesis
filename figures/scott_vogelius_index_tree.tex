@@ -19,29 +19,28 @@
 
 \tikzmath { \yshift = \yshift - 2; }
 
-\drawTreeNode{(mesh0)}{(-5,\yshift)}{$\textnormal{map}(f(c),\ \{ \component{mesh00}{\pycode{"vertex"}},\ \component{mesh01}{\pycode{"edge"}},\ \component{mesh02}{\pycode{"cell"}} \})$};
+\drawTreeNode{(mesh0)}{(-3,\yshift)}{$\textnormal{map}(f(c),\ \{ \component{mesh00}{\pycode{"vertex"}},\ \component{mesh01}{\pycode{"edge"}},\ \component{mesh02}{\pycode{"cell"}} \})$};
 \underlineComponent{space}{space0};
 \drawTreeConnector{space}{space0}{(mesh0)};
 
-\drawTreeNode{(mesh1)}{(5,\yshift)}{$\textnormal{map}(f(c),\ \{ \component{mesh10}{\pycode{"vertex"}},\ \component{mesh11}{\pycode{"edge"}},\ \component{mesh12}{\pycode{"cell"}} \})$};
+\drawTreeNode{(mesh1)}{(4,\yshift)}{$\textnormal{map}(f(c),\ \{ \component{mesh10}{\pycode{"vertex"}},\ \component{mesh11}{\pycode{"edge"}},\ \component{mesh12}{\pycode{"cell"}} \})$};
 \underlineComponent{space}{space1};
 \drawTreeConnector{space}{space1}{(mesh1)};
 
 \tikzmath {
   \yshift = \yshift - 2;
-  \xstart = -12;
-  \xshift = 5;
+  \xstart = -5;
+  \xshift = 3.5;
 }
 
 \newcommand{\drawInnermost}[2]{
   \drawInnermostScalar{#1}{#2}
-  \drawTreeNode{(dof#1#2)}{(\xstart+\xshift*#2,\yshift-2)}{$\textnormal{slice}(\pycode{"component"},\ \{ \pycode{[::]} \})$}
-  \underlineComponent{node#1#2}{node#1#20}
-  \drawTreeConnector{node#1#2}{node#1#20}{(dof#1#2)}
+  \drawTreeNode{(dof#1#2)}{(\xstart+\xshift*#2-.5,\yshift-2)}{$\textnormal{slice}(\pycode{"component"})$}
+  \drawTreeConnectorWhole{node#1#2}{(dof#1#2)}
 }
 
 \newcommand{\drawInnermostScalar}[2]{
-  \drawTreeNode{(node#1#2)}{(\xstart+\xshift*#2,\yshift)}{$\textnormal{slice}(\pycode{"node"},\ \{ \component{node#1#20}{\pycode{[::]}} \})$}
+  \drawTreeNode{(node#1#2)}{(\xstart+\xshift*#2,\yshift)}{$\textnormal{slice}(\pycode{"node"})$}
   \underlineComponent{mesh#1}{mesh#1#2}
   \drawTreeConnector{mesh#1}{mesh#1#2}{(node#1#2)}
 }
@@ -51,8 +50,8 @@
 \drawInnermost{0}{2}
 
 \tikzmath {
-  \xstart = 3;
-  \xshift = 4;
+  \xstart = 5;
+  \xshift = 2.5;
 }
 
 \drawInnermostScalar{1}{0}

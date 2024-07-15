@@ -6,7 +6,7 @@
 \usepackage{mymacros}
 
 \begin{document}
-\begin{tikzpicture}[remember picture]
+\begin{tikzpicture}
 
 \input{figures/common/tree.tikz}
 \input{figures/common/data_layout.tikz}
@@ -48,15 +48,15 @@
 
 % --- TIMES ---
 
-\drawCompositionCircle{(6.2, -.5)};
+\drawCompositionCircle{(6.5, -.5)};
 
 % --- INDEX TREE ---
 
-\coordinate (origin) at (6.6,0);
+\coordinate (origin) at (7,0);
 
-\drawTreeNode{(top)}{(origin)}{slice($a$: \{ \component{top0}{$x$: (\pycode{::2})}, \component{top1}{$y$: (\pycode{1::})} \})};
-\drawTreeNode{(bottom0)}{($(origin)+(0,-2)$)}{scalar($b$, 1)};
-\drawTreeNode{(bottom1)}{($(origin)+(2.2,-2)$)}{slice($c$, \{ (\pycode{1::}) \})};
+\drawTreeNode{(top)}{(origin)}{$\textnormal{slice}(a: \{ \component{top0}{x: \pycode{[::2]}},\ \component{top1}{y: \pycode{[1::]}} \})$};
+\drawTreeNode{(bottom0)}{($(origin)+(0,-2)$)}{$\textnormal{scalar}(b,\ \pycode{1})$};
+\drawTreeNode{(bottom1)}{($(origin)+(2.2,-2)$)}{$\textnormal{slice}(c,\ \{ \pycode{[1::]} \})$};
 
 \underlineComponent{top}{top0};
 \drawTreeConnector{top}{top0}{(bottom0)};
@@ -65,24 +65,24 @@
 
 % --- ARROW ---
 
-\bigArrow{(11.8,-.5)};
+\bigArrow{(12.3,-.5)};
 
 % --- INDEXED ---
 
-\coordinate (origin) at (12.8,0);
+\coordinate (origin) at (13.5,0);
 
 % top
-\drawDofSmall{(origin)}{$d^t_0$\,($a^x_0$)}{red!50};
-\drawDofSmall{($(origin)+(1,0)$)}{$d^t_1$\,($a^x_2$)}{red!50};
-\drawDofSmall{($(origin)+(2,0)$)}{$d^u_0$\,($a^y_1$)}{blue!50};
+\drawDofSmall{(origin)}{$d^t_0 / a^x_0$}{red!50};
+\drawDofSmall{($(origin)+(1,0)$)}{$d^t_1 / a^x_2$}{red!50};
+\drawDofSmall{($(origin)+(2,0)$)}{$d^u_0 / a^y_1$}{blue!50};
 
 \coordinate (aleft) at ($(origin)+(2,0)$);
 \coordinate (aright) at ($(origin)+(3,0)$);
 
 % bottom
 \coordinate (origin) at ($(aleft)+(-.5,-2)$);
-\drawWhiteDofSmall{(origin)}{$e_0$\,($c_1$)};
-\drawWhiteDofSmall{($(origin)+(1,0)$)}{$e_1$\,($c_2$)};
+\drawWhiteDofSmall{(origin)}{$e_0 / c_1$};
+\drawWhiteDofSmall{($(origin)+(1,0)$)}{$e_1 / c_2$};
 
 \draw [connector] (aleft) -- ($(origin)+(0,1)$);
 \draw [connector] (aright) -- ($(origin)+(2,1)$);

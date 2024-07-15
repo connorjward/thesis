@@ -12,23 +12,30 @@ In this chapter we introduce the necessary abstractions and algorithms required 
 
 \section{Motivation}  % maybe not actually a section... like chapter 3
 
-\begin{sidewaysfigure}
-  \centering
-  \includegraphics[scale=.8]{scott_vogelius_index_tree.pdf}
-  \caption{Index tree representing the packing transformation shown in \cref{fig:scott_vogelius_element_dof_layout_packed}.}
-  \label{fig:scott_vogelius_element_index_tree}
-\end{sidewaysfigure}
+% 1. We still have a tree-like structure
+% 2. The tree is parametrised by the cell
+% 3. therefore we need another tree structure to represent this
 
 The transformation in \cref{fig:scott_vogelius_element_dof_layout_packed} demonstrates that one needs to be able to construct axis trees that are parametrised views of another axis tree.
 One can see that the different axes are handled differently, and that the resulting data structure has a similar but not identical tree structure.
-
-% need to transform axis tree to another axis tree
 
 \section{Index trees}
 \label{sec:index_trees}
 
 In \pyop3, indexing is accomplished via the use of \textit{index trees}.
 Analogously to axis trees, index trees consist of multiple \textit{index} objects, each of which has one or more \textit{index components}.
+
+% now talk about how index trees work, what are indices? show SV index tree as an example.
+% needs more detail, compare tree structure to axis tree (like chapter 3)?
+% just like an axis tree has components and axes, an index tree has...
+
+\begin{figure}
+  \centering
+  \includegraphics{scott_vogelius_index_tree.pdf}
+  \caption{Index tree representing the packing transformation shown in \cref{fig:scott_vogelius_element_dof_layout_packed}.}
+  \label{fig:scott_vogelius_element_index_tree}
+\end{figure}
+
 When an axis tree is indexed, it is transformed via composition with an index tree:
 
 \begin{equation*}
@@ -36,9 +43,6 @@ When an axis tree is indexed, it is transformed via composition with an index tr
 \end{equation*}
 
 This composition operation yields a new \textit{indexed} axis tree.
-
-% needs more detail, compare tree structure to axis tree (like chapter 3)?
-% just like an axis tree has components and axes, an index tree has...
 
 \subsection{Indexing axis trees}
 
@@ -84,7 +88,7 @@ It is used to determine the sizes of sliced axes and consistency checks.
   \centering
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics{index_linear_tree_data_layout}
+    \includegraphics{index_linear_tree_data_layout.pdf}
     \caption{
       Diagram of the data layout transformation.
       The original axis tree (left) is composed with an index tree (middle) to produce a new, indexed, axis tree (right).
@@ -97,11 +101,11 @@ It is used to determine the sizes of sliced axes and consistency checks.
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
+    \begin{tblr}{|[1pt]c|[1pt]c|[1pt]c|[1pt]}
       \hline[1pt]
-      \textbf{Target paths} & \textbf{Target expressions} \\
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
       \hline[1pt]
-      $\{c \to a,\ d \to b\}$ & $\{i_a = 2 i_c,\ i_b = i_d+1\}$ \\
+      $\{ c,\ d \}$ & $\{a,\ b\}$ & $\{i_a = 2 i_c,\ i_b = i_d+1\}$ \\
       \hline[1pt]
     \end{tblr}
     \caption{
@@ -128,7 +132,7 @@ The indexed axis tree resulting from the composition of these trees is shown to 
   \centering
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics{multi_component_slice_transform}
+    \includegraphics[scale=.9]{multi_component_slice_transform.pdf}
     \caption{
       Diagram of the data layout transformation.
       ...

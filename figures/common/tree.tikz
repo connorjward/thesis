@@ -42,4 +42,13 @@
   \draw [treenodearrow] ($(\px1,\py2)+(0,.15)$) -- #3;
 }
 
+\newcommand{\drawTreeConnectorWhole}[2]{
+  \tikzmath{
+    coordinate \p;
+    \p1 = (#1.center);
+    \p2 = (#1.south);
+  }
+  \draw [treenodearrow] ($(\px1,\py2)+(0,-.1)$) -- #2;
+}
+
 \newcommand{\component}{\subnode[minimum width=0pt]};
