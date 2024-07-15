@@ -1,3 +1,5 @@
+\input{figures/common/misc.tikz}
+
 \tikzstyle{treenodecommon} = [minimum width=1.5cm];
 \tikzstyle{treenode} = [treenodecommon,minimum height=.7cm,yshift=.15cm,text centered,draw=black,line width=.7pt,anchor=south west];
 \tikzstyle{treenodebg} = [treenodecommon,minimum height=1cm,draw=none,anchor=south west];
@@ -38,14 +40,6 @@
     \p2 = (#1.south);
   }
   \draw [treenodearrow] ($(\px1,\py2)+(0,.15)$) -- #3;
-}
-
-\newcommand{\drawCompositionCircle}[1]{
-  \node [circle,draw,minimum size=2mm,inner sep=0] at #1 {};
-}
-
-\newcommand{\bigArrow}[1]{
-  \draw [line width=.8pt,-{Stealth}] #1 -- ++ (1,0);
 }
 
 \newcommand{\component}{\subnode[minimum width=0pt]};

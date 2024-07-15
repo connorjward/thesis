@@ -8,9 +8,9 @@
 As we have seen thus far, existing software abstractions for mesh-like data layouts are limited by their ability to describe complex layouts without discarding important topological information.
 \pyop3 addresses this by introducing a new data layout abstraction: \textit{axis trees}.
 
-\section{Axis trees}
-\label{sec:axis_trees}
+\section{Motivation} % maybe this is not a section, but just the intro? same structure should be used for indexing chapter.
 
+% sv element stuff
 \begin{figure}
   \centering
   \includegraphics{sv_data_tree.pdf}
@@ -20,56 +20,6 @@ As we have seen thus far, existing software abstractions for mesh-like data layo
 
 If we again consider the data layout for the Scott-Vogelius element (\cref{fig:scott_vogelius_dof_layout}) it can be observed that the data layout naturally decomposes into a tree-like structure.
 This is shown in \cref{fig:sv_data_tree}.
-
-% Needs more
-Using an axis tree, \pyop3 is capable of capturing this structure entirely (\cref{fig:axis_tree}).
-
-\begin{itemize}
-  \item
-    An axis tree is composed of a hierarchy of \textit{axes}.
-
-  \item
-    Each axis has one or more \textit{axis components}.
-
-  \item
-    Each axis may either be the \textit{root} axis, or have a \textit{parent} consisting of the 2-tuple (parent axis, parent component).
-
-  \item
-    Both axes and components are equipped with a \textit{label}.
-    If an axis only has a single component then the component's label may be omitted.
-
-  \item
-    With these labels, one can uniquely describe a particular \textit{path} going down the tree from root to leaf.
-    To give an example from \cref{fig:two_cell_mesh_lagrange_axis_tree}, one could select the DoFs associated with the edges by passing the path (as a mapping): \pycode{{ "mesh": "edge", "dof": None }}.
-
-  \item
-    Axis component labels must be unique within an axis, and axis labels must be unique within each possible path leading from root to leaf.
-
-  \item
-    Axis trees are immutable. Applying transformations to an existing tree always returns a new object.
-\end{itemize}
-
-\begin{figure}
-  \centering
-  \begin{subfigure}{.49\textwidth}
-    \centering
-    \includegraphics{linear_data_tree.pdf}
-  \end{subfigure}
-  \begin{subfigure}{.49\textwidth}
-    \centering
-    \includegraphics{linear_axis_tree.pdf}
-  \end{subfigure}
-  \caption{
-    Data layout (left) and axis tree (right) equivalent to a numpy array with shape \pycode{(2, 3, 2)}.
-    The axes have been given the arbitrary labels $a$, $b$ and $c$ that correspond to axes 0, 1 and 2 of the equivalent numpy array respectively.
-    Axis component labels have been omitted as there is only a single component per axis and hence there is no ambiguity.
-  }
-  \label{fig:numpy_axis_tree}
-\end{figure}
-
-In the same way as numpy, \pyop3 uses the term \textit{axis} to refer to a particular dimension of an array.
-Indeed, it is straightforward to construct an axis tree equivalent to a numpy \pycode{ndarray} (\cref{fig:numpy_axis_tree}).
-The axes in such axis trees are only permitted to have a single component, and hence they are referred to as \textit{linear} axis trees.
 
 \begin{figure}
   \centering
@@ -126,6 +76,59 @@ The axes in such axis trees are only permitted to have a single component, and h
   }
   \label{fig:axis_tree}
 \end{figure}
+
+\section{Axis trees}
+\label{sec:axis_trees}
+
+% Needs more
+Using an axis tree, \pyop3 is capable of capturing this structure entirely (\cref{fig:axis_tree}).
+
+\begin{itemize}
+  \item
+    An axis tree is composed of a hierarchy of \textit{axes}.
+
+  \item
+    Each axis has one or more \textit{axis components}.
+
+  \item
+    Each axis may either be the \textit{root} axis, or have a \textit{parent} consisting of the 2-tuple (parent axis, parent component).
+
+  \item
+    Both axes and components are equipped with a \textit{label}.
+    If an axis only has a single component then the component's label may be omitted.
+
+  \item
+    With these labels, one can uniquely describe a particular \textit{path} going down the tree from root to leaf.
+    To give an example from \cref{fig:two_cell_mesh_lagrange_axis_tree}, one could select the DoFs associated with the edges by passing the path (as a mapping): \pycode{{ "mesh": "edge", "dof": None }}.
+
+  \item
+    Axis component labels must be unique within an axis, and axis labels must be unique within each possible path leading from root to leaf.
+
+  \item
+    Axis trees are immutable. Applying transformations to an existing tree always returns a new object.
+\end{itemize}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics{linear_data_tree.pdf}
+  \end{subfigure}
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics{linear_axis_tree.pdf}
+  \end{subfigure}
+  \caption{
+    Data layout (left) and axis tree (right) equivalent to a numpy array with shape \pycode{(2, 3, 2)}.
+    The axes have been given the arbitrary labels $a$, $b$ and $c$ that correspond to axes 0, 1 and 2 of the equivalent numpy array respectively.
+    Axis component labels have been omitted as there is only a single component per axis and hence there is no ambiguity.
+  }
+  \label{fig:numpy_axis_tree}
+\end{figure}
+
+In the same way as numpy, \pyop3 uses the term \textit{axis} to refer to a particular dimension of an array.
+Indeed, it is straightforward to construct an axis tree equivalent to a numpy \pycode{ndarray} (\cref{fig:numpy_axis_tree}).
+The axes in such axis trees are only permitted to have a single component, and hence they are referred to as \textit{linear} axis trees.
 
 % put into a bullet-ed list?
 Where \pyop3 differs from numpy is the fact that axes are permitted to have more than one component, and hence more than one subaxis.

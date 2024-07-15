@@ -1,0 +1,11 @@
+\newcommand{\drawCompositionCircle}[1]{
+  \node [circle,draw,minimum size=2mm,inner sep=0] at #1 {};
+}
+
+\newcommand{\bigArrowNew}[2]{
+  \draw [line width=.8pt,-{Stealth}] #1 -- ++ #2;
+}
+
+\newcommand{\bigArrow}[1]{
+  \bigArrow{#1}{(1,0)}
+}

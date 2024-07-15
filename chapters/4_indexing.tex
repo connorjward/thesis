@@ -5,12 +5,24 @@
 \chapter{Indexing}
 \label{chapter:indexing}
 
-% TODO: talk about IndexedAxisTrees - cannot reconstruct them
-
 In array codes it is very rarely the case that the entire array is operated on as a single unit.
 Instead, what more commonly happens is the array is restricted to a smaller piece (e.g. a single value) so that it may be read or modified.
 This operation is almost universally referred to as \textit{array indexing}.
 In this chapter we introduce the necessary abstractions and algorithms required to index axis trees in \pyop3.
+
+\section{Motivation}  % maybe not actually a section... like chapter 3
+
+\begin{sidewaysfigure}
+  \centering
+  \includegraphics[scale=.8]{scott_vogelius_index_tree.pdf}
+  \caption{Index tree representing the packing transformation shown in \cref{fig:scott_vogelius_element_dof_layout_packed}.}
+  \label{fig:scott_vogelius_element_index_tree}
+\end{sidewaysfigure}
+
+The transformation in \cref{fig:scott_vogelius_element_dof_layout_packed} demonstrates that one needs to be able to construct axis trees that are parametrised views of another axis tree.
+One can see that the different axes are handled differently, and that the resulting data structure has a similar but not identical tree structure.
+
+% need to transform axis tree to another axis tree
 
 \section{Index trees}
 \label{sec:index_trees}
@@ -23,13 +35,51 @@ When an axis tree is indexed, it is transformed via composition with an index tr
   \textnormal{Axis tree} \quad \circ \quad \textnormal{Index tree} \quad \to \quad \textnormal{Indexed axis tree}
 \end{equation*}
 
-This composition operation yields a new \textit{indexed} axis tree that understand how its entries map back to the original axis tree.
-In other words, it is a \textit{view}.
+This composition operation yields a new \textit{indexed} axis tree.
 
-% TODO: Get rid of source path, instead target path is a mapping c -> a, d -> b
-% TODO: Possibly explain how the ordering of things does not matter.
-% TODO: Add labels to individual entries in the array and propagate them, put labels outside.
-% TODO: For the target expressions use "=", not ":"
+% needs more detail, compare tree structure to axis tree (like chapter 3)?
+% just like an axis tree has components and axes, an index tree has...
+
+\subsection{Indexing axis trees}
+
+\begin{algorithm}
+  \begin{pyalg2}
+    def index_axes(index: Index, old_axis_tree: AxisTree):
+      # process the current index
+      axis_tree, target_paths, target_exprs = \
+        index_handler(index, old_axis_tree)
+
+      for component in index.components:
+        if has_subindex(index, component):
+          # recursively visit child indices
+          subindex = get_subindex(index, component)
+          subaxis_tree, subtarget_paths, subtarget_exprs = \
+            index_axes(subindex, old_axis_tree)
+
+          axis_tree.add_subtree(subaxis_tree)
+          target_paths.update(subtarget_paths)
+          target_exprs.update(subtarget_exprs)
+
+      return axis_tree, target_paths, target_exprs
+  \end{pyalg2}
+
+  \caption{
+    Algorithm that constructs the necessary components to build an indexed axis tree by visiting the nodes of an index tree.
+  }
+  \label{alg:index_axis_tree}
+\end{algorithm}
+
+The construction of an indexed axis tree from an axis tree and index tree is accomplished via a traversal of the index tree (\cref{alg:index_axis_tree}).
+Each index of the tree is processed by the function \pycode{index_handler} (line XXX) to give an axis tree and set of targets paths and expressions specific to that index.
+These axis trees are then glued together (line YYY) to give the axis tree for the final object while the target paths and target expressions are similarly combined (lines AAA and BBB).
+Finally, once collected, the three returned variables may be used to construct a finished indexed axis tree.
+
+The original axis tree (\pycode{old_axis_tree}) plays only a small role in the indexing algorithm.
+It is used to determine the sizes of sliced axes and consistency checks.
+
+\subsubsection{Example 1: linear axis trees}
+
+% TODO: explain how the ordering of paths does not matter - reference data layout transformations
 \begin{figure}
   \centering
   \begin{subfigure}{\textwidth}
@@ -47,13 +97,13 @@ In other words, it is a \textit{view}.
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{|c|c|c|}
-      \hline
-      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
-      \hline
-      \{$c$, $d$\} & \{$a$, $b$\} & \{$i_a$: $2 i_c$, $i_b$: $i_d+1$\} \\
-      \hline
-    \end{tabular}
+    \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
+      \hline[1pt]
+      \textbf{Target paths} & \textbf{Target expressions} \\
+      \hline[1pt]
+      $\{c \to a,\ d \to b\}$ & $\{i_a = 2 i_c,\ i_b = i_d+1\}$ \\
+      \hline[1pt]
+    \end{tblr}
     \caption{
       The indexing information carried by the transformed axis tree that allows it to map back to the original unindexed tree.
     }
@@ -72,84 +122,7 @@ It shows a slicing operation applied to a linear axis tree with shape \pycode{(5
 The index tree is also linear and consists of two \textit{slice} objects over the axes $a$ and $b$ respectively with the former taking every other entry in $a$ (\pycode{[::2]}) and the latter taking all but the first entry in $b$ (\pycode{[1::]}).
 The indexed axis tree resulting from the composition of these trees is shown to the right: only the selected indices from axes $a$ and $b$ are present and the axes have been relabelled (arbitrarily) $c$ and $d$.
 
-In addition to having a new shape and new labels, the indexed axis tree also carries the information necessary to map back from the indexed shape (the \textit{source}) to the original axis tree (the \textit{target}).
-This is done by associating two attributes with the indexed axis tree:
-
-\paragraph{Target paths}
-
-The target path is a map from the source tree to the axis labels of the target tree.
-It allows \pyop3 to know where the source axes came from so it can select the right layout functions (\cref{sec:layouts}) from the target tree.
-In \cref{fig:index_linear_tree_exprs}, the target path shows that source axes $c$ and $d$ map back to $a$ and $b$ in the original array.
-
-\paragraph{Target expressions}
-
-For an indexed axis tree, the target expressions relate the source indices to the target indices as a distinct symbolic expression per target axis.
-In \cref{fig:index_linear_tree_exprs} the two target expressions are shown to be $i_a \coloneq 2 i_c$ and $i_b \coloneq i_d + 1$, telling us that $c_m$ maps to $a_{2m}$ and that $d_n$ maps to $b_{n+1}$ respectively.
-
-With these two pieces of information, it is now possible to implement view-like semantics for indexed axis trees.
-One simply has to:
-
-\begin{enumerate}
-  \item
-    Use the target path to select the appropriate layout function from the target axis tree.
-  \item
-    Modify the layout function by substituting the target indices in the function with the source indices as described by the target expressions attribute of the indexed tree.
-  \item
-    Evaluate the offset using the new layout function (that is now a function of the source indices rather than the target indices).
-\end{enumerate}
-
-Applying these steps using the indexing operation of \cref{fig:index_linear_tree_all}, we have:
-
-\begin{enumerate}
-  \item
-    The target path is $\{a, b\}$, so the selected layout function is $\mathrm{offset}(i_a, i_b) = 3 i_a + i_b$.
-  \item
-    Substituting the target expressions in \cref{fig:index_linear_tree_exprs}, we get the new layout function $\mathrm{offset}(i_c, i_d) = 6 i_c + i_d + 1$.
-  \item
-    The original axis tree may now be addressed using the source indices $i_c$ and $i_d$.
-\end{enumerate}
-
-\subsection{Indexed axis tree construction}
-
-\begin{algorithm}
-  \begin{pyalg}
-    def index_axes(index, old_axis_tree):
-      # process the current index
-      axis_tree, target_paths, target_exprs = index_handler(index, old_axis_tree)
-
-      for component in index.components:
-        if has_subindex(index, component):
-          # recursively visit child indices
-          subindex = get_subindex(index, component)
-          subaxis_tree, subtarget_paths, subtarget_exprs = index_axes(subindex, old_axis_tree)
-
-          axis_tree.add_subtree(subaxis_tree)
-          target_paths |= subtarget_paths
-          target_exprs |= subtarget_exprs
-
-      return axis_tree, target_paths, target_exprs
-  \end{pyalg}
-
-  \caption{
-    Algorithm that constructs the necessary components to build an indexed axis tree by visiting the nodes of an index tree.
-  }
-  \label{alg:index_axis_tree}
-\end{algorithm}
-
-The construction of an indexed axis tree from an axis tree and index tree is accomplished via a traversal of the index tree (\cref{alg:index_axis_tree}).
-Each index of the tree is processed by the function \pycode{index_handler} (line XXX) to give an axis tree and set of targets paths and expressions specific to that index.
-These axis trees are then glued together (line YYY) to give the axis tree for the final object while the target paths and target expressions are similarly combined (lines AAA and BBB).
-Finally, once collected, the three returned variables may be used to construct a finished indexed axis tree.
-
-The original axis tree (\pycode{old_axis_tree}) plays only a small role in the indexing algorithm.
-It is used to determine the sizes of sliced axes and consistency checks.
-
-% TODO: use multi-component indexing as an example here
-
-% "Thus far we have only considered the case of linear index trees..."
-
-% motivation: needed since we need to pack clever things
-% "proto" axis trees
+\subsubsection{Example 2: multi-component axis trees}
 
 \begin{figure}
   \centering
@@ -167,14 +140,15 @@ It is used to determine the sizes of sliced axes and consistency checks.
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{|c|c|c|}
-      \hline
+    \begin{tblr}{|[1pt]c|[1pt]c|[1pt]c|[1pt]}
+      \hline[1pt]
       \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+      \hline[1pt]
+      $\{d^t\}$ & $\{a^x,\ b\}$ & $\{i_a = 2 i_d,\ i_b = 1\}$ \\
       \hline
-      % TODO
-      % \{$c$, $d$\} & \{$a$, $b$\} & \{$i_a$: $2 i_c$, $i_b$: $i_d+1$\} \\
-      \hline
-    \end{tabular}
+      $\{d^u,\ e\}$ & $\{a^y,\ c\}$ & $\{i_a = i_d + 1,\ i_c = i_e+1\}$ \\
+      \hline[1pt]
+    \end{tblr}
     \caption{
       The indexing information carried by the transformed axis tree that allows it to map back to the original unindexed tree.
     }
@@ -190,53 +164,73 @@ It is used to determine the sizes of sliced axes and consistency checks.
 \end{figure}
 
 
-\subsection{Index composition}
-\label{sec:index_composition}
+\subsection{View-like semantics for indexed axis trees}
 
-\begin{figure}
-  \centering
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics{index_composition_linear_tree_data_layout}
-    \caption{
-      The index composition operation.
-      All but the first (\pycode{1::}) of axis $c$ is selected with only the second entry in axis $d$.
-    }
-    \label{fig:index_composition_linear_tree_data_layout}
-  \end{subfigure}
+% aim is to map multi index to multi index... (via subst.)
 
-  \vspace{1em}
+Indexed axis trees behave in the same way as regular axis trees with a small number of exceptions:
 
-  \begin{subfigure}{\textwidth}
-    \centering
-    \begin{tabular}{|c|c|c|}
-      \hline
-      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
-      \hline
-      \{$e$\} & \{$a$, $b$\} & \{$i_a$: $2 (i_e+1)$, $i_b$: $2$\} \\
-      \hline
-    \end{tabular}
-    \caption{
-      Index expressions and paths relating the indexed ``source" tree back to the original unindexed tree.
-      Note how the index for axis $d$ ($i_d$) is not present among the target expressions as it has been substituted for a 1.
-    }
-    \label{fig:index_composition_linear_tree_exprs}
-  \end{subfigure}
+\begin{itemize}
+  \item
+    Indexed axis trees are fully immutable.
+    Operations that add or remove axes from the tree are not permitted.
 
-  \caption{
-    The composition of an already indexed axis tree (from \cref{fig:index_linear_tree_all}) with another index tree.
-    Since a scalar index is used, the axis tree ``loses shape" and is transformed from one with shape (3, 2) to one with shape (2,).
-    The resulting axis tree can still be mapped correctly back to the original unindexed axis tree.
-  }
-  \label{fig:index_composition_linear_tree_all}
-\end{figure}
+  \item
+    To represent the fact that the indexed axis tree is a view of some other axis tree it carries two properties that allow it to map a multi-index with the labels matching the indexed axis tree to a multi-index with labels matching the original axis tree: \textit{target paths} and \textit{target expressions}.
+\end{itemize}
 
-\section{Outer loops}
+% how to introduce these concepts? and discuss composition operation here? - definitely the right place for it just not sure how important it is
+
+\paragraph{Target paths}
+
+The target path is a map from the source tree to the axis labels of the target tree.
+It allows \pyop3 to know where the source axes came from so it can select the right layout functions (\cref{sec:layouts}) from the target tree.
+In \cref{fig:index_linear_tree_exprs}, the target path shows that source axes $c$ and $d$ map back to $a$ and $b$ in the original array.
+
+\paragraph{Target expressions}
+
+For an indexed axis tree, the target expressions relate the source indices to the target indices as a distinct symbolic expression per target axis.
+In \cref{fig:index_linear_tree_exprs} the two target expressions are shown to be $i_a = 2 i_c$ and $i_b = i_d + 1$, telling us that $c_m$ maps to $a_{2m}$ and that $d_n$ maps to $b_{n+1}$ respectively.
+
+The term \textit{target} was chosen as one can consider indexed axis trees to map from themselves (the \textit{source}) to the original axis tree (the \textit{target}).
+
+With these two pieces of information, it is now possible to implement view-like semantics for indexed axis trees.
+One simply has to:
+
+\begin{enumerate}
+  \item
+    Use the target path to select the appropriate layout function from the target axis tree.
+  \item
+    Modify the layout function by substituting the target indices in the function with the source indices as described by the target expressions attribute of the indexed tree.
+  \item
+    Evaluate the offset using the new layout function (that is now a function of the source indices rather than the target indices).
+\end{enumerate}
+
+% example 1
+Applying these steps using the indexing operation of \cref{fig:index_linear_tree_all}, we have:
+
+\begin{enumerate}
+  \item
+    % TODO: Provide more detail about source paths and how this is retrieved.
+    The target paths are $\{c \to a,\ d \to b\}$, so the selected layout function is
+    \begin{equation*}
+      \textnormal{offset}(i_a, i_b) = 3 i_a + i_b.
+    \end{equation*}
+  \item
+    Substituting the target expressions in \cref{fig:index_linear_tree_exprs}, we get the new layout function
+    \begin{equation*}
+      \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1.
+    \end{equation*}
+  \item
+    The original axis tree may now be addressed using the source indices $i_c$ and $i_d$.
+\end{enumerate}
+
+\section{Indexing with outer loops}
 \label{sec:outer_loops}
 
 \begin{figure}[h]
   \centering
-  %
+
   \begin{subfigure}[t]{.48\textwidth}
     \centering
     \begin{minted}{python}
@@ -316,6 +310,7 @@ for i in range(len(numpy_dat)):
 The indexing routines demonstrated so far are not sufficient for \pyop3's purposes.
 If we consider the prototypical finite element assembly loop (\cref{alg:fem_todo}) we see that there is an outer loop over cells, and that the data is packed, or indexed, \textit{relative} to the current cell.
 
+% mention that this will be described in more detail in chapter 5, be simpler here
 In \pyop3, these outer loops are described by the \pycode{loop(...)} construct.
 Calling \pycode{loop} creates a \textit{loop expression}, which is a symbolic object representing the loop to be performed.
 The loop expression expects a \textit{loop index}, and a collection of \textit{statements}.
@@ -330,17 +325,10 @@ The challenge here is how to represent the indexing operation \pycode{dat[i]}...
 
 % scalar shape
 
-% meh, we don't really say this
-Furthermore, the indexed object is dependent upon the loop index: the target expressions of the axis tree must reference the loop index.
-In \pyop3 we say that it is \textit{context-dependent}.
-
 % A loop index has no shape. e.g. axes[p] where p is a loop index is scalar.
 
 % subsection on context-sensitivity? ie. expanding the loop contexts? potentially ick, maybe put as a pass in the codegen section?
 
-% How do I introduce this section? How do I motivate it? Kind of want to thread the "do FEM assembly"
-% story through this whole bit.
-% but try to not explicity use that as an example because I want to save that for the final chapter.
 % TODO: Give an example of how it would look in code, introduce CalledMap vs Map
 \section{Maps}
 
@@ -348,7 +336,7 @@ In \pyop3 we say that it is \textit{context-dependent}.
   \centering
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics{index_map_data_layout}
+    \includegraphics{index_map_data_layout.pdf}
     \caption{
       The data layout transformation from the unindexed axis tree (left) to the indexed one (right).
       Note how the $a$ axis has been replaced by the map axis $c$.
@@ -360,16 +348,16 @@ In \pyop3 we say that it is \textit{context-dependent}.
 
   \begin{subfigure}{\textwidth}
     \centering
-    \begin{tabular}{|c|c|c|}
-      \hline
+    \begin{tblr}{|[1pt]c|[1pt]c|[1pt]c|[1pt]}
+      \hline[1pt]
       \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
-      \hline
-      \{$c$, $b$\} & \{$a$, $b$\} & \{$i_a$: $f(i^p_a, i_c)$, $i_b$: $i_b$\} \\
-      \hline
-    \end{tabular}
+      \hline[1pt]
+      $\{c,\ b\}$ & $\{a,\ b\}$ & $\{i_a = f(L^p_a, i_c),\ i_b = i_b\}$ \\
+      \hline[1pt]
+    \end{tblr}
     \caption{
       The indexing information carried by the indexed axis tree (right).
-      Using a map means that the index for axis $a$ is an expression containing both the outer loop index ($i^p_a$) and an index over the shape coming from the map's arity ($i_c$).
+      Using a map means that the index for axis $a$ is an expression containing both the outer loop index ($L^p_a$) and an index over the shape coming from the map's arity ($i_c$).
     }
     \label{fig:index_map_data_layout_exprs}
   \end{subfigure}
@@ -465,6 +453,48 @@ Ragged maps are also supported. e.g. support, star, PIC
   \caption{TODO}
   \label{fig:map_composition_transform_all}
 \end{figure}
+
+\section{Index composition}
+\label{sec:index_composition}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{index_composition_linear_tree_data_layout}
+    \caption{
+      The index composition operation.
+      All but the first (\pycode{1::}) of axis $c$ is selected with only the second entry in axis $d$.
+    }
+    \label{fig:index_composition_linear_tree_data_layout}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \begin{tabular}{|c|c|c|}
+      \hline
+      \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+      \hline
+      \{$e$\} & \{$a$, $b$\} & \{$i_a$: $2 (i_e+1)$, $i_b$: $2$\} \\
+      \hline
+    \end{tabular}
+    \caption{
+      Index expressions and paths relating the indexed ``source" tree back to the original unindexed tree.
+      Note how the index for axis $d$ ($i_d$) is not present among the target expressions as it has been substituted for a 1.
+    }
+    \label{fig:index_composition_linear_tree_exprs}
+  \end{subfigure}
+
+  \caption{
+    The composition of an already indexed axis tree (from \cref{fig:index_linear_tree_all}) with another index tree.
+    Since a scalar index is used, the axis tree ``loses shape" and is transformed from one with shape (3, 2) to one with shape (2,).
+    The resulting axis tree can still be mapped correctly back to the original unindexed axis tree.
+  }
+  \label{fig:index_composition_linear_tree_all}
+\end{figure}
+
 
 \section{Data layout transformations}
 \label{sec:indexing_data_layout_transformations}

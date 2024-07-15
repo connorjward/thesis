@@ -14,8 +14,16 @@
   \filldraw[draw=black,fill=#3,line width=.7pt] #1 rectangle #2;
 }
 
+\newcommand{\drawBoxNewNew}[3]{
+  \filldraw[draw=black,fill=#3,line width=.7pt] (#1,\yshift) rectangle ++ (#2,1);
+}
+
 \newcommand{\labelBox}[3]{
   \node [at={#1},fill=#3,inner sep=2pt,minimum width=0pt] {#2};
+}
+
+\newcommand{\labelBoxNew}[3]{
+  \node [at={(#1,\yshift+.5)},fill=#3,inner sep=2pt,minimum width=0pt] {#2};
 }
 
 \newcommand{\drawDof}[3]{%
@@ -68,4 +76,8 @@
 
 \newcommand{\labelLayoutAxis}[1]{
   \node [at={(-1.8,\yshift+.5)},fill=none] {#1};
+}
+
+\newcommand{\labelComponent}[1]{
+  \textbf{x$_#1$}
 }
