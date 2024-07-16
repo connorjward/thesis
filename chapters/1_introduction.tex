@@ -251,7 +251,7 @@ From these attributes, it is possible to determine a basis for $P$ by imposing t
   l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, n_k.
 \end{equation*}
 
-In the case of the $P_2$ element this yields the basis functions (\cref{fig:lagrange_element_2_basis})
+In the case of the $P_2$ element this yields the basis functions
 
 % see https://defelement.com/elements/examples/triangle-lagrange-equispaced-2.html
 \begin{align*}
@@ -265,23 +265,19 @@ In the case of the $P_2$ element this yields the basis functions (\cref{fig:lagr
   %
   &\psi_2 = y(2y-1),
   &
-  &\psi_5 = 4x(-x-y+1).
+  &\psi_5 = 4x(-x-y+1),
 \end{align*}
 
-% TODO: reword this, all the right content but can't decide on the phrasing/order.
-% * we have a mesh, made of lots of elements
-% * elements -> basis functions
-% * basis functions have local support (maybe mention continuity)
-In the finite element method, the problem domain is broken apart into a \textit{mesh}, composed of many such cells.
-Basis functions on the vertices and edges are shared between elements.
+shown in \cref{fig:lagrange_element_2_basis}.
 
-From \cref{fig:lagrange_element_2_basis} it can be seen that the basis functions only have \textit{local support}.
-That is, they are restricted to be zero except for some small region ``close" to the node.
+As described, these basis functions belong to just the cell $K$.
+However, this is just the \textit{reference} cell.
+In the finite element method the problem domain $\Omega$ is broken apart into many disjoint cells - $\Omega = \Sigma_K \Omega_K$ - and the integrals are evaluated per cell.
+This tesselation of the domain is termed a \textit{mesh}.
 
-Nodes are restricted to particular topological entities and this imposes different continuity behaviour.
-Vertex nodes are shared by multiple cells whereas edge nodes just couple two cells together.
-Cell nodes (not shown in \cref{fig:lagrange_element_2_basis}) are only non-zero in the cell interior and hence do not couple to adjacent cells.
-It is for this reason that finite elements with only cell nodes are called \textit{discontinuous}.
+From \cref{fig:lagrange_element_2} one can see that the linear functionals, and hence the basis functions, are associated with different topological entities in the cell and this is emphasised by showing them in different colours.
+Inter-cell continuity is achieved by having \glspl{dof} on the vertices and edges, as these are shared between adjacent cells.
+If all \glspl{dof} are associated to the cell alone then the function space is said to be \textit{discontinuous}.
 
 \begin{figure}
   \centering
@@ -310,17 +306,33 @@ For the Stokes equations in 2D, a common choice of element pair, or \textit{mixe
 Shown in \cref{fig:scott_vogelius_element}, the element consists of a continuous vector-valued degree $k$ Lagrange element for the velocity space, and a discontinuous Lagrange element of degree $k-1$.
 Note that the Scott-Vogelius element is known to be inf-sup stable for degree $\geq 4$ but we only show degree 3 here for brevity~\cite{guzmanScottVogeliusFiniteElements2018}.
 
-% NOTE: Potentially a bad name, want to talk about "making this happen in software"
-% I think that this is really a subsection of the other "FEM" bit since the whole point is that
-% we motivate stencil calculations
-\section{Finite element assembly}
+\subsection{Finite element assembly}
 
-\begin{figure}
-  \centering
-  \includegraphics{fem_assembly.pdf}
-  \caption{TODO}
-  \label{fig:fem_assembly}
-\end{figure}
+If we consider assembly the top left block of the matrix in \cref{eq:stokes_linear_system} we see that we need to evaluate
+
+\begin{equation*}
+  \int \nu \nabla \psi^{V_h}_i : \nabla \psi^{\hat V_h}_j \, \textrm{d}\Omega
+\end{equation*}
+
+for each possible $i$ and $j$.
+
+However, from \cref{fig:lagrange_element_2_basis} it can be seen that finite element basis functions are only non-zero in a small region around its assigned mesh entity - we say that they have \textit{local support}.
+This is significant for constructing matrices such as that in \cref{eq:stokes_linear_system} because most of the integrals are zero \textit{by definition}.
+This has two consequences:
+
+\begin{itemize}
+  \item
+    The assembled matrix is \textit{sparse}.
+
+  \item 
+    Assembly is more efficient done cell-wise. That is, one evaluates
+
+    \begin{equation*}
+      \int_K \nu \nabla \psi^{V_h}_K : \nabla \psi^{\hat V_h}_K \, \textrm{d}\Omega_K
+    \end{equation*}
+
+    for each cell $K$ and adds the results together.
+\end{itemize}
 
 % TODO: Decide on a consistent algorithm format
 % TODO: I should introduce the term "stencil"
@@ -336,21 +348,20 @@ Note that the Scott-Vogelius element is known to be inf-sup stable for degree $\
   \label{alg:fem_assembly}
 \end{algorithm}
 
-If we consider one of the integrals in \cref{eq:stokes_linear_system}
+\begin{figure}
+  \centering
+  \includegraphics[scale=1.2]{fem_assembly.pdf}
+  \caption{TODO}
+  \label{fig:fem_assembly}
+\end{figure}
 
-\begin{equation*}
-  \forall i, j,
-\end{equation*}
+The algorithm for this cell-wise assembly process is summarised in \cref{alg:fem_assembly}.
+Given some code that evaluates the integral for a single cell the global algorithm is responsible for marshalling ``local" data in and out of it and hence we term it a \textit{stencil} algorithm.
+An example is shown in \cref{fig:fem_assembly}.
+Local viscosity data for a particular cell is \textit{packed} into a small temporary and the cell integral is evaluated.
+This produces a small dense matrix whose values must be scattered to entries in the global sparse matrix.
 
-numerically evaluating all possible pairs of $i$ and $j$ is inefficient because, due to the local support property of the basis, the majority would evaluate to zero.
-This means that, instead of iterating over all pairs of basis functions, the cells of the mesh may be visited in turn and only the basis functions with non-zero support on that cell are computed with.
-These cell-wise contributions are then accumulated to form the global matrix.
-Since most of the basis functions have zero overlap the resultant matrix is \textit{sparse}.
-
-% TODO: Reference the algorithm and diagram! Also describe "stencil"
-% "A similar process is followed for RHS (if nonzero)"
-
-\subsection{Data layouts}
+\subsection{Finite element data structures}
 
 \begin{figure}
   \centering
@@ -359,13 +370,24 @@ Since most of the basis functions have zero overlap the resultant matrix is \tex
   \label{fig:scott_vogelius_element_dof_layout_packed}
 \end{figure}
 
-With the degree 3 mixed element in \cref{fig:scott_vogelius_element}, for a one-cell mesh one has 26 unknown basis function coefficients, or \textit{degrees of freedom}: 20 for the velocity and 6 for the pressure.
-As each basis function yields a single unknown, the size of the linear system in \cref{eq:stokes_linear_system} is $26 \times 26$.
+For the finite problem in \cref{eq:stokes_linear_system} one must store various arrays of unknowns in memory ($\nu$, $(\hat u, \hat p)^T$, etc).
+The vector $(\hat u, \hat p)^T$, for a 2-dimensional domain, contains
 
-% TODO: reword
-In \cref{eq:stokes_linear_system} the different function spaces have been partitioned to produce a block matrix system.
-Naturally the choice of how to lay these values out in memory is arbitrary, but a common approach is to split them by function space, then by topological entity, and then by vector component (\cref{fig:scott_vogelius_element_dof_layout})
-% This choice of finite element pair means that one would have, for a single element mesh, 26 (?) unknown basis coefficients (DoFs), and the matrix would have 26 rows and 26 columns (and would in fact be dense)
+\begin{equation*}
+  2 ( n_\textnormal{cells} \times 1 + n_\textnormal{edges} \times 2 + n_\textnormal{vertices} \times 1 ) + n_\textnormal{cells} \times 6
+\end{equation*}
+
+unknowns, which are packed into a local temporary of
+
+\begin{equation*}
+  2 ( 1 \times 1 + 3 \times 2 + 3 \times 1 ) + 6 = 26
+\end{equation*}
+
+numbers (per row and column) during assembly.
+This process is illustrated in \cref{fig:scott_vogelius_element_dof_layout_packed}.
+
+In this example it can be seen that both the global and local arrays have some non-trivial structure.
+Representing this structure is one of the main challenges of this thesis and will be described in more detail in \cref{chapter:axis_trees,chapter:indexing}.
 
 \section{Execution models for mesh stencil calculations}
 
