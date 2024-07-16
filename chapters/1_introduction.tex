@@ -21,11 +21,11 @@ As an introductory example to a calculation requiring iterating over a mesh, we 
 Our exposition will focus on the aspects of the computation that are relevant for \pyop3, for a more complete review of \gls{fem} we refer the reader to~\cite{brennerMathematicalTheoryFinite2008} and~\cite{larsonFiniteElementMethod2013}.
 
 The Stokes equations are a linearisation of the Navier-Stokes equations and are used to describe fluid flow for laminar (slow and calm) media.
-For domain $\Omega$ and boundary $\Gamma$, omitting any viscosity or forcing terms for simplicity, they are given by
+For domain $\Omega$ and boundary $\Gamma$, omitting any forcing terms for simplicity, they are given by
 
 \begin{subequations}
   \begin{align}
-    - \Delta u + \nabla p &= 0 \quad \textrm{in} \ \Omega, \\
+    - \nu \Delta u + \nabla p &= 0 \quad \textrm{in} \ \Omega, \\
     %
     \nabla \cdot u &= 0 \quad \textrm{in} \ \Omega, \\
     %
@@ -35,7 +35,7 @@ For domain $\Omega$ and boundary $\Gamma$, omitting any viscosity or forcing ter
   \label{eq:strong_stokes}
 \end{subequations}
 
-with $u$ the fluid velocity and $p$ the pressure.
+with $u$ the fluid velocity, $p$ the pressure and $\nu$ the viscosity.
 We also prescribe Dirichlet boundary conditions for the velocity across the entire boundary, setting $u$ to the value of function $g$.
 Since we have a coupled system of two variables ($u$ and $p$), we refer to the Stokes system as being a \textit{mixed} problem.
 
@@ -52,9 +52,9 @@ For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions, drawn from
 % and Larson and Bengzon (pg. 293)
 \begin{subequations}
   \begin{align}
-    \int \nabla u : \nabla v \, \textrm{d}\Omega
+    \int \nu \nabla u : \nabla v \, \textrm{d}\Omega
     - \int p \nabla \cdot v \, \textrm{d}\Omega
-    - \int (\nabla u \cdot n) \cdot v \, \textrm{d}\Gamma
+    - \int \nu (\nabla u \cdot n) \cdot v \, \textrm{d}\Gamma
     - \int p n \cdot v \, \textrm{d}\Gamma
     &= 0
     &\forall \ v \in \hat V
@@ -100,7 +100,7 @@ Find $(u, p) \in V \times Q$ such that
 
 \begin{subequations}
   \begin{align}
-    \int \nabla u : \nabla v \, \textrm{d}\Omega
+    \int \nu \nabla u : \nabla v \, \textrm{d}\Omega
     - \int p \nabla \cdot v \, \textrm{d}\Omega
     &= 0
     &\forall \ v \in \hat V
@@ -144,7 +144,7 @@ Find $(\hat u, \hat p)$ such that
 
 \begin{subequations}
   \begin{align}
-    \int \hat u \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
+    \int \nu \hat u \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
     - \int \hat p \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega
     &= 0
     &\forall \ \psi^{\hat V} \\
@@ -161,7 +161,7 @@ This can be reformulated as the saddle point linear system
 \begin{equation}
   \left (
   \begin{array}{c|c}
-    \int \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
+    \int \nu \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
     &
     - \int \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega \\
     \hline
