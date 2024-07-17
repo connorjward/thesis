@@ -41,7 +41,7 @@
 \coordinate (origin) at ($(ayleft)+(-1,-2)$);
 \drawWhiteDof{(origin)}{$c_0$};
 \drawWhiteDof{($(origin)+(1,0)$)}{$c_1$};
-\drawWhiteDof{($(origin)+(2,0)$)}{$c_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$c_2$};
 
 \draw [connector] (ayleft) -- ($(origin)+(0,1)$);
 \draw [connector] (ayright) -- ($(origin)+(3,1)$);
@@ -54,9 +54,9 @@
 
 \coordinate (origin) at (7,0);
 
-\drawTreeNode{(top)}{(origin)}{$\textnormal{slice}(a: \{ \component{top0}{x: \pycode{[::2]}},\ \component{top1}{y: \pycode{[1::]}} \})$};
+\drawTreeNode{(top)}{(origin)}{$\textnormal{slice}(a: \{ \component{top0}{x: \pycode{[0,2]}},\ \component{top1}{y: \pycode{[1::]}} \})$};
 \drawTreeNode{(bottom0)}{($(origin)+(0,-2)$)}{$\textnormal{scalar}(b,\ \pycode{1})$};
-\drawTreeNode{(bottom1)}{($(origin)+(2.2,-2)$)}{$\textnormal{slice}(c,\ \{ \pycode{[1::]} \})$};
+\drawTreeNode{(bottom1)}{($(origin)+(2.2,-2)$)}{$\textnormal{slice}(c,\ \{ \pycode{[1,2]} \})$};
 
 \underlineComponent{top}{top0};
 \drawTreeConnector{top}{top0}{(bottom0)};

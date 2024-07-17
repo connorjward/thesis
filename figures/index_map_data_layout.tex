@@ -36,24 +36,24 @@
 
 % --- TIMES ---
 
-\drawCompositionCircle{(5.5, -.5)};
+\drawCompositionCircle{(5.7, -.5)};
 
 % --- INDEX TREE ---
 
-\coordinate (origin) at (6,0);
+\coordinate (origin) at (6.4,0);
 
 \drawTreeNode{(top)}{(origin)}{map($f(p)$, \{ \component{top0}{$a$} \})};
-\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{slice($b$, \{ \pycode{::} \})};
+\drawTreeNode{(bottom)}{($(origin)+(.5,-2)$)}{$\textnormal{slice}(b,\ \{ \pycode{[::]} \})$};
 \underlineComponent{top}{top0};
 \drawTreeConnector{top}{top0}{(bottom)};
 
 % --- ARROW ---
 
-\draw [line width=.8pt,-{Stealth}] (9.5,-.5) -- (10.5,-.5);
+\bigArrow{(10.1,-.5)}
 
 % --- INDEXED ---
 
-\coordinate (origin) at (10.5,0);
+\coordinate (origin) at (11.5,0);
 
 % top
 \drawWhiteDof{(origin)}{$c_0$};

@@ -43,7 +43,7 @@
 \coordinate (origin) at (6,0);
 
 \drawTreeNode{(top)}{(origin)}{map($f(p)$, \{ \component{top0}{$a$} \})};
-\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{slice($b$, \{ \pycode{::} \})};
+\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{$\textnormal{slice}(b, \{ \pycode{[::]} \})$};
 \underlineComponent{top}{top0};
 \drawTreeConnector{top}{top0}{(bottom)};
 

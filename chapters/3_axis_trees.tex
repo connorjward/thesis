@@ -105,6 +105,8 @@ Using an axis tree, \pyop3 is capable of capturing this structure entirely (\cre
     Axis component labels must be unique within an axis, and axis labels must be unique within each possible path leading from root to leaf.
 
   \item
+    % NOTE: this is probably a bad thing to specify, they are mutable in a sense that indexed
+    % trees are not.
     Axis trees are immutable. Applying transformations to an existing tree always returns a new object.
 \end{itemize}
 
@@ -141,6 +143,7 @@ This is incompatible with the renumbering data locality optimisation described i
 This is described in \cref{chapter:indexing}.
 
 \section{Alternative data layouts}
+\label{sec:axis_tree_alternative_layouts}
 
 \begin{figure}
   \centering
