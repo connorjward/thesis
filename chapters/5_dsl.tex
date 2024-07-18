@@ -2,9 +2,6 @@
 
 \begin{document}
 
-% TODO: include somewhere
-% Layout functions, expressed in the symbolic maths package \textit{pymbolic}\footnote{https://documen.tician.de/pymbolic/index.html}, may either be evaluated given a set of indices or used during code generation.
-
 \chapter{The execution model}
 \label{chapter:execution_model}
 
@@ -13,175 +10,11 @@
 % TODO: embedded DSL is used for interoperability with other libraries, and Python is everywhere, can also use parser of parent language (reference UFL for its thoughts on this?)
 
 Thus far we have established a new abstraction for mesh-like data structures, and an approach for symbolically representing smaller ``packed" parts of them.
-In order for \pyop3 to be a usable library, rather than just an interesting abstraction to consider, three problems remain:
-
-\begin{itemize}
-  \item How are the actual data structures stored in memory?
-  \item How does one express operations to be executed?
-  \item How are these operations executed?
-\end{itemize}
-
-These questions will be answered in this chapter, giving us a fully capable, serial-only, \pyop3 library.
-
-\section{Data structures}
-\label{sec:data_structures}
-
-Thus far we have only discussed the \textit{specification} of how data is stored in \pyop3 and not the actual implementation.
-For continuum mechanics problems one typically needs to have representations for scalars, vectors and matrices.
-In \pyop3, recycling the terminology from \pyop2, we call scalars \pycode{Globals}, vectors \pycode{Dats} and matrices \pycode{Mats}.
-All of these data structures work in parallel, and their parallel implementation is deferred to \cref{chapter:parallel}.
-
-\subsection{Scalars (\pycode{Globals})}
-
-\pycode{Globals} are the simplest of \pyop3's data structures.
-They wrap a single scalar value, which may be of any data type (e.g. \pycode{int32}, \pycode{float64}, \pycode{complex128}) and thus have a trivial data layout, hence they have no need for axis trees.
-It is not valid to index into a \pycode{Global} (\cref{chapter:indexing}).
-
-\subsection{Vectors (\pycode{Dats})}
-
-Thus far, all of the data structures that we have encountered would be stored as \pycode{Dats}.
-\pycode{Dats} are constructed with a single axis tree that provides the information necessary to address the underlying flat array that carries the data.
-Having a single axis tree, \pycode{Dats} may be indexed using a single index (\cref{chapter:indexing}).
-
-Currently \pycode{Dats} use numpy arrays as the underlying data storage mechanism, but we intend to permit further array types to enable targeting accelerator architectures like CUDA GPUs (see \cref{sec:future_work}).
-
-\subsection{Matrices (\pycode{Mats})}
-
-\pycode{Mats} require 2 axis trees: one for the rows of the matrix and one for the columns.
-They rely on PETSc \ccode{Mat} objects for the underlying data storage.
-To improve performance one should preallocate the matrix by constructing a \pycode{Sparsity} object and doing a simulated run of all the loop expressions so that non-zeros are put in the right places.
-
-% NOTE: This sort of thing needs to be clearer - we index axis trees, so they have two...
-Since \pycode{Mats} have two axis trees, two indices are needed when indexing.
-
-\section{The domain-specific language}
-\label{sec:dsl}
-
-% forms a tree, show a more complex example
-
-\subsection{Loop expressions}
-% loop expressions, made of a loop index and statements
-% can be context-sensitive - well no, the arrays are
-% and we expand things as a pass.
-
-% how do they manifest? how do we generate code from them?
-% the axes turn into loops - this can be done without mentioning loopy
-
-\begin{figure}[h]
-  \centering
-
-  \hfill
-  %
-  \begin{subfigure}[t]{.3\textwidth}
-    \centering
-    \begin{minipage}{.8\textwidth}
-      \begin{minted}{python}
-        loop(
-          p := axes.index(),
-          do_something(...),
-        )
-      \end{minted}
-    \end{minipage}
-    %
-    \vspace{1em}
-  \end{subfigure}
-  %
-  \hfill
-  %
-  \begin{subfigure}[t]{.38\textwidth}
-    \centering
-    \begin{minipage}{\textwidth}
-      \centering
-      \includegraphics{loop_expr_axes.pdf}
-    \end{minipage}
-  \end{subfigure}
-  %
-  \hfill
-  %
-  \begin{subfigure}[t]{.3\textwidth}
-    \centering
-    \begin{minipage}{.8\textwidth}
-      \begin{minted}{python}
-        for ia in range(5):
-          for ib in range(3):
-            do_something(...)
-      \end{minted}
-    \end{minipage}
-    %
-    \vspace{1.5em}
-  \end{subfigure}
-  %
-  \hfill
-
-  \caption{
-    A simple example of generating code from a loop expression.
-    The loop expression (left) loops over axis tree \pycode{axes} and performs some computation (\pycode{do_something}) for each point in the iteration.
-    \pycode{axes} is defined to be a two-dimensional linear axis tree with shape \pycode{(5, 3)} and axis labels $a$ and $b$ (middle).
-    Pseudocode for the code that is generated from this expression is shown to the right.
-    Loop indices \pycode{ia} and \pycode{ib} correspond to looping over axes $a$ and $b$ respectively.
-  }
-  \label{fig:loop_expr}
-\end{figure}
-
-\subsubsection{Context-sensitive loops}
-
-\begin{figure}[h]
-  \centering
-
-  \begin{subfigure}[t]{.32\textwidth}
-    \centering
-    % extra lines to improve position on page
-    \begin{minted}{python}
-loop(
-  p := axes.index(), ...
-)
-
-
-    \end{minted}
-    %
-    \caption{TODO}
-    \label{fig:multi_component_loop_expr_init}
-  \end{subfigure}
-  %
-  \begin{subfigure}[t]{.32\textwidth}
-    \centering
-    \includegraphics{multi_component_loop_expr_axes.pdf}
-    %
-    \caption{TODO}
-    \label{fig:multi_component_loop_expr_axes}
-  \end{subfigure}
-  %
-  \begin{subfigure}[t]{.32\textwidth}
-    \centering
-    % extra lines to improve position on page
-    \begin{minted}{python}
-for ia in range(2):
-  for ib in range(3):
-    ...
-
-for ia in range(2):
-  for ic in range(2):
-    ...
-    \end{minted}
-    %
-    \caption{TODO}
-    \label{fig:multi_component_loop_expr_codegen}
-  \end{subfigure}
-
-  \caption{TODO}
-  \label{fig:multi_component_loop_expr}
-\end{figure}
-
-% terminals! be more generic
-\subsection{Kernels}
-
-% kernels
-% access descriptors (vague)
+We now move on to consider their concrete implementation, and how to express computations with them.
 
 \section{Code generation}
-\label{sec:codegen}
 
-\begin{figure}[h]
+\begin{figure}
   \centering
   \includegraphics{codegen_flowchart.pdf}
   \caption{
@@ -192,58 +25,108 @@ for ia in range(2):
   \label{fig:codegen_flowchart}
 \end{figure}
 
-% transformations can be split into functional ones and optimisation ones
+% pyop3 has loop expressions that are lowered to loopy kernels that are lowered to C/etc
+% (ref loopy ch. 2)
+% "like pyop2, pyop3 uses loopy as an intermediate representation..."
 
-% dual role of loop expression: codegen spec *and* data to pass through (ref. figure)
+% (paragraph)
+% pyop3 takes a similar approach to loopy in that computations are expressed in a transformable representation
+% pyop3 does things at a higher level... (ref later bits)
+% (transformations can be split into functional ones and optimisation ones)
 
-To aid with the explanation, we will take a straightforward loop expression typical of finite element style codes and demonstrate the transformation and lowering stages of the compilation pipeline as they apply to it:
+% % dual role of loop expression: codegen spec *and* data to pass through (ref. figure)
 
-\begin{center}
-  \begin{minipage}{.38\textwidth}
-    \begin{minted}{python}
-      loop(
-        p := a.index(),
-        kernel(dat0[map0(p), :], dat1[p]),
-      )
-    \end{minted}
-  \end{minipage}
-\end{center}
+\begin{example}
 
-In this loop expression a number of terms require further explanation.
-Firstly, \pycode{dat0} and \pycode{dat1} are defined to be arrays with shape \pycode{(8, 3)} and \pycode{(5,)} respectively, with their axis trees appearing as follows:
+% "we start with something simple..."
 
-\begin{center}
-  \includegraphics{codegen_example_dat_axes.pdf}
-\end{center}
+\begin{pyinline}
+  axes = AxisTree.from_iterable([4, 3])
+  dat = Dat(axes)
+  # set entries to [0, 666, 666, 0, 0, 0, 0, 666, 666, 0, 0, 0]
+  dat[::2, 1:].assign(666)
+\end{pyinline}
 
-The axis tree used to construct \pycode{dat1} (right) is the same as the one used in the loop index \pycode{p := a.index()}.
-We therefore expect that the generated loop will have the following structure (since axis $a$ has 5 entries):
+% (what does this do)
+% dat[::2, 1:] is a view, creates assignment expression that is eagerly evaluated
 
-\begin{center}
-  \begin{minipage}{.25\textwidth}
-    \begin{minted}{python}
-      for ia in range(5):
-        kernel(...)
-    \end{minted}
-  \end{minipage}
-\end{center}
+% we have a single node in our pyop3 expression
+% no transformations of the IR are necessary - single node (show)
 
-\pycode{dat1} is entirely indexed by the loop index \pycode{p}, and so the indexed array \pycode{dat1[p]} only has size 1.
-The situation for \pycode{dat0} is more complicated.
-\pycode{map0} is a map from axis $a$ to axis $x$ with arity 2, and the slice notation ``\pycode{:}" indicates a full slice over the inner axis $y$.
-The indexed object \pycode{dat0[map0(p), :]} passed through to \pycode{kernel} therefore has size 6.
+To generate code from this expression the expression tree is descended and the appropriate loopy constructs are emitted.
+In this case, as the expression tree only has a single node, this traversal is trivial.
+% (old)
+% % single pass
+% % tree is traversed in a pre-order fashion (parents visited first)
+% % loops emit domains and perhaps assignments (ragged)
+% % then terminals (i.e. function calls and assignments) also emit domains and assignments
 
-Lastly, the local kernel (\pycode{kernel}) is defined to be some function taking two arguments with size 6 and intent \pycode{READ}, and size 1 and intent \pycode{INC} respectively.
+To emit code for the \pycode{Assignment} node...
+% loop over source axes...
+% talk about substituted layouts here, connects source axis indices back to offset
+The resulting loopy kernel is shown in \cref{listing:loopy_kernel_ex1}.
 
-\subsection{Loop expression transformations}
+Having generated a loopy kernel, \pyop3 instructs loopy to generate a C string from it (\cref{listing:c_string_ex1}).
+This C code may then be compiled and run.
+The arguments to the generated code (here simply \ccode{array0}) are managed by \pyop3 internally that passes the correct pointers.
+% (old)
+% Once at the level of a loopy kernel, the rest of the compilation becomes straightforward.
+% Depending on the \textit{target} attribute belonging to a kernel, loopy can generate an appropriate string of C code that \pyop3 writes to a file and compiles with a traditional C compiler (e.g. gcc).
+% Once compiled, \pyop3 can load the function pointer from the shared object file, allowing it to be executed.
+% This process is unchanged from \pyop2.
+
+% Unsurprisingly it looks very similar to the input loopy kernel (\cref{lst:codegen_example_loopy_kernel}).
+
+\end{example}
+
+\begin{example}  % outer loops and maps
+
+We now consider a more complex example that is more typical of a continuum mechanics simulation:
+
+\begin{pyinline}
+  a = Axis(5, "a")
+  b = Axis(3, "b")
+  dat0 = Dat(AxisTree.from_iterable([a, b]))
+  dat1 = Dat(a)
+
+  # map0 maps from axis "a" to itself
+  map0 = Map({"a": MapComponent("a", arity=2, ...)})
+
+  loop(
+    ia := a.index(),
+    kernel(dat0[map0(ia), :], dat1[ia]),
+  )
+\end{pyinline}
+
+% SEMANTICS
+% add loop expression and kernel (explain)
+% % loop expressions, made of a loop index and statements
+
+% dat0 is a lot like an indexing example from before... (ref)
+
+% In this loop expression a number of terms require further explanation.
+% Firstly, \pycode{dat0} and \pycode{dat1} are defined to be arrays with shape \pycode{(8, 3)} and \pycode{(5,)} respectively, with their axis trees appearing as follows:
+%
+% \begin{center}
+%   \includegraphics{codegen_example_dat_axes.pdf}
+% \end{center}
+%
+% \pycode{dat1} is entirely indexed by the loop index \pycode{p}, and so the indexed array \pycode{dat1[p]} only has size 1.
+% The situation for \pycode{dat0} is more complicated.
+% \pycode{map0} is a map from axis $a$ to axis $x$ with arity 2, and the slice notation ``\pycode{:}" indicates a full slice over the inner axis $y$.
+% The indexed object \pycode{dat0[map0(p), :]} passed through to \pycode{kernel} therefore has size 6.
+%
+% Lastly, the local kernel (\pycode{kernel}) is defined to be some function taking two arguments with size 6 and intent \pycode{READ}, and size 1 and intent \pycode{INC} respectively.
+
+%TRANSFORM
 
 \begin{table}
   \centering
 
-  \begin{tabular}{|c|l|l|}
-    \hline
+  \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
+    \hline[1pt]
     \textbf{Intent} & \textbf{Pack instruction} & \textbf{Unpack instruction} \\
-    \hline
+    \hline[1pt]
     \pycode{READ} & \ccode{write(temporary, indexed)} & \tableDash \\
     \hline
     \pycode{WRITE} & \tableDash & \ccode{write(indexed, temporary)} \\
@@ -259,8 +142,8 @@ Lastly, the local kernel (\pycode{kernel}) is defined to be some function taking
     \pycode{MAX_WRITE} & \tableDash & \ccode{max(indexed, temporary)} \\
     \hline
     \pycode{MAX_INC} & \ccode{write(temporary, 0)} & \ccode{max(indexed, temporary)} \\
-    \hline
-  \end{tabular}
+    \hline[1pt]
+  \end{tblr}
 
   \caption{
     Intent values supported by \pyop3 kernels and their corresponding pack/unpack instructions.
@@ -270,23 +153,20 @@ Lastly, the local kernel (\pycode{kernel}) is defined to be some function taking
   \label{tab:intents}
 \end{table}
 
-\begin{figure}
-  \centering
+% need transform expression due to kernel needing contiguous data (temporaries)
+    % The expression tree transformation expanding implicit pack and unpack instructions for the example loop expression (\cref{sec:codegen}).
+    % The input loop expression is shown on the left and the output, expanded, loop expression is shown on the right.
+    % \pycode{kernel} has argument intents of \pycode{READ} and \pycode{INC} for its first and second argument respectively and so the transformed expression contains \pycode{write} and \pycode{inc} instructions where appropriate.
+
+\begin{center}
   \includegraphics{loop_expr_tree_transform.pdf}
+\end{center}
 
-  \caption{
-    The expression tree transformation expanding implicit pack and unpack instructions for the example loop expression (\cref{sec:codegen}).
-    The input loop expression is shown on the left and the output, expanded, loop expression is shown on the right.
-    \pycode{kernel} has argument intents of \pycode{READ} and \pycode{INC} for its first and second argument respectively and so the transformed expression contains \pycode{write} and \pycode{inc} instructions where appropriate.
-  }
-  \label{fig:loop_expr_tree_transform}
-\end{figure}
+% LOWERING/COMPILATION
+% first the loop is visited, loop over 5, gives us $L^p_a$.
 
-% explain implicit pack/unpack expansion, reference table (and explain notation) and reference figure (demo)
-
-\subsection{Lowering loop expressions to loopy kernels}
-
-\begin{figure}
+% NOTE: Can probably omit this - same as above really
+\begin{listing}
   \centering
   \begin{minipage}{.8\textwidth}
     \inputminted{text}{./scripts/artefacts/codegen_example_loopy_kernel_tidy.txt}
@@ -294,20 +174,10 @@ Lastly, the local kernel (\pycode{kernel}) is defined to be some function taking
   \caption{
     Abbreviated textual representation of the loopy kernel generated for the example expression (\cref{sec:codegen}).
   }
-  \label{lst:codegen_example_loopy_kernel}
-\end{figure}
+  \label{listing:loopy_kernel_ex2}
+\end{listing}
 
-% single pass
-% tree is traversed in a pre-order fashion (parents visited first)
-% loops emit domains and perhaps assignments (ragged)
-% then terminals (i.e. function calls and assignments) also emit domains and assignments
-
-% explain substituted target expressions
-
-\subsection{Compilation and execution of loopy kernels}
-\label{sec:codegen_loopy_kernel}
-
-\begin{figure}
+\begin{listing}
   \centering
   \begin{minipage}{.8\textwidth}
     \inputminted{c}{./scripts/artefacts/codegen_example_c_code_tidy.c}
@@ -316,20 +186,172 @@ Lastly, the local kernel (\pycode{kernel}) is defined to be some function taking
     TODO
   }
   \label{lst:codegen_example_c_code}
-\end{figure}
+\end{listing}
 
-Once at the level of a loopy kernel, the rest of the compilation becomes straightforward.
-Depending on the \textit{target} attribute belonging to a kernel, loopy can generate an appropriate string of C code that \pyop3 writes to a file and compiles with a traditional C compiler (e.g. gcc).
-Once compiled, \pyop3 can load the function pointer from the shared object file, allowing it to be executed.
-This process is unchanged from \pyop2.
+% For our demo the generated C code can be seen in \cref{lst:codegen_example_c_code}.
+% Unsurprisingly it looks very similar to the input loopy kernel (\cref{lst:codegen_example_loopy_kernel}).
 
-For our demo the generated C code can be seen in \cref{lst:codegen_example_c_code}.
-Unsurprisingly it looks very similar to the input loopy kernel (\cref{lst:codegen_example_loopy_kernel}).
+\end{example}
 
-\paragraph{Note}
+\section{Data structures}
+\label{sec:data_structures}
 
-Despite being included in the compilation flowchart (\cref{fig:codegen_flowchart}), no transformations are currently applied at the level of the loopy kernel.
-Transformations at this level would include operations like intra-element vectorisation~\cite{sunStudyVectorizationMatrixfree2020}, or enabling the generated code to run on GPUs~\cite{fenics2021-kulkarni}.
-These things are considered to be future work (see \cref{sec:future_work}).
+Thus far we have only considered
+Currently \pycode{Dats} use numpy arrays as the underlying data storage mechanism, but we intend to permit further array types to enable targeting accelerator architectures like CUDA GPUs (see \cref{sec:future_work}).
+
+As well as \pycode{Dats}, \pyop3 has \pycode{Globals}, for global scalar values, and \pycode{Mats}, for matrices.
+% globals are really simple
+% indexed with 0, 1, or 2 index trees, row, col axis trees
+
+\subsection{Matrices}
+
+% uses PETSc, support for different formats - restricted dtype
+
+\pycode{Mats} require 2 axis trees: one for the rows of the matrix and one for the columns.
+They rely on PETSc \ccode{Mat} objects for the underlying data storage.
+
+% NOTE: This sort of thing needs to be clearer - we index axis trees, so they have two...
+Since \pycode{Mats} have two axis trees, two indices are needed when indexing.
+
+\subsubsection{Code generation}
+
+Since \pycode{Mats} are not internally represented by a flat buffer they must be accessed through PETSc's C API.
+For example, to read values from a PETSc \ccode{Mat} the following function must be used:
+
+\begin{cinline}
+  MatGetValues(Mat mat,
+               PetscInt m, PetscInt idxm[],
+               PetscInt n, PetscInt idxn[],
+               PetscScalar v[])
+\end{cinline}
+
+This function returns a dense block of values (\ccode{v[]}) read from matrix \ccode{mat} at the row and column indices specified by arrays \ccode{idxm[]} and \ccode{idxn[]} respectively.
+Analogous routines exist for writing and incrementing.
+% this is naturally less efficient than direct insertion into an array, can be a bottleneck
+
+For \pyop3 to be able to interface with PETSc matrices calls to these getter and setter routines have to be emitted.
+
+One challenge presented by this API is that it is no longer possible for \pyop3 to represent offsets purely as a symbolic quantity because PETSc expects these to be packed into the index arrays \ccode{idxm} and \ccode{idxn}.
+To fix this \pyop3 performs an additional step where these arrays are explicitly tabulated by evaluating the layout functions. % show? speed up?
 
 \end{document}
+
+% ===================== OLD ======================
+
+% \section{Expressing computations}
+% \label{sec:dsl}
+%
+% % forms a tree, show a more complex example
+%
+% \subsection{Loop expressions}
+%
+% \begin{figure}[h]
+%   \centering
+%
+%   \hfill
+%   %
+%   \begin{subfigure}[t]{.3\textwidth}
+%     \centering
+%     \begin{minipage}{.8\textwidth}
+%       \begin{minted}{python}
+%         loop(
+%           p := axes.index(),
+%           do_something(...),
+%         )
+%       \end{minted}
+%     \end{minipage}
+%     %
+%     \vspace{1em}
+%   \end{subfigure}
+%   %
+%   \hfill
+%   %
+%   \begin{subfigure}[t]{.38\textwidth}
+%     \centering
+%     \begin{minipage}{\textwidth}
+%       \centering
+%       \includegraphics{loop_expr_axes.pdf}
+%     \end{minipage}
+%   \end{subfigure}
+%   %
+%   \hfill
+%   %
+%   \begin{subfigure}[t]{.3\textwidth}
+%     \centering
+%     \begin{minipage}{.8\textwidth}
+%       \begin{minted}{python}
+%         for ia in range(5):
+%           for ib in range(3):
+%             do_something(...)
+%       \end{minted}
+%     \end{minipage}
+%     %
+%     \vspace{1.5em}
+%   \end{subfigure}
+%   %
+%   \hfill
+%
+%   \caption{
+%     A simple example of generating code from a loop expression.
+%     The loop expression (left) loops over axis tree \pycode{axes} and performs some computation (\pycode{do_something}) for each point in the iteration.
+%     \pycode{axes} is defined to be a two-dimensional linear axis tree with shape \pycode{(5, 3)} and axis labels $a$ and $b$ (middle).
+%     Pseudocode for the code that is generated from this expression is shown to the right.
+%     Loop indices \pycode{ia} and \pycode{ib} correspond to looping over axes $a$ and $b$ respectively.
+%   }
+%   \label{fig:loop_expr}
+% \end{figure}
+%
+% \subsubsection{Context-sensitive loops}
+%
+% \begin{figure}[h]
+%   \centering
+%
+%   \begin{subfigure}[t]{.32\textwidth}
+%     \centering
+%     % extra lines to improve position on page
+%     \begin{minted}{python}
+% loop(
+%   p := axes.index(), ...
+% )
+%
+%
+%     \end{minted}
+%     %
+%     \caption{TODO}
+%     \label{fig:multi_component_loop_expr_init}
+%   \end{subfigure}
+%   %
+%   \begin{subfigure}[t]{.32\textwidth}
+%     \centering
+%     \includegraphics{multi_component_loop_expr_axes.pdf}
+%     %
+%     \caption{TODO}
+%     \label{fig:multi_component_loop_expr_axes}
+%   \end{subfigure}
+%   %
+%   \begin{subfigure}[t]{.32\textwidth}
+%     \centering
+%     % extra lines to improve position on page
+%     \begin{minted}{python}
+% for ia in range(2):
+%   for ib in range(3):
+%     ...
+%
+% for ia in range(2):
+%   for ic in range(2):
+%     ...
+%     \end{minted}
+%     %
+%     \caption{TODO}
+%     \label{fig:multi_component_loop_expr_codegen}
+%   \end{subfigure}
+%
+%   \caption{TODO}
+%   \label{fig:multi_component_loop_expr}
+% \end{figure}
+%
+% \paragraph{Note}
+%
+% Despite being included in the compilation flowchart (\cref{fig:codegen_flowchart}), no transformations are currently applied at the level of the loopy kernel.
+% Transformations at this level would include operations like intra-element vectorisation~\cite{sunStudyVectorizationMatrixfree2020}, or enabling the generated code to run on GPUs~\cite{fenics2021-kulkarni}.
+% These things are considered to be future work (see \cref{sec:future_work}).

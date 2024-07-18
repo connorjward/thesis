@@ -99,7 +99,7 @@
   urldate = {2024-05-03},
   abstract = {WILLOW AHRENS, MIT CSAIL, USA TEODORO FIELDS COLLIN, MIT CSAIL, USA RADHA PATEL, MIT CSAIL, USA KYLE DEEDS, University of Washington, USA CHANGWAN HONG, MIT CSAIL, USA SAMAN AMARASINGHE, MIT CSAIL, USA From FORTRAN to NumPy, arrays have revolutionized how we express computation. However, arrays in these, and almost all prominent systems, can only handle dense rectilinear integer grids. Real world arrays often contain underlying structure, such as sparsity, runs of repeated values, or symmetry. Support for structured data is fragmented and incomplete. Existing frameworks limit the array structures and program control flow they support to better simplify the problem. In this work, we propose a new programming language, Finch, which supports both flexible control flow and diverse data structures. Finch facilitates a programming model which resolves the challenges of computing over structured arrays by combining control flow and data structures into a common representation where they can be co-optimized. Finch automatically specializes control flow to data so that performance engineers can focus on experimenting with many algorithms. Finch supports a familiar programming language of loops, statements, ifs, breaks, etc., over a wide variety of array structures, such as sparsity, run-length-encoding, symmetry, triangles, padding, or blocks. Finch reliably utilizes the key properties of structure, such as structural zeros, repeated values, or clustered non-zeros. We show that this leads to dramatic speedups in operations such as SpMV and SpGEMM, image processing, graph analytics, and a high-level tensor operator fusion interface. CCS Concepts: • Software and its engineering → Control structures; Data types and structures; Imperative languages; • Mathematics of computing → Mathematical software.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Mathematical Software},
   file = {/home/connor/.local/share/zotero/storage/KVQ7BURW/Ahrens et al. - 2024 - Finch Sparse and Structured Array Programming wit.pdf}
 }
@@ -213,7 +213,7 @@
   urldate = {2024-03-04},
   abstract = {The MFEM (Modular Finite Element Methods) library is a high-performance C++ library for finite element discretizations. MFEM supports numerous types of finite element methods and is the discretization engine powering many computational physics and engineering applications across a number of domains. This paper describes some of the recent research and development in MFEM, focusing on performance portability across leadership-class supercomputing facilities, including exascale supercomputers, as well as new capabilities and functionality, enabling a wider range of applications. Much of this work was undertaken as part of the Department of Energy’s Exascale Computing Project (ECP) in collaboration with the Center for Efficient Exascale Discretizations (CEED).},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Mathematical Software,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/3FYSGFAG/Andrej et al. - 2024 - High-performance finite elements with MFEM.pdf}
 }
@@ -621,7 +621,7 @@
   urldate = {2024-01-03},
   abstract = {Partial differential equations (PDEs) are crucial in modelling diverse phenomena across scientific disciplines, including seismic and medical imaging, computational fluid dynamics, image processing, and neural networks. Solving these PDEs on a large scale is an intricate and time-intensive process that demands careful tuning. This paper introduces automated code-generation techniques specifically tailored for distributed memory parallelism (DMP) to solve explicit finite-difference (FD) stencils at scale, a fundamental challenge in numerous scientific applications. These techniques are implemented and integrated into the Devito DSL and compiler framework, a well-established solution for automating the generation of FD solvers based on a high-level symbolic math input. Users benefit from modelling simulations at a high-level symbolic abstraction and effortlessly harnessing HPC-ready distributed-memory parallelism without altering their source code. This results in drastic reductions both in execution time and developer effort. While the contributions of this work are implemented and integrated within the Devito framework, the DMP concepts and the techniques applied are generally applicable to any FD solvers. A comprehensive performance evaluation of Devito’s DMP via MPI demonstrates highly competitive weak and strong scaling on the Archer2 supercomputer, demonstrating the effectiveness of the proposed approach in meeting the demands of large-scale scientific simulations.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Mathematical Software,Computer Science - Performance},
   file = {/home/connor/.local/share/zotero/storage/MBKUP7AW/Bisbas et al. - 2023 - Automated MPI code generation for scalable finite-.pdf}
 }
@@ -637,7 +637,7 @@
   urldate = {2024-04-05},
   abstract = {Domain Specific Languages (DSLs) increase programmer productivity and provide high performance. Their targeted abstractions allow scientists to express problems at a high level, providing rich details that optimizing compilers can exploit to target current- and next-generation supercomputers. The convenience and performance of DSLs come with significant development and maintenance costs. The siloed design of DSL compilers and the resulting inability to benefit from shared infrastructure cause uncertainties around longevity and the adoption of DSLs at scale. By tailoring the broadly-adopted MLIR compiler framework to HPC, we bring the same synergies that the machine learning community already exploits across their DSLs (e.g. Tensorflow, PyTorch) to the finite-difference stencil HPC community. We introduce new HPC-specific abstractions for message passing targeting distributed stencil computations. We demonstrate the sharing of common components across three distinct HPC stencil-DSL compilers: Devito, PSyclone, and the Open Earth Compiler, showing that our framework generates high-performance executables based upon a shared compiler ecosystem.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Mathematical Software},
   file = {/home/connor/.local/share/zotero/storage/EM54HCCK/Bisbas et al. - 2024 - A shared compilation stack for distributed-memory .pdf}
 }
@@ -699,7 +699,7 @@
   urldate = {2023-01-12},
   abstract = {High level domain specific languages for the finite element method underpin high productivity programming environments for simulations based on partial differential equations (PDE) while employing automatic code generation to achieve high performance. However, a limitation of this approach is that it does not support operators that are not directly expressible in the vector calculus. This is critical in applications where PDEs are not enough to accurately describe the physical problem of interest. The use of deep learning techniques have become increasingly popular in filling this knowledge gap, for example to include features not represented in the differential equations, or closures for unresolved spatiotemporal scales. We introduce an interface within the Firedrake finite element system that enables a seamless interface with deep learning models. This new feature composes with the automatic differentiation capabilities of Firedrake, enabling the automated solution of inverse problems. Our implementation interfaces with PyTorch and can be extended to other machine learning libraries. The resulting framework supports complex models coupling PDEs and deep learning whilst maintaining separation of concerns between application scientists and software experts.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Mathematical Software,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/H2LCS6Z2/Bouziani and Ham - 2021 - Escaping the abstraction a foreign function inter.pdf}
 }
@@ -715,7 +715,7 @@
   urldate = {2023-03-23},
   abstract = {Partial differential equations (PDEs) are central to describing and modelling complex physical systems that arise in many disciplines across science and engineering. However, in many realistic applications PDE modelling provides an incomplete description of the physics of interest. PDE-based machine learning techniques are designed to address this limitation. In this approach, the PDE is used as an inductive bias enabling the coupled model to rely on fundamental physical laws while requiring less training data. The deployment of high-performance simulations coupling PDEs and machine learning to complex problems necessitates the composition of capabilities provided by machine learning and PDE-based frameworks. We present a simple yet effective coupling between the machine learning framework PyTorch and the PDE system Firedrake that provides researchers, engineers and domain specialists with a high productive way of specifying coupled models while only requiring trivial changes to existing code.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Machine Learning,Computer Science - Mathematical Software,Mathematics - Numerical Analysis,Physics - Computational Physics},
   file = {/home/connor/.local/share/zotero/storage/HSTHEL6R/Bouziani and Ham - 2023 - Physics-driven machine learning models coupling Py.pdf}
 }
@@ -799,7 +799,7 @@
   urldate = {2023-03-23},
   abstract = {Build-time configuration and environment assumptions are hampering progress and usability in scientific software. That which would be utterly unacceptable in non-scientific software somehow passes for the norm in scientific packages. The community needs reusable software packages that are easy use and flexible enough to accommodate next-generation simulation and analysis demands.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{Computer Science - Computational Engineering, Finance, and Science},Computer Science - Mathematical Software,Computer Science - Software Engineering},
   file = {/home/connor/.local/share/zotero/storage/M9UQWRQ4/Brown et al. - 2014 - Run-time extensibility and librarization of simula.pdf}
 }
@@ -1162,7 +1162,7 @@
   urldate = {2024-06-20},
   abstract = {We present PetIGA, a code framework to approximate the solution of partial differential equations using isogeometric analysis. PetIGA can be used to assemble matrices and vectors which come from a Galerkin weak form, discretized with Non-Uniform Rational B-spline basis functions. We base our framework on PETSc, a high-performance library for the scalable solution of partial differential equations, which simplifies the development of large-scale scientific codes, provides a rich environment for prototyping, and separates parallelism from algorithm choice. We describe the implementation of PetIGA, and exemplify its use by solving a model nonlinear problem. To illustrate the robustness and flexibility of PetIGA, we solve some challenging nonlinear partial differential equations that include problems in both solid and fluid mechanics. We show strong scaling results on up to 4096 cores, which confirm the suitability of PetIGA for large scale simulations.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Mathematical Software,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/A4X8H8IR/Dalcin et al. - 2015 - PetIGA A Framework for High-Performance Isogeomet.pdf}
 }
@@ -1273,7 +1273,7 @@
   url = {http://arxiv.org/abs/1604.06525},
   urldate = {2022-06-20},
   abstract = {Many graphics and vision problems can be expressed as non-linear least squares optimizations of objective functions over visual data, such as images and meshes. The mathematical descriptions of these functions are extremely concise, but their implementation in real code is tedious, especially when optimized for real-time performance on modern GPUs in interactive applications. In this work, we propose a new language, Opt (available under http://optlang.org), for writing these objective functions over image- or graph-structured unknowns concisely and at a high level. Our compiler automatically transforms these specifications into state-of-the-art GPU solvers based on Gauss-Newton or Levenberg-Marquardt methods. Opt can generate different variations of the solver, so users can easily explore tradeoffs in numerical precision, matrix-free methods, and solver approaches. In our results, we implement a variety of real-world graphics and vision applications. Their energy functions are expressible in tens of lines of code, and produce highly-optimized GPU solver implementations. These solver have performance competitive with the best published hand-tuned, application-specific GPU solvers, and orders of magnitude beyond a general-purpose auto-generated solver.},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Computer Vision and Pattern Recognition,Computer Science - Graphics,Computer Science - Programming Languages},
   file = {/home/connor/OneDrive/AppData/Zotero/DeVito et al_2017_Opt.pdf;/home/connor/.local/share/zotero/storage/J39PNCF9/1604.html}
 }
@@ -1298,7 +1298,7 @@
   urldate = {2023-09-04},
   abstract = {Getting standard multigrid to work efficiently for the high-frequency Helmholtz equation has been an open problem in applied mathematics for years. Much effort has been dedicated to finding solution methods which can use multigrid components to obtain solvers with a linear time complexity. In this work we present one among the first stand-alone multigrid solvers for the 2D Helmholtz equation using both a constant and non-constant wavenumber model problem. We use standard smoothing techniques and do not impose any restrictions on the number of grid points per wavelength on the coarse-grid. As a result we are able to obtain a full V- and W-cycle algorithm. The key features of the algorithm are the use of higher-order inter-grid transfer operators combined with a complex constant in the coarsening process. Using weighted-Jacobi smoothing, we obtain a solver which is h´independent and scales linearly with the wavenumber k. Numerical results using 1 to 5 GMRES(3) smoothing steps approach k´ and h´ independent convergence, when combined with the higher-order inter-grid transfer operators and a small or even zero complex shift. The proposed algorithm provides an important step towards the perpetuating branch of research in finding scalable solvers for challenging wave propagation problems.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{65N55, 65F10, 65F15},G.1.8,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/D6IU4HQX/Dwarka and Vuik - 2023 - Stand-alone Multigrid for Helmholtz Revisited Tow.pdf}
 }
@@ -1314,7 +1314,7 @@
   urldate = {2023-09-18},
   abstract = {The dune-functions Dune module provides interfaces for functions and function space bases. It forms one abstraction level above grids, shape functions, and linear algebra, and provides infrastructure for full discretization frameworks like dune-pdelab and dune-fem. This document describes the function space bases provided by dune-functions. These are based on an abstract description of bases for product spaces as trees of simpler bases. From this description, many different numberings of degrees of freedom by multi-indices can be derived in a natural way. We describe the abstract concepts, document the programmer interface, and give a complete example program that solves the stationary Stokes equation using Taylor-Hood elements.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {68N99,Computer Science - Mathematical Software,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/RA8QV7H7/Engwer et al. - 2018 - Function space bases in the dune-functions module.pdf}
 }
@@ -1535,7 +1535,7 @@
   urldate = {2022-08-22},
   abstract = {The \$hp\$-adaptive finite element method (FEM) - where one independently chooses the mesh size (\$h\$) and polynomial degree (\$p\$) to be used on each cell - has long been known to have better theoretical convergence properties than either \$h\$- or \$p\$-adaptive methods alone. However, it is not widely used, owing at least in parts to the difficulty of the underlying algorithms and the lack of widely usable implementations. This is particularly true when used with continuous finite elements. Herein, we discuss algorithms that are necessary for a comprehensive and generic implementation of \$hp\$-adaptive finite element methods on distributed-memory, parallel machines. In particular, we will present a multi-stage algorithm for the unique enumeration of degrees of freedom (DoFs) suitable for continuous finite element spaces, describe considerations for weighted load balancing, and discuss the transfer of variable size data between processes. We illustrate the performance of our algorithms with numerical examples, and demonstrate that they scale reasonably up to at least 16,384 Message Passing Interface (MPI) processes. We provide a reference implementation of our algorithms as part of the open-source library deal.II.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Mathematical Software,G.1.8,G.4,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/TZ57B9PX/Fehling and Bangerth - 2022 - Algorithms for Parallel Generic $hp$-adaptive Fini.pdf}
 }
@@ -1797,7 +1797,7 @@
   url = {https://www.ams.org/mcom/2019-88-316/S0025-5718-2018-03346-4/},
   urldate = {2024-06-17},
   langid = {english},
-  file = {/home/connor/.local/share/zotero/storage/6RMCRHSN/Guzman and Scott - 2017 - The Scott-Vogelius finite elements revisited.pdf;/home/connor/OneDrive/AppData/Zotero/Guzmán_Scott_2018_The Scott-Vogelius finite elements revisited.pdf}
+  file = {/home/connor/.local/share/zotero/storage/6RMCRHSN/Guzman and Scott - 2017 - The Scott-Vogelius finite elements revisited.pdf}
 }
 
 @article{hamAutomatedShapeDifferentiation2019,
@@ -1829,7 +1829,7 @@
   urldate = {2024-01-17},
   abstract = {In this work, we introduce a new algorithm for N-to-M checkpointing in finite element simulations. This new algorithm allows efficient saving/loading of functions representing physical quantities associated with the mesh representing the physical domain. Specifically, the algorithm allows for using different numbers of parallel processes for saving and loading, allowing for restarting and post-processing on the process count appropriate to the given phase of the simulation and other conditions. For demonstration, we implemented this algorithm in PETSc, the Portable, Extensible Toolkit for Scientific Computation, and added a convenient high-level interface into Firedrake, a system for solving partial differential equations using finite element methods. We evaluated our new implementation by saving and loading data involving 8.2 billion finite element degrees of freedom using 8,192 parallel processes on ARCHER2, the UK National Supercomputing Service.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Mathematical Software},
   file = {/home/connor/.local/share/zotero/storage/5T33UASW/Ham et al. - 2024 - Efficient N-to-M Checkpointing Algorithm for Finit.pdf}
 }
@@ -1863,7 +1863,7 @@
   urldate = {2023-01-16},
   abstract = {This white paper highlights current limitations in the algebraic closure Unified Form Language (UFL). UFL currently represents forms over finite element spaces, however finite element problems naturally result in objects in the dual to a finite element space, and operators mapping between primal and dual finite element spaces. This document sketches the relevant mathematical areas and proposes changes to the UFL language to support dual spaces as first class types in UFL.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Mathematical Software},
   file = {/home/connor/.local/share/zotero/storage/FCRBA7HD/Ham - 2021 - UFL Dual Spaces, a proposal.pdf}
 }
@@ -1900,7 +1900,7 @@
   urldate = {2024-07-16},
   abstract = {Patch-based relaxation refers to a family of methods for solving linear systems which partitions the matrix into smaller pieces often corresponding to groups of adjacent degrees of freedom residing within patches of the computational domain. The two most common families of patch-based methods are block-Jacobi and Schwarz methods, where the former typically corresponds to non-overlapping domains and the later implies some overlap. We focus on cases where each patch consists of the degrees of freedom within a finite element method mesh cell. Patch methods often capture complex local physics much more effectively than simpler point-smoothers such as Jacobi; however, forming, inverting, and applying each patch can be prohibitively expensive in terms of both storage and computation time. To this end, we propose several approaches for performing analysis on these patches and constructing a reduced representation. The compression techniques rely on either matrix norm comparisons or unsupervised learning via a clustering approach. We illustrate how it is frequently possible to retain/factor less than 5\% of all patches and still develop a method that converges with the same number of iterations or slightly more than when all patches are stored/factored.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/ZQDCKLBQ/Harper and Tuminaro - 2023 - Compression and Reduced Representation Techniques .pdf}
 }
@@ -2176,7 +2176,7 @@
   urldate = {2022-09-20},
   abstract = {Rust is a relatively new system programming language that has been experiencing a rapid adoption in the past 10 years. Rust incorporates a memory ownership model enforced at a compile time. Since this model involves zero runtime overhead, programs written in Rust are not only memory-safe but also fast, leading to performance comparable to C and C++. Multiple existing benchmarks comparing the performance of Rust with other languages focus on rarely used superficial algorithms, leading to somewhat inconclusive results. In this work, we conduct a comparative performance benchmark of Rust and C++ using commonly used algorithms and data structures rather than exotic ones. Our evaluation shows that the overall performance of Rust is similar to C++, with only minor disadvantage. We also demonstrate that in some Rust routines are slightly faster than the ones of C++.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Performance,Computer Science - Programming Languages},
   file = {/home/connor/.local/share/zotero/storage/E6WQFCKW/Ivanov - 2022 - Is Rust C++-fast Benchmarking System Languages on.pdf}
 }
@@ -2233,7 +2233,7 @@
   urldate = {2024-05-13},
   abstract = {The never-ending computational demand from simulations of turbulence makes computational fluid dynamics (CFD) a prime application use case for current and future exascale systems. High-order finite element methods, such as the spectral element method, have been gaining traction as they offer high performance on both multicore CPUs and modern GPU-based accelerators. In this work, we assess how high-fidelity CFD using the spectral element method can exploit the modular supercomputing architecture at scale through domain partitioning, where the computational domain is split between a Booster module powered by GPUs and a Cluster module with conventional CPU nodes. We investigate several different flow cases and computer systems based on the Modular Supercomputing Architecture (MSA). We observe that for our simulations, the communication overhead and load balancing issues incurred by incorporating different computing architectures are seldom worthwhile, especially when I/O is also considered, but when the simulation at hand requires more than the combined global memory on the GPUs, utilizing additional CPUs to increase the available memory can be fruitful. We support our results with a simple performance model to assess when running across modules might be beneficial. As MSA is becoming more widespread and efforts to increase system utilization are growing more important our results give insight into when and how a monolithic application can utilize and spread out to more than one module and obtain a faster time to solution.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},C.1.4,Computer Science - Mathematical Software,G.4,J.2,Physics - Fluid Dynamics},
   file = {/home/connor/.local/share/zotero/storage/5X7FFRXU/Karp et al. - 2024 - Experience and Analysis of Scalable High-Fidelity .pdf}
 }
@@ -2693,7 +2693,7 @@
   urldate = {2022-09-06},
   abstract = {This work investigates a variant of the conjugate gradient (CG) method and embeds it into the context of high-order finite-element schemes with fast matrix-free operator evaluation and cheap preconditioners like the matrix diagonal. Relying on a data-dependency analysis and appropriate enumeration of degrees of freedom, we interleave the vector updates and inner products in a CG iteration with the matrix-vector product with only minor organizational overhead. As a result, around 90\% of the vector entries of the three active vectors of the CG method are transferred from slow RAM memory exactly once per iteration, with all additional access hitting fast cache memory. Node-level performance analyses and scaling studies on up to 147k cores show that the CG method with the proposed performance optimizations is around two times faster than a standard CG solver as well as optimized pipelined CG and s-step CG methods for large sizes that exceed processor caches, and provides similar performance near the strong scaling limit.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Mathematical Software,G.4,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/P4IB2XZX/Kronbichler et al. - 2022 - Enhancing data locality of the conjugate gradient .pdf}
 }
@@ -3074,7 +3074,7 @@
   urldate = {2022-09-06},
   abstract = {Sparse tiling is a technique to fuse loops that access common data, thus increasing data locality. Unlike traditional loop fusion or blocking, the loops may have different iteration spaces and access shared datasets through indirect memory accesses, such as A[map[i]] -- hence the name "sparse". One notable example of such loops arises in discontinuous-Galerkin finite element methods, because of the computation of numerical integrals over different domains (e.g., cells, facets). The major challenge with sparse tiling is implementation -- not only is it cumbersome to understand and synthesize, but it is also onerous to maintain and generalize, as it requires a complete rewrite of the bulk of the numerical computation. In this article, we propose an approach to extend the applicability of sparse tiling based on raising the level of abstraction. Through a sequence of compiler passes, the mathematical specification of a problem is progressively lowered, and eventually sparse-tiled C for-loops are generated. Besides automation, we advance the state-of-the-art by introducing: a revisited, more efficient sparse tiling algorithm; support for distributed-memory parallelism; a range of fine-grained optimizations for increased run-time performance; implementation in a publicly-available library, SLOPE; and an in-depth study of the performance impact in Seigen, a real-world elastic wave equation solver for seismological problems, which shows speed-ups up to 1.28x on a platform consisting of 896 Intel Broadwell cores.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{Computer Science - Computational Engineering, Finance, and Science},D.1.2,G.4,Physics - Geophysics},
   file = {/home/connor/.local/share/zotero/storage/R4WSS8F7/Luporini et al. - 2019 - Automated Tiling of Unstructured Mesh Computations.pdf}
 }
@@ -3193,7 +3193,7 @@
   urldate = {2023-03-05},
   abstract = {In this humorous and thought provoking article, we discuss certain myths and legends that are folklore among members of the high-performance computing community. We collected those myths from conversations at conferences and meetings, product advertisements, papers, and other communications such as tweets, blogs, and news articles within (and beyond) our community. We believe they represent the zeitgeist of the current era of massive change, driven by the end of many scaling laws such as Dennard scaling and Moore’s law. While some laws end, new directions open up, such as algorithmic scaling or novel architecture research. However, these myths are rarely based on scientific facts but often on some evidence or argumentation. In fact, we believe that this is the very reason for the existence of many myths and why they cannot be answered clearly. While it feels like there should be clear answers for each, some may remain endless philosophical debates such as the question whether Beethoven was better than Mozart. We would like to see our collection of myths as a discussion of possible new directions for research and industry investment.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Computers and Society,Computer Science - Hardware Architecture,Computer Science - Machine Learning,Computer Science - Social and Information Networks},
   file = {/home/connor/.local/share/zotero/storage/XR9AD9IC/Matsuoka et al. - 2023 - Myths and Legends in High-Performance Computing.pdf}
 }
@@ -3417,7 +3417,7 @@
   urldate = {2023-08-16},
   abstract = {The stability, robustness, accuracy, and efficiency of space-time finite element methods crucially depend on the choice of approximation spaces for test and trial functions. This is especially true for high-order, mixed finite element methods which often must satisfy an inf-sup condition in order to ensure stability. With this in mind, the primary objective of this paper and a companion paper is to provide a wide range of explicitly stated, conforming, finite element spaces in four-dimensions. In this paper, we construct explicit high-order conforming finite elements on 4-cubes (tesseracts); our construction uses tools from the recently developed ‘Finite Element Exterior Calculus’. With a focus on practical implementation, we provide details including Piola-type transformations, and explicit expressions for the volumetric, facet, face, edge, and vertex degrees of freedom. In addition, we establish important theoretical properties, such as the exactness of the finite element sequences, and the unisolvence of the degrees of freedom.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{14F40, 52B11, 58A12, 65D05, 74S05},Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/CZIDFXD9/Nigam_Williams_2023_Conforming Finite Element Function Spaces in Four Dimensions, Part 1.pdf}
 }
@@ -3433,7 +3433,7 @@
   urldate = {2023-04-17},
   abstract = {We present methods and tools that significantly improve the ability to estimate quantities and fields which are difficult to directly measure, such as the fluidity of ice, using point data sources, such as satellite altimetry. These work with both sparse and dense point data with estimated quantities and fields becoming more accurate as the number of measurements are increased. Such quantities and fields are often used as inputs to mathematical models that are used to make predictions so improving their accuracy is of vital importance. We demonstrate how our methods and tools can increase the accuracy of results, ensure posterior consistency, and aid discourse between modellers and experimenters.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Mathematical Software,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/2R3SQDZF/Nixon-Hill et al. - 2023 - Consistent Point Data Assimilation in Firedrake an.pdf}
 }
@@ -3944,7 +3944,7 @@
   urldate = {2023-08-22},
   abstract = {Numerical methods such as the Finite Element Method (FEM) have been successfully adapted to utilize the computational power of GPU accelerators. However, much of the effort around applying FEM to GPU’s has been focused on high-order FEM due to higher arithmetic intensity and order of accuracy. For applications such as the simulation of subsurface processes, high levels of heterogeneity results in high-resolution grids characterized by highly discontinuous (cell-wise) material property fields. Moreover, due to the significant uncertainties in the characterization of the domain of interest, e.g. geologic reservoirs, the benefits of high order accuracy are reduced, and low-order methods are typically employed. In this study, we present a strategy for implementing highly performant low-order matrix-free FEM operator kernels in the context of the conjugate gradient (CG) method. Performance results of matrix-free Laplace and isotropic elasticity operator kernels are presented and are shown to compare favorably to matrix-based SpMV operators on V100, A100, and MI250X GPUs.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Mathematical Software,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/DWJVFQR8/Settgast et al_2023_Performant low-order matrix-free finite element kernels on GPU architectures.pdf}
 }
@@ -4146,7 +4146,7 @@
   urldate = {2022-08-25},
   abstract = {Two important classes of three-dimensional elements in computational meshes are hexahedra and tetrahedra. While several efficient methods exist that convert a hexahedral element to a tetrahedral elements, the existing algorithm for tetrahedralization of a hexahedral complex is the marching tetrahedron algorithm which limits pre-selection of face divisions. We generalize a procedure for tetrahedralizing triangular prisms to tetrahedralizing cubes, and combine it with certain heuristics to design an algorithm that can triangulate any hexahedra.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Computational Geometry,Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/IS49WH2M/Timalsina and Knepley - 2022 - Tetrahedralization of a Hexahedral Complex.pdf}
 }
@@ -4225,7 +4225,7 @@
   urldate = {2022-08-19},
   abstract = {Despite significant investment in software infrastructure, machine learning systems, runtimes and compilers do not compose properly. We propose a new design aiming at providing unprecedented degrees of modularity, composability and genericity. This paper discusses a structured approach to the construction of domain-specific code generators for tensor compilers, with the stated goal of improving the productivity of both compiler engineers and end-users. The approach leverages the natural structure of tensor algebra. It has been the main driver for the design of progressive lowering paths in \textbackslash MLIR. The proposed abstractions and transformations span data structures and control flow with both functional (SSA form) and imperative (side-effecting) semantics. We discuss the implications of this infrastructure on compiler construction and present preliminary experimental results.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Programming Languages},
   file = {/home/connor/.local/share/zotero/storage/XR9XWN5I/Vasilache et al. - 2022 - Composable and Modular Code Generation in MLIR A .pdf}
 }
@@ -4241,7 +4241,7 @@
   urldate = {2024-07-16},
   abstract = {This work introduces and assesses the efficiency of a monolithic phMG multigrid framework designed for high-order discretizations of stationary Stokes systems using Taylor-Hood and Scott-Vogelius elements. The proposed approach integrates coarsening in both approximation order (p) and mesh resolution (h), to address the computational and memory efficiency challenges that are often encountered in conventional high-order numerical simulations. Our numerical results reveal that phMG offers significant improvements over traditional spatial-coarsening-only multigrid (hMG) techniques for problems discretized with Taylor-Hood elements across a variety of problem sizes and discretization orders. In particular, the phMG method exhibits superior performance in reducing setup and solve times, particularly when dealing with higher discretization orders and unstructured problem domains. For Scott-Vogelius discretizations, while monolithic phMG delivers low iteration counts and competitive solve phase timings, it exhibits a discernibly slower setup phase when compared to a multilevel (non-monolithic) full-block-factorization (FBF) preconditioner where phMG is employed only for the velocity unknowns. This is primarily due to the setup costs of the larger mixed-field relaxation patches with monolithic phMG versus the patch setup costs with a single unknown type for FBF.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Mathematics - Numerical Analysis},
   file = {/home/connor/.local/share/zotero/storage/I3N5W3RB/Voronin et al. - 2024 - Monolithic Multigrid Preconditioners for High-Orde.pdf}
 }
@@ -4367,7 +4367,7 @@
   urldate = {2022-08-10},
   abstract = {We introduce SpDISTAL, a compiler for sparse tensor algebra that targets distributed systems. SpDISTAL combines separate descriptions of tensor algebra expressions, sparse data structures, data distribution, and computation distribution. Thus, it enables distributed execution of sparse tensor algebra expressions with a wide variety of sparse data structures and data distributions. SpDISTAL is implemented as a C++ library that targets a distributed task-based runtime system and can generate code for nodes with both multi-core CPUs and multiple GPUs. SpDISTAL generates distributed code that achieves performance competitive with hand-written distributed functions for specific sparse tensor algebra expressions and that outperforms general interpretation-based systems by one to two orders of magnitude.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {{Computer Science - Distributed, Parallel, and Cluster Computing},Computer Science - Programming Languages},
   file = {/home/connor/.local/share/zotero/storage/J9GHUE8M/Yadav et al. - 2022 - SpDISTAL Compiling Distributed Sparse Tensor Comp.pdf}
 }
@@ -4406,7 +4406,7 @@
   urldate = {2022-08-30},
   abstract = {This paper presents a code generator for sparse tensor contraction computations. It leverages a mathematical representation of loop nest computations in the sparse polyhedral framework (SPF), which extends the polyhedral model to support non-affine computations, such as arise in sparse tensors. SPF is extended to perform layout specification, optimization, and code generation of sparse tensor code: 1) we develop a polyhedral layout specification that decouples iteration spaces for layout and computation; and, 2) we develop efficient co-iteration of sparse tensors by combining polyhedra scanning over the layout of one sparse tensor with the synthesis of code to find corresponding elements in other tensors through an SMT solver. We compare the generated code with that produced by a state-of-the-art tensor compiler, TACO. We achieve on average 1.63× faster parallel performance than TACO on sparse-sparse co-iteration and describe how to improve that to 2.72× average speedup by switching the find algorithms. We also demonstrate that decoupling iteration spaces of layout and computation enables additional layout and computation combinations to be supported. CCS Concepts: • Software and its engineering → Source code generation; Domain specific languages.},
   langid = {english},
-  pubstate = {preprint},
+  pubstate = {prepublished},
   keywords = {Computer Science - Performance,Computer Science - Programming Languages},
   file = {/home/connor/.local/share/zotero/storage/2W4HESQL/Zhao et al. - 2022 - Polyhedral Specification and Code Generation of Sp.pdf}
 }

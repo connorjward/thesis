@@ -21,28 +21,6 @@
 \usepackage{caption}
 \usepackage{subcaption}
 
-% for code
-\usepackage{algorithm}
-\usepackage{minted}
-  % center code listings
-  % https://tex.stackexchange.com/questions/161124/how-to-make-a-minted-code-listing-centered-on-a-page
-  \usepackage{xpatch,letltxmacro}
-  \LetLtxMacro{\cminted}{\minted}
-  \let\endcminted\endminted
-  \xpretocmd{\cminted}{\RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}}{}{}
-
-  % settings for all minted environments
-  % https://tex.stackexchange.com/questions/25190/defining-a-command-for-a-minted-environment
-  \newminted[pyalg]{python}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
-  % \newenvironment{env}{\VerbatimEnvironment\begin{pyalg}}{\end{pyalg}}
-
-  % this is the same but in principle I think actual code vs algorithms could be different
-  \newminted[pylisting]{python}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
-  % \newenvironment{env}{\VerbatimEnvironment\begin{pylisting}}{\end{pylisting}}
-
-  \newminted[clisting]{c}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
-
-  \newminted[pyalg2]{python}{autogobble,linenos,escapeinside=??,highlightcolor=red!30}
 
 % code overlay: https://tex.stackexchange.com/questions/287549/is-it-possible-to-use-tikzmark-inside-minted
 \usepackage{tikz}

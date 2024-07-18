@@ -1,9 +1,5 @@
 \ProvidesPackage{mymacros}
 
-% ============================== IMPORTS ==============================
-
-% \usepackage[cache=false]{minted}
-
 % ============================== ACRONYMS ==============================
 \usepackage[acronym,nomain]{glossaries}
   \setacronymstyle{long-short}
@@ -59,8 +55,9 @@
 % https://tex.stackexchange.com/questions/10243/tabular-border-style
 \usepackage{tabularray}
 
+% NOTE: This doesn't appear to work, but still looks fine...
 % https://tex.stackexchange.com/questions/33486/aligning-inside-tabular-environment-specific-cell
-\newcommand{\tableDash}{\multicolumn{1}{c|}{\pycode{-}}}
+\newcommand{\tableDash}{\SetCell{c}\pycode{-}}
 
 % checkbox
 % source https://tex.stackexchange.com/questions/16000/creating-boxed-check-mark
@@ -75,3 +72,54 @@
 \usepackage{rotating}
 % https://tex.stackexchange.com/questions/337/how-to-change-certain-pages-into-landscape-portrait-mode
 % \usepackage{pdflscape}
+
+% ============================== EXAMPLES ==============================
+
+% https://tex.stackexchange.com/questions/21227/example-environment
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{example}{Example}[chapter]
+
+% ============================== CODE LISTINGS ==============================
+
+\usepackage{algorithm}
+\usepackage{minted}
+  % center code listings
+  % https://tex.stackexchange.com/questions/161124/how-to-make-a-minted-code-listing-centered-on-a-page
+  \usepackage{xpatch,letltxmacro}
+  \LetLtxMacro{\cminted}{\minted}
+  \let\endcminted\endminted
+  \xpretocmd{\cminted}{\RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}}{}{}
+
+  % settings for all minted environments
+  % https://tex.stackexchange.com/questions/25190/defining-a-command-for-a-minted-environment
+  \newminted[pyalg]{python}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
+  % \newenvironment{env}{\VerbatimEnvironment\begin{pyalg}}{\end{pyalg}}
+
+  % this is the same but in principle I think actual code vs algorithms could be different
+  \newminted[pylisting]{python}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
+  % \newenvironment{env}{\VerbatimEnvironment\begin{pylisting}}{\end{pylisting}}
+
+  \newminted[clisting]{c}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
+
+  \newminted[pyalg2]{python}{autogobble,linenos,escapeinside=??,highlightcolor=red!30}
+  \newminted[mypyinline]{python}{autogobble,escapeinside=??,highlightcolor=red!30}
+  \newminted[mycinline]{c}{autogobble,escapeinside=??,highlightcolor=red!30}
+
+% custom environments
+% https://www.overleaf.com/learn/latex/Environments
+% NOTE: Must include \VerbatimEnvironment for this to work (see pg. 29 minted docs)
+\newenvironment
+  {pyinline}
+  {\VerbatimEnvironment \begin{center} \begin{minipage}{.8\textwidth} \begin{mypyinline}}
+  {\end{mypyinline} \end{minipage} \end{center}}
+
+\newenvironment
+  {cinline}
+  {\VerbatimEnvironment \begin{center} \begin{minipage}{.8\textwidth} \begin{mycinline}}
+  {\end{mycinline} \end{minipage} \end{center}}
+
+\newenvironment
+  {cinlinesmall}
+  {\VerbatimEnvironment \begin{center} \begin{mycinline*}{fontsize=\footnotesize}}
+  {\end{mycinline*} \end{center}}

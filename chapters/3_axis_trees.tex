@@ -2,6 +2,7 @@
 
 \begin{document}
 
+% NOTE: Should introduce vectors/Dats here, analogous to numpy in a good way.
 \chapter{Describing mesh-like data layouts}
 \label{chapter:axis_trees}
 
@@ -140,7 +141,7 @@ These can all be seen in \cref{fig:axis_tree}.
 
 By default, when constructing an axis with multiple components the components are stored as contiguous blocks with all entries from the first component preceding the second and so on.
 This is incompatible with the renumbering data locality optimisation described in \cref{sec:intro_mesh_numbering} and \cref{sec:dmplex_data_layout} and so more is required for that to work.
-This is described in \cref{chapter:indexing}.
+This is described in \cref{chapter:indexing}. %FIXME: no, in Firedrake chapter
 
 \section{Alternative data layouts}
 \label{sec:axis_tree_alternative_layouts}
