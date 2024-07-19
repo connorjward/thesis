@@ -38,6 +38,15 @@
 % TODO
 \usepackage{todonotes}
 
+% ============================== EXAMPLES ==============================
+
+% needs to be here and not in mymacros.sty because "chapter" fails in tikz envs.
+% https://tex.stackexchange.com/questions/21227/example-environment
+\usepackage{amsthm}
+\theoremstyle{definition}
+\newtheorem{example}{Example}[chapter]
+
+
 % CUSTOM
 \usepackage{mymacros}
 

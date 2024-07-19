@@ -39,7 +39,7 @@ We now move on to consider their concrete implementation, and how to express com
 \begin{example}
 \label{example:assign_codegen}
 
-% "we start with something simple..."
+"we start with something simple..."
 
 \begin{pyinline}
   axes = AxisTree.from_iterable([5, 3])
@@ -50,6 +50,10 @@ We now move on to consider their concrete implementation, and how to express com
 
 % (what does this do)
 % dat[::2, 1:] is a view, creates assignment expression that is eagerly evaluated
+
+\begin{center}
+  \includegraphics{codegen_example1_expr.pdf}
+\end{center}
 
 % we have a single node in our pyop3 expression
 % no transformations of the IR are necessary - single node (show)
@@ -177,12 +181,12 @@ We now consider a more complex example that is more typical of a continuum mecha
 \end{table}
 
 % need transform expression due to kernel needing contiguous data (temporaries)
-    % The expression tree transformation expanding implicit pack and unpack instructions for the example loop expression (\cref{sec:codegen}).
-    % The input loop expression is shown on the left and the output, expanded, loop expression is shown on the right.
-    % \pycode{kernel} has argument intents of \pycode{READ} and \pycode{INC} for its first and second argument respectively and so the transformed expression contains \pycode{write} and \pycode{inc} instructions where appropriate.
+% The expression tree transformation expanding implicit pack and unpack instructions for the example loop expression (\cref{sec:codegen}).
+% The input loop expression is shown on the left and the output, expanded, loop expression is shown on the right.
+% \pycode{kernel} has argument intents of \pycode{READ} and \pycode{INC} for its first and second argument respectively and so the transformed expression contains \pycode{write} and \pycode{inc} instructions where appropriate.
 
 \begin{center}
-  \includegraphics{loop_expr_tree_transform.pdf}
+  \includegraphics{codegen_example2_expr_transform.pdf}
 \end{center}
 
 % LOWERING/COMPILATION
@@ -196,7 +200,7 @@ We now consider a more complex example that is more typical of a continuum mecha
   \caption{
     TODO
   }
-  \label{lst:codegen_example_c_code}
+  \label{listing:codegen_example2_c_code}
 \end{listing}
 
 % For our demo the generated C code can be seen in \cref{lst:codegen_example_c_code}.

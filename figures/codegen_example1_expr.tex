@@ -1,0 +1,16 @@
+\documentclass[tikz]{standalone}
+
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}[yscale=-1]
+
+\input{figures/common/ast.tikz}
+
+\node (one) [element] at (0,0) {\pycodemini{write(dat[::2, 1:], 666)}};
+
+\end{tikzpicture}
+\end{document}
