@@ -1,0 +1,27 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+\usepackage{amssymb}
+
+\begin{document}
+\begin{tikzpicture}[scale=1.5]
+
+\input{figures/common/split_mesh.tikz}
+
+\drawSplitMesh
+
+% draw a sample patch (p1)
+\tkzDefShiftPoint[p1v10](250:.2){patch0}
+\tkzDefShiftPoint[p1v11](135:.18){patch1}
+\tkzDefShiftPoint[p1v15](20:.2){patch2}
+\filldraw[patch] (patch0) -- (patch1) -- (patch2) -- cycle;
+\node at (p1c0) {$\bigstar$};
+
+% draw a sample patch (p2)
+\tkzDefShiftPoint[p2v1](205:.2){patch0}
+\tkzDefShiftPoint[p2v5](310:.2){patch2}
+\tkzDefShiftPoint[p2v6](75:.23){patch1}
+\filldraw[patch] (patch0) -- (patch1) -- (patch2) -- cycle;
+\node at (p2c0) {$\bigstar$};
+
+\end{tikzpicture}
+\end{document}

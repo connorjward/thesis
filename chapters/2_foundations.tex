@@ -103,18 +103,8 @@ Once a \pycode{LoopKernel} has been created, loopy also provides a wealth of dif
 \subsection{Parallel execution}
 \label{sec:pyop2_parallel}
 
-% NOTE: closure is novel concept...
-\begin{figure}
-  \centering
-  \includegraphics{pyop2_split_mesh.pdf}
-  \caption{
-    \pyop2 entity classes for a mesh distributed between 2 processes.
-    Points belonging to process 1 (left) are shown in red and points belonging to process 2 (right) are shown in blue.
-    \textit{Ghost} points are indicated by points whose colour match the other process, \textit{owned} points are faded and the rest are labelled \textit{core}.
-    We assume that one is only computing cell-wise integrals on the mesh and so the mesh overlap need only contain enough ghost points to ensure that all the cells have a complete closure.
-  }
-  \label{fig:pyop2_split_mesh}
-\end{figure}
+% NOTE: I am deciding to not try too hard to explain core/owned/ghost because I
+% think that the design is poor and I demonstrate something better later.
 
 \begin{algorithm}
   \begin{verbatim}
@@ -146,7 +136,6 @@ The number of \textit{ghost} points is known to the mesh already, as it has know
 To determine the \textit{core} and \textit{owned} partitions one loops over the cells of a mesh and inspecting all the points in the closure of the cell.
 If any of the points in the closure are \textit{ghost}, then all other points in the closure are marked as \textit{owned}.
 Any remaining points without a label are labelled \textit{core}.
-An example partitioning of a distributed mesh into \textit{core}, \textit{owned} and \textit{ghost} points is shown in \cref{fig:pyop2_split_mesh}.
 
 From this partitioning it is possible to interleave computation and communication.
 Computations over points marked \textit{core} are not influenced by any ghost data and so can proceed before ghost data has been communicated. \textit{Owned} points need to have up-to-date ghost data and so must wait for all communication to be completed before beginning.

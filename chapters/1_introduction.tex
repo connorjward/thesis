@@ -11,9 +11,6 @@
 %   * fluids...
 %   * ???
 
-% use the term "STENCIL"
-% mesh iteration crops up all over the place
-
 \section{A motivating example: solving the Stokes equations using the finite element method}
 \label{sec:stokes_equations}
 
@@ -451,7 +448,24 @@ For the unstructured mesh traversal operation we are interested in, we need an a
 
 % large scale simulations need to be run on massively parallel machines, necessitates dist. memory (MPI)
 
+In massively parallel simulations the data structures are often too large to be stored in the memory of any individual node.
+Instead, they are \textit{distributed} between all of the processes, with each process owning, and seeing, only a small piece of the entire structure.
+
 In order to run simulations at scale global data structures are broken apart and each process stores and operates on its own local piece.
+
+% TODO: do not fade some out - just the shared ones.
+% NOTE: closure is novel concept...
+\begin{figure}
+  \centering
+  \includegraphics{split_mesh.pdf}
+  \caption{
+    \pyop2 entity classes for a mesh distributed between 2 processes.
+    Points belonging to process 1 (left) are shown in red and points belonging to process 2 (right) are shown in blue.
+    \textit{Ghost} points are indicated by points whose colour match the other process, \textit{owned} points are faded and the rest are labelled \textit{core}.
+    We assume that one is only computing cell-wise integrals on the mesh and so the mesh overlap need only contain enough ghost points to ensure that all the cells have a complete closure.
+  }
+  \label{fig:pyop2_split_mesh}
+\end{figure}
 
 % TODO: I think it is better to not bother talking about "closed" meshes here. Then can move
 % some things back to DMPlex section. Hmm but overlap is important for PyOP2 exposition!
@@ -464,6 +478,13 @@ The amount of overlap required depends on both the stencil and also the amount o
 
 The global matrix is also partitioned, usually by row, so each process only sees a portion of it
 
+% show the mesh figure here? not in chapter 2?
+It is often the case when solving PDEs that unknowns must be stored on multiple processes simultaneously.
+Consider the partitioned mesh shown in \cref{fig:???}.
+In order to be able to compute the cell-wise integrals for the finite element method, the cell stencils overlap with each other and the shared overlap region must be stored on both processes.
+Since unknowns must have only one owning process, their representation on other ranks are known as ``ghosts".
+
+
 % Now how to get good performance? reduce amount of communication + overlap computation and communication (non-blocking), avoid expensive comm patterns (like all to one rank)
 
 \subsubsection{Performance portability}
@@ -473,6 +494,9 @@ The global matrix is also partitioned, usually by row, so each process only sees
 % potentially very effective for this sort of work - very parallel
 
 % challenging programming model, different programming languages (and vendor specific) (apart from Kokkos etc), kernels need to be launched (can be slow, latency), memory transers between host and device
+
+% OpenMP? hybrid?
+% As with Firedrake and PETSc, MPI is chosen as the sole parallel abstraction; hybrid models also using shared memory libraries like OpenMP (cite) are not used because the posited performance advantages are contentious \parencite{knepleyExascaleComputingThreads2015} and would increase the complexity of the code.
 
 \subsubsection{Interoperability with existing software}
 
