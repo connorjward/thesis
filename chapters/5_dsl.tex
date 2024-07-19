@@ -37,13 +37,14 @@ We now move on to consider their concrete implementation, and how to express com
 % % dual role of loop expression: codegen spec *and* data to pass through (ref. figure)
 
 \begin{example}
+\label{example:assign_codegen}
 
 % "we start with something simple..."
 
 \begin{pyinline}
-  axes = AxisTree.from_iterable([4, 3])
+  axes = AxisTree.from_iterable([5, 3])
   dat = Dat(axes)
-  # set entries to [0, 666, 666, 0, 0, 0, 0, 666, 666, 0, 0, 0]
+  # set entries to [0, 666, 666, 0, 0, 0, 0, 666, 666, 0, 0, 0, 0, 666, 666]
   dat[::2, 1:].assign(666)
 \end{pyinline}
 
@@ -61,12 +62,34 @@ In this case, as the expression tree only has a single node, this traversal is t
 % % loops emit domains and perhaps assignments (ragged)
 % % then terminals (i.e. function calls and assignments) also emit domains and assignments
 
+\begin{listing}
+  \centering
+  \begin{minipage}{.9\textwidth}
+    \inputminted{text}{./scripts/artefacts/codegen_example1_loopy_kernel_tidy.txt}
+  \end{minipage}
+  \caption{
+    Abbreviated textual representation of the loopy kernel generated for the example expression in \cref{example:assign_codegen}.
+  }
+  \label{listing:codegen_example1_loopy_kernel}
+\end{listing}
+
 To emit code for the \pycode{Assignment} node...
 % loop over source axes...
 % talk about substituted layouts here, connects source axis indices back to offset
-The resulting loopy kernel is shown in \cref{listing:loopy_kernel_ex1}.
+The resulting loopy kernel is shown in \cref{listing:codegen_example1_loopy_kernel}.
 
-Having generated a loopy kernel, \pyop3 instructs loopy to generate a C string from it (\cref{listing:c_string_ex1}).
+\begin{listing}
+  \centering
+  \begin{minipage}{.9\textwidth}
+    \inputminted{c}{./scripts/artefacts/codegen_example1_c_code_tidy.c}
+  \end{minipage}
+  \caption{
+    TODO
+  }
+  \label{listing:codegen_example1_c_code}
+\end{listing}
+
+Having generated a loopy kernel, \pyop3 instructs loopy to generate a C string from it (\cref{listing:codegen_example1_c_code}).
 This C code may then be compiled and run.
 The arguments to the generated code (here simply \ccode{array0}) are managed by \pyop3 internally that passes the correct pointers.
 % (old)
@@ -165,22 +188,10 @@ We now consider a more complex example that is more typical of a continuum mecha
 % LOWERING/COMPILATION
 % first the loop is visited, loop over 5, gives us $L^p_a$.
 
-% NOTE: Can probably omit this - same as above really
 \begin{listing}
   \centering
   \begin{minipage}{.8\textwidth}
-    \inputminted{text}{./scripts/artefacts/codegen_example_loopy_kernel_tidy.txt}
-  \end{minipage}
-  \caption{
-    Abbreviated textual representation of the loopy kernel generated for the example expression (\cref{sec:codegen}).
-  }
-  \label{listing:loopy_kernel_ex2}
-\end{listing}
-
-\begin{listing}
-  \centering
-  \begin{minipage}{.8\textwidth}
-    \inputminted{c}{./scripts/artefacts/codegen_example_c_code_tidy.c}
+    \inputminted{c}{./scripts/artefacts/codegen_example2_c_code_tidy.c}
   \end{minipage}
   \caption{
     TODO
@@ -203,15 +214,23 @@ As well as \pycode{Dats}, \pyop3 has \pycode{Globals}, for global scalar values,
 % globals are really simple
 % indexed with 0, 1, or 2 index trees, row, col axis trees
 
+% table of differences? # axis trees, memory rep, possible dtypes?
+% think it's overkill. just needs a sentence
+
 \subsection{Matrices}
 
-% uses PETSc, support for different formats - restricted dtype
+% initialisation...
+% uses PETSc, support for different formats (block, nest, CUDA, ...) - restricted dtype
 
 \pycode{Mats} require 2 axis trees: one for the rows of the matrix and one for the columns.
 They rely on PETSc \ccode{Mat} objects for the underlying data storage.
 
+\subsubsection{Indexing}
+
 % NOTE: This sort of thing needs to be clearer - we index axis trees, so they have two...
 Since \pycode{Mats} have two axis trees, two indices are needed when indexing.
+
+% and it also returns a temporary that can be manipulated? (adds row and col labels...)
 
 \subsubsection{Code generation}
 
@@ -233,6 +252,8 @@ For \pyop3 to be able to interface with PETSc matrices calls to these getter and
 
 One challenge presented by this API is that it is no longer possible for \pyop3 to represent offsets purely as a symbolic quantity because PETSc expects these to be packed into the index arrays \ccode{idxm} and \ccode{idxn}.
 To fix this \pyop3 performs an additional step where these arrays are explicitly tabulated by evaluating the layout functions. % show? speed up?
+
+% NOTE: This is a specific instance of a general "compression" operation
 
 \end{document}
 

@@ -37,9 +37,9 @@ loop = op3.loop(
 loopy_kernel = loop.loopy_code.ir
 
 # loopy kernel
-with open(f"{artefact_directory()}/codegen_example_loopy_kernel_default.txt", "w") as f:
+with open(f"{artefact_directory()}/codegen_example2_loopy_kernel_default.txt", "w") as f:
     f.write(strip_ansi_chars(str(loopy_kernel)))
 
 # C code
-with open(f"{artefact_directory()}/codegen_example_c_code_default.c", "w") as f:
+with open(f"{artefact_directory()}/codegen_example2_c_code_default.c", "w") as f:
     f.write(lp.generate_code_v2(loopy_kernel).device_code())
