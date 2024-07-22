@@ -1,3 +1,5 @@
+\input{figures/common/dof_colors.tikz}
+
 \newcommand{\defMeshOne}{
   \tkzDefPoint(0,0){p1v0}
   \tkzDefPoint(.1,1.1){p1v1}
@@ -76,19 +78,37 @@
 }
 
 \newcommand{\drawCellOne}[3]{
-  \drawCell{#1}{#2}{#3}{red!68}
+  \ifthenelse{\splitMeshFormat = 0}{\drawCell{#1}{#2}{#3}{red!68}}{}
 }
 
 \newcommand{\drawCellOneGhost}[3]{
-  \drawCell{#1}{#2}{#3}{red!34}
+  \ifthenelse{\splitMeshFormat = 0}{\drawCell{#1}{#2}{#3}{red!34}}{}
 }
 
 \newcommand{\drawCellTwo}[3]{
-  \drawCell{#1}{#2}{#3}{blue!68}
+  \ifthenelse{\splitMeshFormat = 0}{\drawCell{#1}{#2}{#3}{blue!68}}{}
 }
 
 \newcommand{\drawCellTwoGhost}[3]{
-  \drawCell{#1}{#2}{#3}{blue!34}
+  \ifthenelse{\splitMeshFormat = 0}{\drawCell{#1}{#2}{#3}{blue!34}}{}
+}
+
+\newcommand{\drawEdgeLagrange}[2]{
+  \tkzDrawSegments[line width=1pt,draw=black](#1,#2)
+  \tkzDefBarycentricPoint(#1=1,#2=1)\tkzGetPoint{p0}
+  \tkzDrawPoint[draw=edgedofcolor,fill=edgedofcolor,size=6](p0)
+}
+
+\newcommand{\drawEdgeLagrangeRoot}[2]{
+  \tkzDrawSegments[line width=1pt,draw=black](#1,#2)
+  \tkzDefBarycentricPoint(#1=1,#2=1)\tkzGetPoint{p0}
+  \tkzDrawPoint[diamond,draw=edgedofcolor,fill=edgedofcolor,size=8](p0)
+}
+
+\newcommand{\drawEdgeLagrangeLeaf}[2]{
+  \tkzDrawSegments[line width=1pt,draw=black](#1,#2)
+  \tkzDefBarycentricPoint(#1=1,#2=1)\tkzGetPoint{p0}
+  \tkzDrawPoint[diamond,draw=edgedofcolor,fill=white,size=8,line width=1pt](p0)
 }
 
 \newcommand{\drawEdge}[3]{
@@ -96,39 +116,103 @@
 }
 
 \newcommand{\drawEdgeOne}[2]{
-  \drawEdge{#1}{#2}{red!80}
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawEdge{#1}{#2}{red!80}}
+    {\drawEdgeLagrange{#1}{#2}}
 }
 
-\newcommand{\drawEdgeOneGhost}[2]{
-  \drawEdge{#1}{#2}{red!40}
+\newcommand{\drawEdgeOneRoot}[2]{
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawEdge{#1}{#2}{red!40}}
+    {\drawEdgeLagrangeRoot{#1}{#2}}
+}
+
+\newcommand{\drawEdgeOneLeaf}[2]{
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawEdgeTwoRoot{#1}{#2}}
+    {\drawEdgeLagrangeLeaf{#1}{#2}}
 }
 
 \newcommand{\drawEdgeTwo}[2]{
-  \drawEdge{#1}{#2}{blue!80}
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawEdge{#1}{#2}{blue!80}}
+    {\drawEdgeLagrange{#1}{#2}}
 }
 
-\newcommand{\drawEdgeTwoGhost}[2]{
-  \drawEdge{#1}{#2}{blue!40}
+\newcommand{\drawEdgeTwoRoot}[2]{
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawEdge{#1}{#2}{blue!40}}
+    {\drawEdgeLagrangeRoot{#1}{#2}}
+}
+
+\newcommand{\drawEdgeTwoLeaf}[2]{
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawEdgeOneRoot{#1}{#2}}
+    {\drawEdgeLagrangeLeaf{#1}{#2}}
 }
 
 \newcommand{\drawVert}[2]{
   \tkzDrawPoints[draw=#2,fill=#2,size=4](#1)
 }
 
-\newcommand{\drawVertOne}[1]{
-  \drawVert{#1}{red!80}
+\newcommand{\drawVertLagrange}[1]{
+  \tkzDrawPoint[draw=vertdofcolor,fill=vertdofcolor,size=6](#1)
 }
 
-\newcommand{\drawVertOneGhost}[1]{
-  \drawVert{#1}{red!40}
+\newcommand{\drawVertLagrangeRoot}[1]{
+  \tkzDrawPoint[diamond,draw=vertdofcolor,fill=vertdofcolor,size=8](#1)
+}
+
+\newcommand{\drawVertLagrangeLeaf}[1]{
+  \tkzDrawPoint[diamond,draw=vertdofcolor,fill=white,size=8,line width=1pt](#1)
+}
+
+\newcommand{\drawVertOne}[1]{
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawVert{#1}{red!80}}
+    {\drawVertLagrange{#1}}
+}
+
+\newcommand{\drawVertOneRoot}[1]{
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawVert{#1}{red!40}}
+    {\drawVertLagrangeRoot{#1}}
+}
+
+\newcommand{\drawVertOneLeaf}[1]{
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawVertTwoRoot{#1}}
+    {\drawVertLagrangeLeaf{#1}}
 }
 
 \newcommand{\drawVertTwo}[1]{
-  \drawVert{#1}{blue!80}
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawVert{#1}{blue!80}}
+    {\drawVertLagrange{#1}}
 }
 
-\newcommand{\drawVertTwoGhost}[1]{
-  \drawVert{#1}{blue!40}
+\newcommand{\drawVertTwoRoot}[1]{
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawVert{#1}{blue!40}}
+    {\drawVertLagrangeRoot{#1}}
+}
+
+\newcommand{\drawVertTwoLeaf}[1]{
+  \ifthenelse
+    {\splitMeshFormat = 0}
+    {\drawVertOneRoot{#1}}
+    {\drawVertLagrangeLeaf{#1}}
 }
 
 \tkzSetUpStyle[densely dashed,shorten >=.1cm,shorten <=.1cm,line width=.5]{connector}
@@ -175,7 +259,7 @@
   \drawEdgeOne{p1v7}{p1v11}
   \drawEdgeOne{p1v11}{p1v15}
   \drawEdgeOne{p1v8}{p1v12}
-  \drawEdgeTwoGhost{p1v10}{p1v14}
+  \drawEdgeOneLeaf{p1v10}{p1v14}
 
   \drawEdgeOne{p1v1}{p1v4}
   \drawEdgeOne{p1v1}{p1v6}
@@ -183,9 +267,9 @@
   \drawEdgeOne{p1v4}{p1v9}
   \drawEdgeOne{p1v5}{p1v10}
   \drawEdgeOne{p1v7}{p1v10}
-  \drawEdgeTwoGhost{p1v9}{p1v12}
-  \drawEdgeTwoGhost{p1v9}{p1v14}
-  \drawEdgeTwoGhost{p1v10}{p1v15}
+  \drawEdgeOneLeaf{p1v9}{p1v12}
+  \drawEdgeOneLeaf{p1v9}{p1v14}
+  \drawEdgeOneLeaf{p1v10}{p1v15}
 
   % vertices
   \drawVertOne{p1v4}
@@ -193,12 +277,12 @@
   \drawVertOne{p1v6}
   \drawVertOne{p1v7}
   \drawVertOne{p1v8}
-  \drawVertOneGhost{p1v9}
-  \drawVertOneGhost{p1v10}
+  \drawVertOneRoot{p1v9}
+  \drawVertOneRoot{p1v10}
   \drawVertOne{p1v11}
-  \drawVertTwoGhost{p1v12}
-  \drawVertTwoGhost{p1v14}
-  \drawVertTwoGhost{p1v15}
+  \drawVertOneLeaf{p1v12}
+  \drawVertOneLeaf{p1v14}
+  \drawVertOneLeaf{p1v15}
 
   % debugging
   % \tkzLabelPoints[anchor=south,font=\tiny](p1v0,p1v1,p1v2,p1v3,p1v4,p1v5,p1v6,p1v7,p1v8,p1v9,p1v10,p1v11,p1v12,p1v13,p1v14,p1v15)
@@ -246,15 +330,15 @@
   \drawEdgeTwo{p2v1}{p2v5}
   \drawEdgeTwo{p2v5}{p2v9}
   \drawEdgeTwo{p2v9}{p2v13}
-  \drawEdgeTwoGhost{p2v2}{p2v6}
+  \drawEdgeTwoRoot{p2v2}{p2v6}
   \drawEdgeTwo{p2v6}{p2v10}
   \drawEdgeTwo{p2v10}{p2v14}
   \drawEdgeTwo{p2v7}{p2v11}
   \drawEdgeTwo{p2v11}{p2v15}
 
-  \drawEdgeTwoGhost{p2v1}{p2v4}
-  \drawEdgeTwoGhost{p2v1}{p2v6}
-  \drawEdgeTwoGhost{p2v2}{p2v7}
+  \drawEdgeTwoRoot{p2v1}{p2v4}
+  \drawEdgeTwoRoot{p2v1}{p2v6}
+  \drawEdgeTwoRoot{p2v2}{p2v7}
   \drawEdgeTwo{p2v5}{p2v8}
   \drawEdgeTwo{p2v6}{p2v9}
   \drawEdgeTwo{p2v6}{p2v11}
@@ -267,12 +351,12 @@
   \drawVertTwo{p2v9}
   \drawVertTwo{p2v10}
   \drawVertTwo{p2v11}
-  \drawVertTwoGhost{p2v4}
+  \drawVertTwoRoot{p2v4}
   \drawVertTwo{p2v5}
-  \drawVertTwoGhost{p2v6}
-  \drawVertTwoGhost{p2v7}
-  \drawVertOneGhost{p2v1}
-  \drawVertOneGhost{p2v2}
+  \drawVertTwoRoot{p2v6}
+  \drawVertTwoRoot{p2v7}
+  \drawVertTwoLeaf{p2v1}
+  \drawVertTwoLeaf{p2v2}
 
   % label "core" and "owned"
   % \node (p2core) [inner sep=0pt,xshift=15pt,yshift=20pt] at (p2v11) {\footnotesize core};
