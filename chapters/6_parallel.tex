@@ -5,12 +5,13 @@
 \chapter{Parallelism}
 \label{chapter:parallel}
 
+% not really useful any more since we talk about MPI a lot in ch. 2
 Just like Firedrake (e.g.~\cite{betteridgeCodeGenerationProductive2021}) and PETSc (e.g.~???), \pyop3 is designed to be run efficiently on even the world's largest supercomputers.
 Accordingly, \pyop3 is designed to work SPMD with MPI/distributed memory.
 
 \section{Parallel data layouts}
 
-% don't need to worry about PETSc matrices
+% "in the following... just dats,  don't need to worry about PETSc matrices"
 
 \subsection{Partitioning ghost points}
 
@@ -18,126 +19,320 @@ Whilst it is essential for ghost points to be present for finite element assembl
 Ghost points are copies of owned points held on other processes so when considering the \textit{global} vector they should be discarded.
 Since FEM simulations often involve alternating assembly with solving and copying, and copying arrays can be expensive, \pyop3 reorders the data such that ghost unknowns are always stored after owned ones.
 This allows one to reuse the array between assembly and solving - solving just uses a truncated view.
-
 % this can also occur when one has constrained DoFs (i.e. non-physical) (e.g. boundary conditions) and these also want to be dropped from the global vector
-
-% show an example for a mixed system, the parallel bits are handled at the root level
 % compared to pyop2, mixed things are done truly at the end - building global vector used to involve copying (bottleneck on GPU)
 
+With axis trees, it is natural to express the partitioning of owned and ghost points at the level of an axis.
+For a distributed mesh, for example, one could choose a numbering such that ghost points at kept at the end giving a layout similar to the following:
 
-% to solve this we introduce the concept of AxisComponents having "regions" (tabulation algorithm) - talk about layout functions (must be tabulated)
+\begin{center}
+  \includegraphics{parallel_partition_mesh_axis.pdf}
+\end{center}
+
+Where halo points are denoted by the hatching pattern.
+This approach runs into difficulties however when we want to nest axes.
+If we consider a simple mixed system of two fields then we might have a layout resembling the following:
+
+\begin{center}
+  \includegraphics{parallel_partition_mixed.pdf}
+\end{center}
+
+
+This is problematic for achieving the desirable partitioning of owned and ghost points because the natural concatenation of axis components would result in an interleaving of owned and ghost points:
+
+\begin{center}
+  \includegraphics{parallel_partition_mixed_flat_bad.pdf}
+\end{center}
+
+Whereas the desired layout should instead look like:
+
+\begin{center}
+  \includegraphics{parallel_partition_mixed_flat.pdf}
+\end{center}
+
+This suggests that the following changes be made to the layout algorithms of \cref{chapter:axis_trees}:
+
+\begin{itemize}
+  \item
+    Layouts for parallel inner axes cannot be determined in isolation since they depend on other parts of the tree.
+  \item
+    For multi-component trees like that shown above, the layouts cannot be expressed as an affine function like $\textnormal{offset}(i) = \textnormal{step} \times i + \textnormal{start}$ because of the jump between owned and ghost points.
+    Instead the offsets must be tabulated into an array.
+\end{itemize}
+
+Note that for now we assume that parallel axes are not nested.
+
+\begin{algorithm}
+  \begin{center}
+    \begin{minipage}{.9\textwidth}
+      \begin{pyalg2}
+        def collect_layouts(axis_tree: AxisTree):
+          layouts = {}
+          offset = 0
+          for region in axis_tree.regions:
+            # same as in ?\cref{chapter:axis_trees}?
+            size = collect_layouts_inner(axis_tree.root, layouts, region, offset)
+            offset += size
+          return layouts
+      \end{pyalg2}
+    \end{minipage}
+  \end{center}
+
+  \caption{
+    Algorithm for computing the layout functions of an axis tree with multiple regions.
+  }
+  \label{alg:collect_layouts_parallel}
+\end{algorithm}
+
+
+% to solve this we introduce the concept of AxisComponents having "regions"  - talk about layout functions (must be tabulated)
 % all DoFs for the first region precede latter regions
 % extra region DoFs may be discarded simply by taking a slice
 
+% now reference the algorithm
+
+\begin{pyopcompare}
+  Rather than storing data for multi-field problems in a contiguous array, \pyop2 \pycode{MixedDats} store each field in a separate sub-\pycode{Dat}.
+  This results in a data layout that looks like:
+
+  \begin{center}
+    \includegraphics{parallel_partition_mixed_flat_pyop2.pdf}
+  \end{center}
+
+  Constructing the global vector therefore requires a copy, which has been found to be inefficient on GPUs.
+  \pyop3, by using regions to partition the ghost data to the end of the array regardless of the field structure, is able to avoid this copy.
+\end{pyopcompare}
+
 \subsection{Star forests}
-% NOTE: ref sec:dmplex_parallel to talk about star forests
 
-% parallel axis trees have an associated DoF star forest that manages sends/recvs/updating things
-% this is constructed with an algorithm (show)
+\begin{algorithm}
+  \begin{center}
+    \begin{minipage}{.9\textwidth}
+      \begin{pyalg2}
+        def create_dof_sfs(axis: Axis, ...):
+          dof_sfs = []
+          for component in axis.components:
+            if component.sf:
+              # create a DoF SF by composing the point SF and section
+              dof_sf = create_dof_sf_inner(axis, component, ...)
+              dof_sfs.append(dof_sf)
 
-% for parallel, axis components also have an SF... how does this feed into the algorithm above?
+            # else create a star forest per point
+            elif has_subaxis(axis, component):
+              subaxis = get_subaxis(axis, component)
 
+              # loop over all entries in the axis and recurse
+              for pt in range(component.count):
+                sub_dof_sfs = create_dof_sfs(subaxis, ...)
+                dof_sfs.extend(sub_dof_sfs)
+
+          return dof_sfs
+      \end{pyalg2}
+    \end{minipage}
+  \end{center}
+
+  \caption{
+    TODO
+  }
+  \label{alg:compose_star_forests}
+\end{algorithm}
+
+Alongside having parallel regions, axis components also carry \textit{star forests} that encapsulate the point-to-point mapping between processes.
+In exactly the same way as descibed in \cref{sec:dmplex_parallel}, these may be transformed along with offset information to create a new star forest mapping DoFs.
+In order to construct the correct DoF-to-DoF star forest a number of operations are required:
+
+\begin{enumerate}
+  \item
+    A PETSc \ccode{Section} (\cref{sec:dmplex_data_layout}) is constructed for the axis component.
+    Since \ccode{Sections} are analogous to the tabulated offset arrays described in \cref{sec:layout_alg_ragged}, the algorithm is very similar to \cref{alg:tabulate_offsets}.
+
+  \item
+    The point star forest and \ccode{Section} are composed by calling the function \ccode{PetscSFCreateSectionSF()} to yield a DoF-to-DoF mapping for the axis component.
+
+  \item
+    Star forests for each axis component are collected by traversing the axis tree (\cref{alg:compose_star_forests}).
+
+  \item
+    Lastly, the star forests are combined using the function \ccode{PetscSFConcatenate()}.
+\end{enumerate}
+
+% Communication patterns?
+% Ensuring consistency?
 \section{Communication optimisations}
+% NOTE: Not sure about the section/subsection division here
+
+With the DoF star forest, \pyop3 \pycode{Dats} now have the right information to exchange ghost information between processes.
+Recalling that star forests largely support the two operations, reductions from leaves to roots and broadcasts from roots to leaves, \pyop3 needs to be able to correctly track the state of both the roots and leaves of the star forest such that the data are consistent.
+
+In order to accomplish this, each \pycode{Dat} stores two attributes:
+
+\begin{paragraph}{\pycode{leaves_valid}}
+  A boolean value indicating whether or not ghost DoFs (leaves of the DoF star forest) are up-to-date.
+  Updating these would require a broadcast from root to leaves.
+\end{paragraph}
+
+\begin{paragraph}{\pycode{pending_reduction}}
+  A \pyop3 access descriptor indicating that, for owned DoFs (roots of the DoF star forest) to be valid, an appropriate reduction of leaves to roots needs to be applied.
+  For the moment only the \pycode{INC} access descriptor is supported, which would require a summation reduction.
+  If \pycode{pending_reduction} is \pycode{None} then root values are considered up-to-date.
+\end{paragraph}
+
+The reason that these attributes are tracked by \pyop3 is that they enable ghost exchanges to occur lazily, and hence in certain circumstances the exchanges may be skipped entirely.
+Examples include:
+
+\begin{itemize}
+  \item If the array is being read from and all values are already up-to-date, no exchange is necessary.
+  \item If ghost values are not being read from, then broadcasting roots to leaves is not required.
+  \item If the array is being written to, pending reductions need not occur and can be discarded as all the data is being overwritten.
+  \item If the array is being incremented into multiple times in a row, the pending summation reduction need not be executed because the operations commute.
+\end{itemize}
+
+\begin{pyopcompare}
+  Just like \pyop3, \pyop2 tracks the validity of ghost values with a boolean flag, and ghost exchanges are performed lazily.
+  However, \pyop2 does not track pending reductions and hence these are done eagerly.
+  This has been found to be a bottleneck in certain finite element simulations that have multiple assembly loops executed in sequence.
+\end{pyopcompare}
 
 \subsection{Overlapping communication with computation}
 
-In order to hide the often expensive latencies associated with halo exchanges, \pyop3 uses non-blocking MPI operations to interleave computation and communication.
-Since distributed meshes only need to communicate data at their boundary, and given the surface-area-to-volume ratio effect, the bulk of the required computation can happen without using any halo data.
-The algorithm for overlapping computation and communication therefore looks like this:
+% NOTE: This is badly formatted, improve along with PyOP2 one!
+\begin{algorithm}
+  \begin{minted}[autogobble]{text}
+    reduce_leaves_to_roots_begin()
 
-% but this is more complicated - also see chapter 2...
-\begin{enumerate}
-  \item Initiate non-blocking halo exchanges.
-  \item Compute results for data that does not rely on the completion of these halo exchanges.
-  \item Block until the halo exchanges are complete.
-  \item Compute results for data that requires up-to-date halo data.
-\end{enumerate}
+    FOR EACH item IN iterset.core:
+      compute(item)
 
-This interleaving approach is used in \pyop2 and has been reimplemented, with slight improvements, in \pyop3.
+    reduce_leaves_to_roots_end()
+    broadcast_roots_to_leaves_begin()
 
-% compared with pyop2 we have taken a slightly different approach...
-\pyop2 is able to track leaf validity, but does not have a transparent solution for commuting reductions.
+    FOR EACH item IN iterset.root:
+      compute(item)
 
-% NOTE: reference sec:pyop2_parallel. I mention that two concepts are conflated: data partitioning and iteration set partitioning.
-% in pyop3 we split into owned+ghost (data) and core+noncore (iterset)
+    broadcast_roots_to_leaves_end()
 
-% "BUT...
-% (express as a limitation, rather than a mistake.)
+    FOR EACH item IN iterset.leaf:
+      compute(item)
+  \end{minted}
+  \caption{The \pyop3 parallel loop execution algorithm to interleave computation and communication.}
+  \label{alg:pyop3_comp_comm_overlap}
+\end{algorithm}
+
+Similarly to \pyop2, \pyop3 parallel loops overlap communication and computation to minimise the impact of network latency on performance.
+Since reductions are not done eagerly in \pyop3 the transfer algorithm includes an additional step: before one can update ghost values via a broadcast from roots to leaves, the owned values themselves must be updated using a potential reduction.
+This modification to the original \pyop2 algorithm (\cref{alg:pyop2_comp_comm_overlap}) is illustrated in \cref{alg:pyop3_comp_comm_overlap}.
+
+
+\subsubsection{Iteration set partitioning}
+
+As can be seen in \cref{alg:pyop3_comp_comm_overlap}, the iteration set has been partitioned into 3 disjoint sets, \textit{core}, \textit{root} and \textit{leaf}, representing the following:
+
 \begin{itemize}
   \item
-    \textbf{The iteration is conflated with the data layout}\\
-    ...
-    For instance, it is not possible to perform parallel loops using larger stencils because the \textit{core}-\textit{owned} split is different.
-    Embedding the iteration set into the data layout means that the underlying sets of the data structures are invalid.
+    \textit{Core} entities are those that can be evaluated without waiting for any parallel exchanges to complete, as all of the data necessary for the computation is already correctly stored locally.
 
   \item
-    \textbf{The parallel decomposition is assumed to be the same for all data structures}\\
+    \textit{Root} entities are those that use data from roots of the DoF star forest.
+    Computing at these points therefore requires that the root data has been updated via a reduction.
+
+  \item
+    Finally, \textit{leaf} points access data from the leaves of the DoF star forest.
+    Executing computations at these points requires that both reductions and broadcasts are complete beforehand.
+\end{itemize}
+
+\begin{figure}
+  \centering
+  \includegraphics{split_mesh_partition.pdf}
+  \caption{TODO}
+  \label{fig:split_mesh_partition}
+\end{figure}
+
+This partitioning is demonstrated in \cref{fig:split_mesh_partition}.
+For the cell-based iteration shown the core, root and leaf iteration entries are marked with a \textbf{C}, \textbf{R} and \textbf{L} respectively.
+It can be seen that core entries do not touch any DoFs managed by the star forest (diamonds), root entries do not touch any ghost DoFs (hollow diamonds), and leaf cells are the remaining few.
+
+\begin{algorithm}
+  \begin{center}
+    \begin{minipage}{.9\textwidth}
+      \begin{pyalg2}
+        def partition_iterset(iterset, arrays):
+          # store either CORE, ROOT or LEAF for each entry in the iteration
+          # set, defaulting to CORE
+          labels = np.full(iterset.size, CORE)
+
+          # loop over the iteration set
+          for p in iterset.iter():
+
+            # loop over each array accessed by the loop expression
+            for array in arrays:
+              # If p is already known to be a leaf then skip ahead
+              if labels[p] == LEAF:
+                continue
+
+              # mark roots and leaves of the DoF SF
+              dof_sf = array.sf
+              is_root_or_leaf = np.full(dof_sf.size, CORE)
+              is_root_or_leaf[dof_sf.iroot] = ROOT
+              is_root_or_leaf[dof_sf.ileaf] = LEAF
+
+              # loop over the points accessed by the stencil
+              for q in array.iter():
+                point_label = is_root_or_leaf[q]
+                if point_label == LEAF:
+                  labels[p] = LEAF
+                  break  # no point doing more analysis
+                elif point_label == ROOT:
+                  labels[p] = ROOT
+                else:
+                  # must be CORE
+                  pass
+
+          icore = indices_where(labels == CORE)
+          iroot = indices_where(labels == ROOT)
+          ileaf = indices_where(labels == LEAF)
+
+          return icore, iroot, ileaf
+      \end{pyalg2}
+    \end{minipage}
+  \end{center}
+
+  \caption{
+    TODO
+  }
+  \label{alg:partition_iterset}
+\end{algorithm}
+
+% this could be inserted into the prose I expect - the algorithm for partitioning is the same as for pyop2 more or less but done at runtime
+\begin{pyopcompare}
+  As described in \cref{sec:pyop2_parallel}, \pyop2 partitions its \pycode{Sets} (equivalent to \pyop3 axis trees) into 3 pieces: \textit{core}, \textit{owned} and \textit{ghost};
+  where ghost points are the same as \pyop3 and owned points are defined to be those whose stencil touches ghost points - equivalent to \pyop3's concept of a \textit{leaf}.
+  This partitioning is then used to order the data in the \pycode{Dat} such that it looks like:
+
+  \begin{center}
+    \includegraphics{pyop2_partition.pdf}
+  \end{center}
+
+  % key point: what matters is the actual stencil, not the expected one
+  This approach differs from \pyop3 in that this partitioning is used \textit{both} for dividing the data layout into owned and ghost \textit{and} for partitioning the iteration set to overlap communication with computation.
+  This approach has a number of drawbacks:  % repeated "approach"
+
+  \begin{paragraph}{Changing the stencil size will break in parallel}
+    Since the \textit{owned} partition of a \pycode{Set} is defined from some stencil (usually the closure of a cell, \cref{fig:dmplex_queries}) the loops over core and owned points are established in advance.
+    This means that if a larger stencil were to be used mapping, say, cells to adjacent cells then cells near the boundary would be incorrectly classified as core, leading to a race condition.
+  \end{paragraph}
+
+  \begin{paragraph}{The parallel decomposition is assumed to be the same for all data structures}
     It is not always the case that all data structures will be defined on the same mesh (e.g. mesh transfer operations).
     In such a case the algorithms used to determine \textit{core} and \textit{owned} points no longer work because the algorithm does not take into account the parallel decomposition of the other mesh.
     \textit{Core} points on one mesh may be \textit{ghost} in another, and hence the \textit{core} points ought to be labelled \textit{owned}.
-\end{itemize}
-
-These limitations suggest a new approach: the partitioning of data and the partitioning of the iteration set should be \textit{distinct processes}.
-In \pyop3 we adopt the following new terminology:
-
-
-Loop expression iteration sets are split into \textit{core} and \textit{non-core} sets.
-This partitioning is established by running over the iteration set and checking the access pattern for all arguments.
-If any of the arguments require halo data then the iteration point is classified as \textit{non-core}.
-All remaining points are then classified \textit{core}.
-%Rather than being contiguous, the indices are split into two ordered and interleaved subsets. % easy to implement!
-As ghost points are not iterated over they are not included in the subsets.
-
-\subsection{Lazy communication}
-
-Coupled with the principle of ``don't wait for data you don't need", \pyop3 also obeys of ``don't send data if you don't have to".
-
-% something about "redundant messages"
-
-\pyop3 associates with each parallel data structure two attributes: \pycode{leaves_valid} and \pycode{pending_reduction}.
-The former tracks whether or not leaves (ghost points) contain up-to-date values.
-The latter tracks, in a manner of speaking, the validity of the roots of the star forest.
-If the leaves of the forest were modified, \pycode{pending_reduction} stores the reduction operation that needs to be executed for the roots of the star forest to contain correct values.
-As an example, were values to be incremented into the leaves\footnote{For this to be valid the leaves need to be zeroed beforehand.}, a \ccode{SUM} reduction would be required for owned values to be synchronised.
-If there is no pending reduction, the roots are considered to be valid.
-
-The advantage to having these attributes is that they allow \pyop3 to only perform halo exchanges when absolutely necessary.
-Some pertinent cases include:
-
-\begin{itemize}
-  \item If the array is being written to \pycode{op3.WRITE}, all prior writes may be discarded.
-  \item If the array is being read from (\pycode{op3.READ}) and all values are already up-to-date, no exchange is necessary.
-  \item If the array is being incremented into (\pycode{op3.INC}) multiple times in a row, no exchange is needed as the reductions commute.
-\end{itemize}
-
-
-% ------------------------------ OLD =====================================
-
-\begin{figure}
-  \begin{subfigure}{\textwidth}
-    \includegraphics{iterset_partition_cell}
-    \caption{TODO}
-    \label{fig:iterset_partition_cell}
-  \end{subfigure}
-  %
-  \begin{subfigure}{\textwidth}
-    \includegraphics{iterset_partition_facet}
-    \caption{TODO}
-    \label{fig:iterset_partition_facet}
-  \end{subfigure}
-  %
-  \caption{TODO}
-  \label{fig:iterset_partition}
-\end{figure}
-
-
-% TODO validate that these statements are correct
-Although this interleaving approach may seem like the most sensible approach to this problem, it is worthwhile to note that there are subtle performance considerations that affect the effectiveness of the algorithm over a simpler blocking halo exchange approach.
-\cite{bisbasAutomatedMPICode2023} showed that, in the (structured) finite difference setting, it is in fact often a better choice to use blocking exchanges because
-(a) the background thread running the non-blocking communication occasionally interrupts the stream of execution, and
-(b) looping over entries that touch halo data separately adversely affects data locality.
-With \pyop3 we have only implemented the non-blocking approach for now, though a comparison with blocking exchanges in the context of an unstructured mesh would be interesting to pursue in future.
-
-
+  \end{paragraph}
+\end{pyopcompare}
 
 \end{document}
+
+% ======================================= OLD ==================================
+% Although this interleaving approach may seem like the most sensible approach to this problem, it is worthwhile to note that there are subtle performance considerations that affect the effectiveness of the algorithm over a simpler blocking halo exchange approach.
+% \cite{bisbasAutomatedMPICode2023} showed that, in the (structured) finite difference setting, it is in fact often a better choice to use blocking exchanges because
+% (a) the background thread running the non-blocking communication occasionally interrupts the stream of execution, and
+% (b) looping over entries that touch halo data separately adversely affects data locality.
+% With \pyop3 we have only implemented the non-blocking approach for now, though a comparison with blocking exchanges in the context of an unstructured mesh would be interesting to pursue in future.

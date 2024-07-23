@@ -1,0 +1,22 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/data_layout.tikz}
+
+\tikzmath { \yshift = 0; };
+
+\drawBoxNewNew{0}{6}{white}
+\labelBoxNew{3}{core}{white}
+
+\drawBoxNewNew{6}{3}{white}
+\labelBoxNew{7.5}{owned}{white}
+
+\drawBoxNewNew{9}{3}{white}
+\drawHaloBox{9}{3}
+\labelBoxNew{10.5}{ghost}{white}
+
+\end{tikzpicture}
+\end{document}

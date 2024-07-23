@@ -131,6 +131,12 @@ To do so each set is split into 3 parts:
   \item \textit{Ghost}: Set elements present on a process that belong to another process.
 \end{itemize}
 
+  % Given this partitioning, \pyop2 then reorders the data such that it looks like:
+  %
+  % \begin{center}
+  %   \includegraphics{pyop2_partition.pdf}
+  % \end{center}
+
 % NOTE: closure is a new term here
 The number of \textit{ghost} points is known to the mesh already, as it has knowledge of its overlap.
 To determine the \textit{core} and \textit{owned} partitions one loops over the cells of a mesh and inspecting all the points in the closure of the cell.
@@ -386,6 +392,13 @@ An example of such a distribution is shown in Figure~\ref{???}.
 Upon construction a DMPlex holds a \textit{point star forest} that stores the information about ghost points (\cref{fig:star_forest_point}).
 This is insufficient for function data to be communicated correctly though because the number of \glspl{dof} associated with each entity can change.
 To transfer function data, PETSc composes the point star forest with a \ccode{Section} to produce a new star forest (\cref{fig:star_forest_dof}).
+
+% maybe use alg. from chapter 6 here?
+
+        % def create_dof_sf_inner(axis: Axis, component: AxisComponent, ...):
+        %   section = create_section(axis, component)
+        %   dof_sf = component.sf.createSectionSF(section, ...)
+        %   return dof_sf
 
 \section{A language for structured data: numpy}
 

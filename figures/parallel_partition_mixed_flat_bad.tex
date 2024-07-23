@@ -1,0 +1,26 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/data_layout.tikz}
+
+\tikzmath { \yshift = 0; };
+
+\drawBoxNewNew{0}{4}{white}
+\labelBoxNew{2}{$V_h$}{white}
+
+\drawBoxNewNew{4}{2}{white}
+\drawHaloBox{4}{2}
+\labelBoxNew{5}{$V_h$}{white}
+
+\drawBoxNewNew{6}{4}{white}
+\labelBoxNew{8}{$Q_h$}{white}
+
+\drawBoxNewNew{10}{2}{white}
+\drawHaloBox{10}{2}
+\labelBoxNew{11}{$Q_h$}{white}
+
+\end{tikzpicture}
+\end{document}

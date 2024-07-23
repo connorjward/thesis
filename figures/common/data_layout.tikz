@@ -4,7 +4,6 @@
 \tikzstyle{ptlabel} = [anchor=center,color=black,opacity=1]
 \tikzstyle{connector} = [densely dashed]
 
-% TODO: Remove
 \newcommand{\drawBox}[5]{
   \filldraw[draw=black,fill=#5,line width=.7pt] #1 rectangle #2;
   \node [at={#3},fill=#5] {#4};
@@ -31,16 +30,38 @@
   \node [at={($#1+(.5,.5)$)}] {#2};
 }
 
+\newcommand{\drawHaloDof}[3]{%
+  \filldraw[draw=black,fill=#3,line width=.7pt] #1 rectangle ++ (1,1);
+  \draw[draw=black,line width=.7pt,pattern=north west lines] #1 rectangle ++ (1,1);
+  \node [at={($#1+(.5,.5)$)},fill=#3] {#2};
+}
+
+\newcommand{\drawHaloBox}[2]{
+  \draw[draw=black,line width=.7pt,pattern=north west lines] (#1,\yshift) rectangle ++ (#2,1);
+}
+
 \newcommand{\drawCellDof}[2]{%
   \drawDof{#1}{#2}{bgcelldofcolor};
+}
+
+\newcommand{\drawCellDofHalo}[2]{%
+  \drawHaloDof{#1}{#2}{bgcelldofcolor};
 }
 
 \newcommand{\drawEdgeDof}[2]{%
   \drawDof{#1}{#2}{bgedgedofcolor};
 }
 
+\newcommand{\drawEdgeDofHalo}[2]{%
+  \drawHaloDof{#1}{#2}{bgedgedofcolor};
+}
+
 \newcommand{\drawVertDof}[2]{%
   \drawDof{#1}{#2}{bgvertdofcolor};
+}
+
+\newcommand{\drawVertDofHalo}[2]{%
+  \drawHaloDof{#1}{#2}{bgvertdofcolor};
 }
 
 \newcommand{\drawNodeDof}[2]{%

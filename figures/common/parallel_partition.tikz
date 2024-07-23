@@ -1,0 +1,10 @@
+\input{figures/common/data_layout.tikz}
+
+\newcommand{\drawMeshAxis}{
+  \drawVertDof{(origin)}{$v_3$}
+  \drawEdgeDof{($(origin)+(1,0)$)}{$e_1$}
+  \drawCellDof{($(origin)+(2,0)$)}{$c_2$}
+  \drawBox{($(origin)+(3,0)$)}{($(origin)+(5,1)$)}{($(origin)+(4,.5)$)}{$\dots$}{white}
+  \drawEdgeDofHalo{($(origin)+(5,0)$)}{$e_9$}
+  \drawCellDofHalo{($(origin)+(6,0)$)}{$c_7$}
+}
