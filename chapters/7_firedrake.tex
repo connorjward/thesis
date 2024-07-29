@@ -1,0 +1,59 @@
+\documentclass[thesis]{subfiles}
+
+\begin{document}
+
+\chapter{Firedrake integration}
+
+We will demonstrate the functionality of \pyop3 by integrating it with the finite element framework Firedrake.
+The intent is for \pyop3 to in the near future serve as a replacement for \pyop2 inside Firedrake.
+
+In order to demonstrate the steps necessary for this integration to work, we will work through solving the Stokes problem described in \cref{sec:stokes_equations}.
+
+\section{The Firedrake framework}
+
+\begin{figure}
+  \includegraphics{firedrake_structure.pdf}
+  \caption{TODO}
+  \label{fig:firedrake_structure}
+\end{figure}
+
+% introduce UFL
+
+\section{Solving the Stokes equations}
+
+\begin{listing}
+  \centering
+  \begin{minipage}{.9\textwidth}
+    \inputminted{python}{./scripts/stokes_demo.py}
+  \end{minipage}
+  \caption{
+    Firedrake code for setting up and solving the Stokes problem set up in \cref{sec:stokes_equations}.
+  }
+  \label{listing:stokes_demo}
+\end{listing}
+
+%1. mesh (arbitrary dimension and cell type - sort of)
+% 2. function spaces
+% 3. functions and matrices? sparsities?
+
+% what is Firedrake! should go here not in background.
+
+% mesh.points, V.axes
+% mesh numbering is handled here via an indexing operation - pyop3 does not know about it.
+% DatView for viewing function components
+% mixed dats are now contiguous
+
+\section{Packing}
+
+% these are bad to include because it's bad design.
+\subsection{Tensor product cells}
+
+\subsection{Hexahedral elements}
+
+%\subsection{Fieldsplit} ???
+
+%\subsection{Performance} ???
+% all about minimising memory bandwidth, aim for roofline peak at all points
+% I need to implement the map compression algorithm (generically)
+
+\end{document}
