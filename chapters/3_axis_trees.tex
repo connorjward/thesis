@@ -22,61 +22,61 @@ As we have seen thus far, existing software abstractions for mesh-like data layo
 If we again consider the data layout for the Scott-Vogelius element (\cref{fig:scott_vogelius_dof_layout}) it can be observed that the data layout naturally decomposes into a tree-like structure.
 This is shown in \cref{fig:sv_data_tree}.
 
-\begin{figure}
-  \centering
-  %
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics{mixed_axis_tree.pdf}
-    \caption{
-      Abstract representation of the axis tree.
-      For simplicity the component labels for the \textit{dof} subaxes have been omitted.
-    }
-    \label{fig:axis_tree_abstract}
-  \end{subfigure}
-
-  \vspace{1em}
-
-  \begin{subfigure}{\textwidth}
-    \centering
-    \begin{minipage}{.8\textwidth}
-      % TODO: Use some predefined env
-      \begin{minted}[frame=single,autogobble]{python}
-        mesh_axis = Axis({"vertex": 3, "edge": 3, "cell": 1}, "mesh")
-        axes = AxisTree.from_nest({
-          Axis({"Vh": 1, "Qh": 1}, "space"): [
-            {
-              mesh_axis: [  # Vh space
-                {Axis(1, "node"): Axis(2, "component")},  # vertices
-                {Axis(2, "node"): Axis(2, "component")},  # edges
-                {Axis(1, "node"): Axis(2, "component")},  # cells
-              ]
-            },
-            {
-              mesh_axis: [  # Qh space
-                Axis(0, "node"),  # vertices
-                Axis(0, "node"),  # edges
-                Axis(6, "node"),  # cells
-              ]
-            },
-          ]
-        })
-      \end{minted}
-    \end{minipage}
-    \caption{
-      \pyop3 code that constructs the axis tree shown in \cref{fig:axis_tree_abstract}.
-      The tree structure is represented by a nested collection of Python dictionaries and lists.
-      Axis components are implicitly constructed by the \pycode{Axis} constructor.
-      \pycode{Axis(2, "mylabel")} creates an axis labelled \pycode{"mylabel"} with a single anonymous component of size 2, and \pycode{Axis({"x": 2, "y": 3}, "mylabel")} creates a similarly labelled axis but with two components labelled \pycode{"x"} and \pycode{"y"}.
-    }
-    \label{fig:axis_tree_code}
-  \end{subfigure}
-  %
-  \caption{
-    The axis tree representing the data layout shown in \cref{fig:sv_data_tree}.
-  }
-  \label{fig:axis_tree}
-\end{figure}
+% \begin{figure}
+%   \centering
+%   %
+%   \begin{subfigure}{\textwidth}
+%     \centering
+%     \includegraphics{scott_vogelius_axis_tree.pdf}
+%     \caption{
+%       Abstract representation of the axis tree.
+%       For simplicity the component labels for the \textit{dof} subaxes have been omitted.
+%     }
+%     \label{fig:axis_tree_abstract}
+%   \end{subfigure}
+%
+%   \vspace{1em}
+%
+%   \begin{subfigure}{\textwidth}
+%     \centering
+%     \begin{minipage}{.8\textwidth}
+%       % TODO: Use some predefined env
+%       \begin{minted}[frame=single,autogobble]{python}
+%         mesh_axis = Axis({"vertex": 3, "edge": 3, "cell": 1}, "mesh")
+%         axes = AxisTree.from_nest({
+%           Axis({"Vh": 1, "Qh": 1}, "space"): [
+%             {
+%               mesh_axis: [  # Vh space
+%                 {Axis(1, "node"): Axis(2, "component")},  # vertices
+%                 {Axis(2, "node"): Axis(2, "component")},  # edges
+%                 {Axis(1, "node"): Axis(2, "component")},  # cells
+%               ]
+%             },
+%             {
+%               mesh_axis: [  # Qh space
+%                 Axis(0, "node"),  # vertices
+%                 Axis(0, "node"),  # edges
+%                 Axis(6, "node"),  # cells
+%               ]
+%             },
+%           ]
+%         })
+%       \end{minted}
+%     \end{minipage}
+%     \caption{
+%       \pyop3 code that constructs the axis tree shown in \cref{fig:axis_tree_abstract}.
+%       The tree structure is represented by a nested collection of Python dictionaries and lists.
+%       Axis components are implicitly constructed by the \pycode{Axis} constructor.
+%       \pycode{Axis(2, "mylabel")} creates an axis labelled \pycode{"mylabel"} with a single anonymous component of size 2, and \pycode{Axis({"x": 2, "y": 3}, "mylabel")} creates a similarly labelled axis but with two components labelled \pycode{"x"} and \pycode{"y"}.
+%     }
+%     \label{fig:axis_tree_code}
+%   \end{subfigure}
+%   %
+%   \caption{
+%     The axis tree representing the data layout shown in \cref{fig:sv_data_tree}.
+%   }
+%   \label{fig:axis_tree}
+% \end{figure}
 
 \section{Axis trees}
 \label{sec:axis_trees}

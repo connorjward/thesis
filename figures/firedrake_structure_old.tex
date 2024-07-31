@@ -1,0 +1,88 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+% compact itemize
+% https://stackoverflow.com/questions/4968557/latex-very-compact-itemize
+\usepackage{enumitem}
+\setlist{topsep=0pt,parsep=0pt,partopsep=0pt,leftmargin=*}
+
+\begin{document}
+\begin{tikzpicture}
+
+\fontfamily{\sfdefault}
+
+\tikzstyle{block} = [rectangle,rounded corners];
+
+\tikzstyle{header} = [block,draw=black,align=center,fill=white,font=\bfseries\large,line width=1.5pt];
+
+\tikzstyle{node} = [
+  block,draw=black,minimum width=4cm,text width=4cm,minimum height=2cm,
+  align=left,anchor=west,line width=1.5pt,font=\footnotesize
+];
+\tikzstyle{ours} = [node,fill=red!60];
+\tikzstyle{not_ours} = [node,fill=gray!60];
+
+\node (user_input) [block,line width=1.1pt,draw=black,anchor=west,fill=blue!30,at={(1,0)},minimum width=14.2cm,minimum height=3.2cm] {};
+\node [header,at={(13.5,0)}] {User input};
+
+\node (ufl) [ours,at={(1.6,0)}] {
+  \begin{itemize}
+    \item DSL for expressing PDEs
+    \item Near mathematical syntax
+  \end{itemize}
+};
+\node (ufl_header) [header,at={(ufl.north)}] {UFL};
+
+\node (firedrake) [ours,at={(7.1,0)}] {
+  \begin{itemize}
+    \item Library for solving PDEs expressed in UFL
+  \end{itemize}
+};
+\node (firedrake_header) [header,at={(firedrake.north)}] {Firedrake};
+
+\node (tsfc) [ours,at={(0,-3.4)}] {
+  \begin{itemize}
+    \item Two-Stage Form Compiler
+    \item Compiles UFL to loopy kernels
+  \end{itemize}
+};
+\node (tsfc_header) [header,at={(tsfc.north)}] {TSFC};
+
+\node (pyop3) [ours,at={(5.5,-3.4)}] {
+  \begin{itemize}
+    \item DSL and compiler
+    \item Applies computational kernels to unstructured meshes
+  \end{itemize}
+};
+\node (pyop3_header) [header,at={(pyop3.north)}] {PyOP2};
+
+\node (petsc) [not_ours,at={(11,-3.4)}] {
+  \begin{itemize}
+    \item Linear and non-linear solvers
+    \item Parallel and sparse data structures
+    \item Unstructured mesh
+  \end{itemize}
+};
+\node (petsc_header) [header,at={(petsc.north)}] {PETSc};
+
+\node (loopy) [not_ours,at={(2.75,-6.5)}] {
+  \begin{itemize}
+    \item Code generator
+    \item Targets multiple backends including CPUs and GPUs
+  \end{itemize}
+};
+\node (loopy_header) [header,at={(loopy.north)}] {loopy};
+
+\tikzstyle{arrow} = [line width=1pt];
+
+\draw [arrow,_-_{Stealth}] (firedrake) -- (ufl);
+\draw [arrow,_-_{Stealth}] (firedrake) -- (pyop3_header);
+\draw [arrow,{Stealth}_-_{Stealth}] (firedrake) -- (petsc);  % two-way arrow
+\draw [arrow,_-_{Stealth}] (firedrake) -- (tsfc);
+\draw [arrow,_-_{Stealth}] (pyop3) -- (petsc);
+\draw [arrow,_-_{Stealth}] (pyop3) -- (loopy);
+\draw [arrow,_-_{Stealth}] (tsfc_header) -- (ufl);
+\draw [arrow,_-_{Stealth}] (tsfc) -- (loopy);
+
+\end{tikzpicture}
+\end{document}

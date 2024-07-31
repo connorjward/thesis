@@ -4,27 +4,68 @@
 
 \chapter{Firedrake integration}
 
-We will demonstrate the functionality of \pyop3 by integrating it with the finite element framework Firedrake.
-The intent is for \pyop3 to in the near future serve as a replacement for \pyop2 inside Firedrake.
-
-In order to demonstrate the steps necessary for this integration to work, we will work through solving the Stokes problem described in \cref{sec:stokes_equations}.
+One of the main advantages to a framework like \pyop3 is that, by automating a process typically done by hand, it allows for higher level abstractions to be built on top of it.
+In this chapter we will demonstrate this by integrating \pyop3 into the finite element framework Firedrake~\cite{FiredrakeUserManual}.
 
 \section{The Firedrake framework}
 
+% firedrake motivation
+Firedrake is a framework for automating the solutions to the finite element method.
+% productive, high level, near mathematical
+
 \begin{figure}
-  \includegraphics{firedrake_structure.pdf}
+  \includegraphics{firedrake_structure_old.pdf}
   \caption{TODO}
-  \label{fig:firedrake_structure}
+  \label{fig:firedrake_structure_old}
 \end{figure}
 
-% introduce UFL
+Firedrake is composed of a number of interacting software components (\cref{fig:firedrake_structure_old}):
 
-\section{Solving the Stokes equations}
+\paragraph{At the top level, users write Python scripts using both the Unified Form Language (UFL) and the Firedrake API.}
+UFL is a domain-specific language for expressing variational problems with support for symbolic operations such as taking derivatives~\cite{alnaesUnifiedFormLanguage2014a}.
+
+\paragraph{Given a variational form expressed in UFL, Firedrake can then assemble the required matrices and vectors.}
+
+\paragraph{Lastly, given the right assembled objects, Firedrake coordinates the (non-) linear solve and possible preconditioner applications.}
+In order to do this Firedrake calls PETSc~\cite{petsc-user-ref,petsc-web-page,petsc-efficient}, a library with a wealth of different solvers and preconditioners.
+Like Firedrake, PETSc places an emphasis on composability and rapid prototyping; it is straightforward to make fine-grained changes to the choice of solvers and preconditioners simply by passing a dictionary of options to Firedrake's \pycode{solve()} function.
+
+\vspace{\baselineskip}
+
+\pyop2 is clearly central to Firedrake's functionality and it is this component that \pyop3 is intended to be a drop-in replacement for.
+
+\subsection{Solving a finite element problem with Firedrake}
 
 \begin{listing}
   \centering
   \begin{minipage}{.9\textwidth}
-    \inputminted{python}{./scripts/stokes_demo.py}
+    \begin{pyalg2}
+      from firedrake import *
+
+      # initialise the mesh and function spaces
+      mesh = UnitSquareMesh(10, 10)
+      V = VectorFunctionSpace(mesh, "P", 3)
+      Q = FunctionSpace(mesh, "DP", 2)
+      W = MixedFunctionSpace([V, Q])
+
+      u, p = TrialFunctions(W)
+      v, q = TestFunctions(W)
+
+      # viscosity
+      nu = Constant(666)
+
+      # define lhs and rhs
+      a = nu * inner(grad(u), grad(v)) * dx - p * div(v) * dx + q * div(u) * dx
+      L = Cofunction(W.dual())  # zero rhs
+
+      # construct the boundary condition
+      g = Constant([666, 666])
+      bc = DirichletBC(W.sub(0), g, "on_boundary")
+
+      # assemble and solve the problem
+      solution = Function(W)
+      solve(a == L, solution, bcs=[bc])
+    \end{pyalg2}
   \end{minipage}
   \caption{
     Firedrake code for setting up and solving the Stokes problem set up in \cref{sec:stokes_equations}.
@@ -32,28 +73,256 @@ In order to demonstrate the steps necessary for this integration to work, we wil
   \label{listing:stokes_demo}
 \end{listing}
 
-%1. mesh (arbitrary dimension and cell type - sort of)
-% 2. function spaces
-% 3. functions and matrices? sparsities?
+An example Firedrake script for solving the Stokes equations (\cref{sec:stokes_equations}) is shown in \cref{listing:stokes_demo}.
 
-% what is Firedrake! should go here not in background.
+% ...
 
-% mesh.points, V.axes
-% mesh numbering is handled here via an indexing operation - pyop3 does not know about it.
-% DatView for viewing function components
-% mixed dats are now contiguous
+% NOTE: do not talk about pyop3, that comes after - just explain the script
+\paragraph{Create the mesh}
+% arbitrary dimension and cell type (sort of)
 
-\section{Packing}
+\paragraph{Build the function spaces}
 
-% these are bad to include because it's bad design.
-\subsection{Tensor product cells}
+a function space associates a finite element with a mesh
 
-\subsection{Hexahedral elements}
+here we create a mixed FE space with SV element pair
 
-%\subsection{Fieldsplit} ???
+\paragraph{Construct the forms}
 
-%\subsection{Performance} ???
-% all about minimising memory bandwidth, aim for roofline peak at all points
-% I need to implement the map compression algorithm (generically)
+These are exactly the same as the equations in \cref{???}
+
+\paragraph{Solve the variational problem}
+
+Call \pycode{solve()}. This:
+
+The bilinear form \pycode{a} is assembled...
+assembles the LHS matrix and RHS vector
+
+solves the linear system using PETSc - it is not shown here but can pass solver parameters... - solution for both u and p fields stored in \pycode{solution}
+
+\section{Representing global data}
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=.8]{scott_vogelius_space_axis_tree.pdf}
+  \caption{
+    TODO.
+  }
+  \label{fig:firedrake_axis_tree}
+\end{figure}
+
+As demonstrated in \cref{chapter:axis_trees}, data layouts for function spaces are well represented as axis trees.
+For the Stokes problem above, the axis tree created for the mixed function space \pycode{W} is shown in \cref{fig:firedrake_axis_tree}.
+The \pycode{"mesh"} axis (appearing twice) comes from the mesh and the other axes (\pycode{"space"}, \pycode{"node"}, and \pycode{"component"}) all come from the function space definition.
+As described in \cref{sec:foundations_dmplex}, the mesh carries a point star forest and this is used to build the correct DoF star forest for exchanging ghost data (\cref{sec:parallel_star_forests}).
+
+At present the ordering of axes for function spaces is fixed, but it would be straightforward to extend Firedrake to support alternative data layouts (see \cref{sec:axis_tree_alternative_layouts}, \cref{sec:indexing_data_layout_transformations}).
+
+\subsection{Mesh renumbering}
+
+An observant reader may have noticed that in the axis tree just introduced (\cref{fig:firedrake_axis_tree}) no interleaving of DoFs appears to be happening, which would be problematic for reasons of data locality (\cref{sec:intro_mesh_numbering}).
+This is in fact not the case: we have skipped a step in our explanation.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=.7]{mesh_renumbering_transform.pdf}
+  \caption{TODO}
+  \label{fig:mesh_renumbering_transform}
+\end{figure}
+
+When the axis tree for the function space is created it is actually linear and ragged.
+The \pycode{"mesh"} axis only has one axis component that represents all of the mesh entities and the different entity types are separated via a slicing operation.
+This is demonstrated in \cref{fig:mesh_renumbering_transform}.
+The original mesh axis (left, labelled with indices $p_i$) is indeed interleaved as desired and the cell/edge/vertex axis tree partitioning only exists in the indexed axis tree.
+
+\begin{algorithm}
+  \begin{center}
+    \begin{minipage}{.9\textwidth}
+      \begin{pyalg2}
+        def plex_renumbering(plex: PETSc.DMPlex, cell_order: np.ndarray[int]):
+          # bookkeeping to track result
+          renumbering = np.empty(num_points(plex))
+          owned_ptr = 0
+          ghost_ptr = num_owned_points(plex)
+          seen_points = set()
+
+          # loop over cells
+          c_start, c_end = plex.getHeightStratum(0)
+          for cell in range(c_start, c_end):
+            # renumber the cell
+            cell_renum = cell_order[cell]
+
+            # pack points in the cell closure together, skipping already
+            # seen points and respecting the owned/ghost partition
+            closure = get_closure(plex, cell_renum)
+            for pt in closure:
+              if pt in seen:
+                continue
+              else:
+                if is_ghost(pt):
+                  renumbering[ghost_ptr] = pt
+                  ghost_ptr += 1
+                else:
+                  renumbering[owned_ptr] = pt
+                  owned_ptr += 1
+                seen.add(pt)
+        return renumbering
+      \end{pyalg2}
+    \end{minipage}
+  \end{center}
+
+  \caption{
+    TODO.
+  }
+  \label{alg:plex_renumbering}
+\end{algorithm}
+
+To determine the point numbering a cell-local numbering is used.
+Summarised in \cref{alg:plex_renumbering}, one loops over the cells of the mesh and packs entities in their closure together.
+To further improve locality the cell loop is ordered with an RCM numbering so nearby cell closures are kept close in memory.
+\Cref{alg:plex_renumbering} is very similar to alg. 3 of~\cite{langeEfficientMeshManagement2016} except, due to reasons explained in \cref{sec:communication_optimisations}, the \textit{non-core} (also referred to as \textit{owned}) entity class is dropped.
+
+\section{Finite element assembly}
+
+Now that we have the required global data structures we may now consider the finite element assembly process.
+For the Stokes problem above, the assembly loop created for the LHS matrix is equivalent to the following \pyop3 code:
+
+\begin{pyinline}
+  loop(cell := mesh.cells.owned.index(),
+       kernel(viscosity_dat[closure(cell)],
+              output_mat[closure(cell), closure(cell)]))
+\end{pyinline}
+
+\begin{figure}
+  \centering
+  \includegraphics{scott_vogelius_index_tree.pdf}
+  \caption{
+    An complete index tree appropriate for transforming a Scott-Vogelius axis tree (\cref{fig:firedrake_axis_tree}) into a cell-local view.
+  }
+  \label{fig:firedrake_index_tree}
+\end{figure}
+
+\begin{itemize}
+  \item
+    \pycode{mesh.cells.owned} is a \pyop3 axis representing the owned cells of the mesh.
+
+  \item
+    \pycode{kernel} is the local kernel generated by TSFC using the form \pycode{a}.
+    It has intents of \pycode{READ} for the first argument and \pycode{INC} for the second.
+
+  \item
+    The kernel arguments \pycode{viscosity_dat} and \pycode{output_mat} are a \pycode{Dat} and \pycode{Mat} respectively.
+    Each is restricted to a view of the DoFs supported on the cell by indexing with \pycode{closure(cell)}.
+    \pycode{viscosity_dat}, having only a single associated axis tree, takes only a single index, whilst \pycode{output_mat} requires two. \\
+    As the axis trees for the data structures are non-flat simply indexing with \pycode{closure(cell)} is some syntactic sugar.
+    Internally the index is translated into the appropriate index tree (\cref{fig:firedrake_index_tree}).
+\end{itemize}
+
+Notice that this closely resembles the pseudo-code shown in \cref{alg:fem_assembly}.
+
+At this point we now have a loop expression correctly encapsulating the assembly process.
+\pyop3 can now generate and execute code for it in parallel using the processes established in \cref{chapter:execution_model}.
+
+\subsection{More integral types}
+
+\begin{figure}
+  \centering
+  \includegraphics{interior_facet_support.pdf}
+  \caption{
+    Stencil for an interior facet integral.
+    The facet currently being iterated over is marked with the star.
+  }
+  \label{fig:interior_facet_support}
+\end{figure}
+
+In addition to cells, Firedrake also supports integrating over the (interior and exterior) facets of a mesh.
+In these cases the data that is packed and passed to the local kernel consists of the `macro' cell formed from the cells in the support of the facet (e.g. \cref{fig:interior_facet_support}).
+
+With \pyop3 it is straightforward to express assembly loops for facet integrals using \textit{map composition} (\cref{sec:indexing_map_composition}):
+
+\begin{pyinline}
+  facet = mesh.interior_facets.owned.index()
+  packed = dat[closure(support(facet))]
+\end{pyinline}
+
+\subsection{Handling orientations}
+
+One of the big advantages of \pyop3 over \pyop2 is in its ability to express transformations that cannot be memoized.
+An example of this is the way in which element orientations are handled.
+
+% the problem
+% -----------
+% adjacent cells may disagree on the orientation of a shared facet or edge
+% the local kernel is then packed incorrectly, so the computation is incorrect
+% this is only a problem for some element types, the error may be avoided for simplices of any dimension and a non-mobius strip solution exists for quads by choosing a global numbering that dictates a particular entity orientation
+% in particular this trick cannot be used for hexahedral elements
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.45\textwidth}
+    \centering
+    \includegraphics{lagrange_element_3_default.pdf}
+  \end{subfigure}
+  %
+  \begin{subfigure}{0.45\textwidth}
+    \centering
+    \includegraphics{lagrange_element_3_flip.pdf}
+  \end{subfigure}
+  \caption{Reference $P_3$ (Lagrange, degree 3) element (left), and with an edge flipped (right).}
+  \label{fig:element_orientation_permute}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.45\textwidth}
+    \centering
+    \includegraphics{raviart_thomas_default.pdf}
+  \end{subfigure}
+  %
+  \begin{subfigure}{0.45\textwidth}
+    \centering
+    \includegraphics{raviart_thomas_flip.pdf}
+  \end{subfigure}
+  \caption{Reference Raviart-Thomas element (left), and with an edge flipped (right).}
+  \label{fig:element_orientation_flip}
+\end{figure}
+
+The general solution to this problem is to make the packing code aware of the orientation of the different entities.
+This is relatively straightforward for function spaces with point evaluation DoFs (\cref{fig:element_orientation_permute}) because the necessary transformation is simply a permutation and so can embedded in the cell-node maps.
+This is what Firedrake does currently.
+
+However, this approach fails to work for function spaces with vector-valued DoFs, such as \hdiv and \hcurl, since the transformation can include a scaling.
+See, for example, the case shown in \cref{fig:element_orientation_flip}.
+In order for the edge DoF to be packed correctly for both cells, one of them needs to scale its value by $-1$.
+In general this transformation can be a matrix.
+The software package Basix~\cite{scroggsBasixRuntimeFinite2022,scroggsConstructionArbitraryOrder2021} is capable of generating these transformation matrices.
+
+% how things are done in pyop3
+% ----------------------------
+With \pyop3 we can express the permutation transformation as a symbolic indexing operation.
+% compared to pyop2 where it is memoized in advance
+
+% show an inline diagram of the data layout and the flip needed - want the original one done first
+
+% consider simplest possible, P3 and disregard non-edge DoFs
+
+% given a permutation array [[0, 1], [1, 0]]
+% and orientation [[0, 1, 0]]
+
+% cell = 0
+% dat[closure(cell)][:, [[0, 1], [1, 0], [0, 1]]]
+
+% cell = 0
+% dat[closure(cell)][:, perms[[0, 1, 0]]]
+
+% cell = 0
+% dat[closure(cell)][:, perms[ort[cell]]]
+
+% thus, we can now represent the permutation transformation entirely symbolically
+
+% why is this good?
+% easier to extend? expressed at runtime -> codegen more difficult things...
+
+% now how to extend to general transformations
 
 \end{document}

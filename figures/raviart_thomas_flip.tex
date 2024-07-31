@@ -1,0 +1,29 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/element.tikz}
+
+\stylesegmentsmulti
+\drawTriangleWithFlippedEdge
+
+% edge dofs
+\tkzDefBarycentricPoint(v0=1,v1=1) \tkzGetPoint{e0d0}
+\tkzDefShiftPoint[e0d0](-90:.8){e0d0v}
+\draw [vecdof] (e0d0) -- (e0d0v);
+\drawFilledEdge{e0d0}{2};
+
+\tkzDefBarycentricPoint(v0=1,v2=1) \tkzGetPoint{e1d0}
+\tkzDefShiftPoint[e1d0](180:.8){e1d0v}
+\draw [vecdof] (e1d0) -- (e1d0v);
+\drawFilledEdge{e1d0}{1};
+
+\tkzDefBarycentricPoint(v1=1,v2=1) \tkzGetPoint{e2d0}
+\tkzDefShiftPoint[e2d0](45:.8){e2d0v}
+\draw [vecdof] (e2d0) -- (e2d0v);
+\drawFilledEdge{e2d0}{0};
+
+\end{tikzpicture}
+\end{document}

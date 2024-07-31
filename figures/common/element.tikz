@@ -50,7 +50,7 @@
   \drawFilledCell{e2}{5}
 }
 
-\newcommand{\drawLagrangeThree}{%
+\newcommand{\defLagrangeThree}{
   \tkzDefBarycentricPoint(v1=2.3,v2=1) \tkzGetPoint{e0d0}
   \tkzDefBarycentricPoint(v1=1,v2=2.3) \tkzGetPoint{e0d1}
 
@@ -59,6 +59,10 @@
 
   \tkzDefBarycentricPoint(v0=2.3,v1=1) \tkzGetPoint{e2d0}
   \tkzDefBarycentricPoint(v0=1,v1=2.3) \tkzGetPoint{e2d1}
+}
+
+\newcommand{\drawLagrangeThree}{%
+  \defLagrangeThree
 
   \drawFilledVertex{v0}{0}
   \drawFilledVertex{v1}{1}
@@ -70,4 +74,57 @@
   \drawFilledEdge{e2d0}{7}
   \drawFilledEdge{e2d1}{8}
   \drawFilledCell{c0}{9}
+}
+
+\newcommand{\drawLagrangeThreeFlipped}{%
+  \defLagrangeThree
+
+  \drawFilledVertex{v0}{0}
+  \drawFilledVertex{v1}{1}
+  \drawFilledVertex{v2}{2}
+  \drawFilledEdge{e0d0}{4}
+  \drawFilledEdge{e0d1}{3}
+  \drawFilledEdge{e1d0}{5}
+  \drawFilledEdge{e1d1}{6}
+  \drawFilledEdge{e2d0}{7}
+  \drawFilledEdge{e2d1}{8}
+  \drawFilledCell{c0}{9}
+}
+
+\tikzstyle {vecdof} = [-stealth,draw=bgedgedofcolor,line width=1.9];
+
+% directions arrows on edges
+\newcommand{\stylesegmentsmidpoint}{%
+  \tkzSetUpStyle[
+    postaction=decorate,
+    decoration={
+      markings,
+      mark=at position .53 with {\arrow[very thick]{##1}},
+    }
+  ]{myarrow}
+}
+
+\newcommand{\stylesegmentsmulti}{%
+  \tkzSetUpStyle[
+    postaction=decorate,
+    decoration={
+      markings,
+      mark=at position .78 with {\arrow[very thick]{##1}},
+      mark=at position .28 with {\arrow[very thick]{##1}},
+    }
+  ]{myarrow}
+}
+
+\newcommand{\drawTriangleWithEdgeArrows}{
+  \defTriangle
+  \tkzDrawSegment[myarrow=stealth](v0,v1)
+  \tkzDrawSegment[myarrow=stealth](v1,v2)
+  \tkzDrawSegment[myarrow=stealth](v0,v2)
+}
+
+\newcommand{\drawTriangleWithFlippedEdge}{
+  \defTriangle
+  \tkzDrawSegment[myarrow=stealth](v0,v1)
+  \tkzDrawSegment[myarrow=stealth](v2,v1)
+  \tkzDrawSegment[myarrow=stealth](v0,v2)
 }

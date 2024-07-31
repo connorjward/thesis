@@ -217,8 +217,6 @@
 
 \tkzSetUpStyle[densely dashed,shorten >=.1cm,shorten <=.1cm,line width=.5]{connector}
 
-\tkzSetUpStyle[draw=black,fill=black,line width=.7pt,fill opacity=.1,rounded corners=7]{patch}
-
 \newcommand{\drawSplitMesh}{
 
 \begin{scope}

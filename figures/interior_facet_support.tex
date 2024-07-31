@@ -1,0 +1,20 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+\usepackage{amssymb}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/two_cell_mesh_lagrange.tikz}
+
+\defTwoCellMeshLagrange
+\drawTwoCellMeshLagrange
+
+\node [fill=white] at (e2) {$\bigstar$};
+
+\tikzmath { \shift = .5; }
+
+\filldraw [patch] ($(v0)+(-\shift,0)$) -- ($(v1)+(0,\shift)$) -- ($(v3)+(\shift,0)$) -- ($(v2)+(0,-\shift)$) -- cycle;
+
+\end{tikzpicture}
+\end{document}

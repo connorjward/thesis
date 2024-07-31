@@ -1,0 +1,70 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}[remember picture]
+
+\input{figures/common/tree.tikz}
+
+% Scott-Vogelius element
+\drawTreeNode{(field)}{(8,6)}{
+  \pycode{"space"}: \{ \component{field0}{\pycode{"V"}: \pycode{1}}, \component{field1}{\pycode{"Q"}: \pycode{1}} \}
+};
+
+\drawTreeNode{(mesh0)}{(0,4)}{
+  \pycode{"mesh"}: \{ \component{mesh00}{\pycode{"cell"}: \pycode{ncells}}, \component{mesh01}{\pycode{"edge"}: \pycode{nedges}}, \component{mesh02}{\pycode{"vertex"}: \pycode{nverts}} \}
+};
+
+\tikzmath { \xstart = .8; \xshift = 2.8; }
+
+\drawTreeNode{(celldof0)}{(\xstart+\xshift*0,2)}{\pycode{"node"}: \{ \component{cdof0}{\pycode{1}} \}};
+\drawTreeNode{(vertdof0)}{(\xstart+\xshift*1,2)}{\pycode{"node"}: \{ \component{vdof0}{\pycode{2}} \}};
+\drawTreeNode{(edgedof0)}{(\xstart+\xshift*2,2)}{\pycode{"node"}: \{ \component{edof0}{\pycode{1}} \}};
+
+\drawTreeNode{(mesh1)}{(11,4)}{
+  \pycode{"mesh"}: \{ \component{mesh10}{\pycode{"cell"}: \pycode{ncells}}, \component{mesh11}{\pycode{"edge"}: \pycode{nedges}}, \component{mesh12}{\pycode{"vertex"}: \pycode{nverts}} \}
+};
+
+\tikzmath { \xstart = 13; }
+
+\drawTreeNode{(celldof1)}{(\xstart+\xshift*0,2)}{\pycode{"node"}: \{ \pycode{6} \}};
+\drawTreeNode{(vertdof1)}{(\xstart+\xshift*1,2)}{\pycode{"node"}: \{ \pycode{0} \}};
+\drawTreeNode{(edgedof1)}{(\xstart+\xshift*2,2)}{\pycode{"node"}: \{ \pycode{0} \}};
+
+\tikzmath { \xstart = .2; \xshift = 3.9; }
+
+\drawTreeNode{(celldim0)}{(\xstart+\xshift*0,0)}{\pycode{"component"}: \{ \pycode{2} \}};
+\drawTreeNode{(vertdim0)}{(\xstart+\xshift*1,0)}{\pycode{"component"}: \{ \pycode{2} \}};
+\drawTreeNode{(edgedim0)}{(\xstart+\xshift*2,0)}{\pycode{"component"}: \{ \pycode{2} \}};
+
+\underlineComponent{field}{field0};
+\underlineComponent{field}{field1};
+\drawTreeConnector{field}{field0}{(mesh0)};
+\drawTreeConnector{field}{field1}{(mesh1)};
+
+\underlineComponent{mesh0}{mesh00};
+\underlineComponent{mesh0}{mesh01};
+\underlineComponent{mesh0}{mesh02};
+\drawTreeConnector{mesh0}{mesh00}{(celldof0)};
+\drawTreeConnector{mesh0}{mesh01}{(vertdof0)};
+\drawTreeConnector{mesh0}{mesh02}{(edgedof0)};
+
+\underlineComponentNarrow{celldof0}{cdof0};
+\underlineComponentNarrow{vertdof0}{vdof0};
+\underlineComponentNarrow{edgedof0}{edof0};
+\drawTreeConnector{celldof0}{cdof0}{(celldim0)};
+\drawTreeConnector{vertdof0}{vdof0}{(vertdim0)};
+\drawTreeConnector{edgedof0}{edof0}{(edgedim0)};
+
+\underlineComponent{mesh1}{mesh10};
+\underlineComponent{mesh1}{mesh11};
+\underlineComponent{mesh1}{mesh12};
+\drawTreeConnector{mesh1}{mesh10}{(celldof1)};
+\drawTreeConnector{mesh1}{mesh11}{(vertdof1)};
+\drawTreeConnector{mesh1}{mesh12}{(edgedof1)};
+
+\end{tikzpicture}
+
+\end{document}

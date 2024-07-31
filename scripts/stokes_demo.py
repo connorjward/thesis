@@ -1,3 +1,4 @@
+# NOTE: This is just a copy of what is in chapter 7 to check it works
 from firedrake import *
 
 # initialise the mesh and function spaces
@@ -14,7 +15,7 @@ nu = Constant(666)
 
 # define lhs and rhs
 a = nu * inner(grad(u), grad(v)) * dx - p * div(v) * dx + q * div(u) * dx
-L = Form([])  # empty rhs
+L = Cofunction(W.dual())
 
 # construct the boundary condition
 g = Constant([666, 666])

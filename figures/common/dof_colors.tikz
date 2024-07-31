@@ -8,4 +8,6 @@
 \colorlet{bgvertdofcolor}{vertdofcolor!60}
 \colorlet{bgnodedofcolor}{nodedofcolor!60}
 
-\tikzstyle {edge} = [draw=black,line width=1pt];
+\tikzstyle {edge} = [draw=black,line width=1.2pt];
+
+\tkzSetUpStyle[draw=black,fill=black,line width=.7pt,fill opacity=.1,rounded corners=7]{patch}
