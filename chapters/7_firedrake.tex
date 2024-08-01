@@ -300,29 +300,57 @@ The software package Basix~\cite{scroggsBasixRuntimeFinite2022,scroggsConstructi
 % how things are done in pyop3
 % ----------------------------
 With \pyop3 we can express the permutation transformation as a symbolic indexing operation.
+% this means we can generate code for it (do at runtime), step towards more complex runtime transformations
 % compared to pyop2 where it is memoized in advance
 
-% show an inline diagram of the data layout and the flip needed - want the original one done first
-
 % consider simplest possible, P3 and disregard non-edge DoFs
+To explain how this is done we consider the edge flip shown in \cref{fig:element_orientation_permute}.
+For simplicity consider a one-cell mesh and we omit cell and vertex DoFs.
 
-% given a permutation array [[0, 1], [1, 0]]
-% and orientation [[0, 1, 0]]
+As well as the axis tree for the function space we now have two extra pieces of information:
 
-% cell = 0
-% dat[closure(cell)][:, [[0, 1], [1, 0], [0, 1]]]
+\begin{itemize}
+  \item
+    The orientation of the edges, stored as an array of integers per cell closure.
+    For this single-cell-mesh case the orientation array of the flipped triangle is $\{ c_0 \to \pycode{[0, 1, 0]} \}$, or, equivalently, \pycode{orientations = [[0, 1, 0]]}.
+    An orientation of 0 is considered `default', and 1 means that it is flipped.
 
-% cell = 0
-% dat[closure(cell)][:, perms[[0, 1, 0]]]
+  \item
+    The DoF permutation for a given orientation.
+    Since there are only two ways that an edge can be oriented this is therefore stored as $\{ 0 \to \pycode{[0, 1]},\ 1 \to \pycode{[1, 0]} \}$, or in code as \pycode{perms = [[0, 1], [1, 0]]}.
+\end{itemize}
 
-% cell = 0
-% dat[closure(cell)][:, perms[ort[cell]]]
+Now, in order to correctly pack the DoFs for the kernel the following permutation of the DoFs axis is required:
 
-% thus, we can now represent the permutation transformation entirely symbolically
+\begin{pyinline}
+  cell = 0
+  packed = dat[closure(cell)][:, [[0, 1], [1, 0], [0, 1]]]
+\end{pyinline}
 
-% why is this good?
-% easier to extend? expressed at runtime -> codegen more difficult things...
+\noindent
+which is equivalent to following transformation:
 
-% now how to extend to general transformations
+\begin{center}
+  \includegraphics{element_orientation_permute_data.pdf}
+\end{center}
+
+The array \pycode{[[0, 1], [1, 0], [0, 1]]} clearly comes from the permutation array above, so we may transform the code to:
+
+\begin{pyinline}
+  cell = 0
+  packed = dat[closure(cell)][:, perms[[0, 1, 0]]]
+\end{pyinline}
+
+The final array \pycode{[0, 1, 0]} is simply the orientations array, giving the final transformation as:
+
+\begin{pyinline}
+  cell = 0
+  packed = dat[closure(cell)][:, perms[orientations[cell]]]
+\end{pyinline}
+
+With this we now have a fully symbolic, indexing approach to permuting the DoFs for any function space.
+Having a symbolic representation of this transformation means that one can generate code for the transformation, instead of memoizing the modified maps in advance.
+Whilst not strictly necessary for the permutation case described here it is essential for more complex transformations that this be expressible.
+Extending Firedrake and \pyop3 to support general transformations is future work.
 
 \end{document}

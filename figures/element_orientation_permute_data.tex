@@ -1,0 +1,39 @@
+\documentclass[tikz]{standalone}
+
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/tree.tikz}
+\input{figures/common/data_layout.tikz}
+
+\drawDof{(0,0)}{$e_0$}{bgedgedofcolor};
+\drawDof{(1,0)}{$e_1$}{bgedgedofcolor};
+\drawDof{(2,0)}{$e_2$}{bgedgedofcolor};
+
+\tikzmath { \yshift = -2; }
+
+\drawWhiteDof{(-2,\yshift)}{$n_0$};
+\drawWhiteDof{(-1,\yshift)}{$n_1$};
+\draw [connector] (0,0) -- (-2,-1);
+\draw [connector] (1,0) -- ( 0,-1);
+
+\drawWhiteDof{( .5,\yshift)}{$n_0$};
+\drawWhiteDof{(1.5,\yshift)}{$n_1$};
+\draw [connector] (1,0) -- ( .5,-1);
+\draw [connector] (2,0) -- (2.5,-1);
+
+% flipped arrow
+\draw [{stealth}-{stealth},draw=black,line width=1pt] (1,\yshift-.1) to [bend right=40] (2,\yshift-.1);
+
+\drawWhiteDof{(3,\yshift)}{$n_0$};
+\drawWhiteDof{(4,\yshift)}{$n_1$};
+\draw [connector] (2,0) -- (3,-1);
+\draw [connector] (3,0) -- (5,-1);
+
+\end{tikzpicture}
+\end{document}
