@@ -1,0 +1,2 @@
+# Streaming memory bandwidth (MB/s), determined from PETSc make streams
+main_memory = 15385
