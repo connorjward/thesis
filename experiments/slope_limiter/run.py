@@ -60,6 +60,7 @@ def make_loop_expr(mesh, cg, dg):
             c := mesh.star(v, k=2).index(),
             max_(dg.dat[c], cg.dat[v]),
         ),
+        compiler_parameters={"add_petsc_event": True},
     )
 
 
