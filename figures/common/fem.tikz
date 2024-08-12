@@ -1,0 +1,154 @@
+\input{figures/common/dof_colors.tikz}
+
+% define colors
+\newcommand{\celldofcolor}{celldofcolor}
+\newcommand{\edgedofcolor}{edgedofcolor}
+\newcommand{\vertdofcolor}{vertdofcolor}
+
+\newcommand{\defcellmidpoint}[4]{
+  \tkzDefBarycentricPoint(#1=1,#2=1,#3=1) \tkzGetPoint{#4}
+}
+
+\newcommand{\drawcelldof}[3]{
+  \defcellmidpoint{#1}{#2}{#3}{#1#2#3}
+  \tkzDrawPoint[celldof](#1#2#3)
+}
+
+\newcommand{\drawedgedof}[2]{
+  \tkzDefBarycentricPoint(#1=2,#2=1) \tkzGetPoint{#1#2}
+  \tkzDefBarycentricPoint(#1=1,#2=2) \tkzGetPoint{#2#1}
+  \tkzDrawPoint[edgedof](#1#2)
+  \tkzDrawPoint[edgedof](#2#1)
+}
+
+\newcommand{\drawvertexdof}[1]{
+  \tkzDrawPoint[vertdof](#1)
+}
+
+\newcommand{\drawMeshStencil}{
+  % styles specific to the mesh
+  \tkzSetUpStyle[draw=black,line width=.5]{edge}
+  \tkzSetUpStyle[line width=1]{dof}
+  \tkzSetUpStyle[dof,draw=\celldofcolor,fill=\celldofcolor]{celldof}
+  \tkzSetUpStyle[dof,draw=\edgedofcolor,fill=\edgedofcolor]{edgedof}
+  \tkzSetUpStyle[dof,draw=\vertdofcolor,fill=\vertdofcolor]{vertdof}
+
+
+  % define nodes
+  \tkzDefPoints{0/0/v0,0/1/v1,0/2/v2,0/3/v3}
+  \tkzDefPoints{1/0/v4,1/1/v5,1/2/v6, 1/3/v7}
+  \tkzDefPoints{2/0/v8,2/1/v9,2/2/v10,2/3/v11}
+  \tkzDefPoints{3/0/v12,3/1/v13,3/2/v14,3/3/v15}
+
+  % make it look messy
+  \tkzDefShiftPoint[v0](0,0){v0}
+  \tkzDefShiftPoint[v1](0,.1){v1}
+  \tkzDefShiftPoint[v2](-.1,-.1){v2}
+  \tkzDefShiftPoint[v3](.2,.1){v3}
+  \tkzDefShiftPoint[v4](.1,0){v4}
+  \tkzDefShiftPoint[v5](0,0){v5}
+  \tkzDefShiftPoint[v6](-.1,0){v6}
+  \tkzDefShiftPoint[v7](0,0){v7}
+  \tkzDefShiftPoint[v8](0,0){v8}
+  \tkzDefShiftPoint[v9](.1,0){v9}
+  \tkzDefShiftPoint[v10](0,.1){v10}
+  \tkzDefShiftPoint[v11](-.1,.2){v11}
+  \tkzDefShiftPoint[v12](0,-.1){v12}
+  \tkzDefShiftPoint[v13](.1,-.1){v13}
+  \tkzDefShiftPoint[v14](.2,.1){v14}
+  \tkzDefShiftPoint[v15](.1,.1){v15}
+
+  % draw the mesh
+  \tkzDrawSegments[edge](v0,v1 v1,v2 v2,v3)
+  \tkzDrawSegments[edge](v4,v5 v5,v6 v6,v7)
+  \tkzDrawSegments[edge](v8,v9 v9,v10 v10,v11)
+  \tkzDrawSegments[edge](v12,v13 v13,v14 v14,v15)
+  \tkzDrawSegments[edge](v0,v4 v4,v8)
+  \tkzDrawSegments[edge](v1,v5 v5,v9)
+  \tkzDrawSegments[edge](v2,v6 v6,v10)
+  \tkzDrawSegments[edge](v3,v7 v7,v11 v11,v15)
+  \tkzDrawSegments[edge](v8,v12 v9,v13 v10,v14)
+  \tkzDrawSegments[edge](v1,v4 v1,v6 v3,v6)
+  \tkzDrawSegments[edge](v4,v9 v5,v10 v7,v10)
+  \tkzDrawSegments[edge](v9,v12 v9,v14 v10,v15)
+
+  % cell DoFs
+  \drawcelldof{v0}{v1}{v4}
+  \drawcelldof{v1}{v4}{v5}
+  \drawcelldof{v1}{v5}{v6}
+  \drawcelldof{v1}{v2}{v6}
+  \drawcelldof{v2}{v3}{v6}
+  \drawcelldof{v3}{v6}{v7}
+  \drawcelldof{v4}{v8}{v9}
+  \drawcelldof{v4}{v5}{v9}
+  \drawcelldof{v5}{v9}{v10}
+  \drawcelldof{v5}{v6}{v10}
+  \drawcelldof{v6}{v7}{v10}
+  \drawcelldof{v7}{v10}{v11}
+  \drawcelldof{v8}{v9}{v12}
+  \drawcelldof{v9}{v12}{v13}
+  \drawcelldof{v9}{v13}{v14}
+  \drawcelldof{v9}{v10}{v14}
+  \drawcelldof{v10}{v14}{v15}
+  \drawcelldof{v10}{v11}{v15}
+
+  % edge DoFs
+  \drawedgedof{v0}{v1}
+  \drawedgedof{v1}{v2}
+  \drawedgedof{v2}{v3}
+  \drawedgedof{v4}{v5}
+  \drawedgedof{v5}{v6}
+  \drawedgedof{v6}{v7}
+  \drawedgedof{v8}{v9}
+  \drawedgedof{v9}{v10}
+  \drawedgedof{v10}{v11}
+  \drawedgedof{v12}{v13}
+  \drawedgedof{v13}{v14}
+  \drawedgedof{v14}{v15}
+  \drawedgedof{v0}{v4}
+  \drawedgedof{v4}{v8}
+  \drawedgedof{v1}{v5}
+  \drawedgedof{v5}{v9}
+  \drawedgedof{v2}{v6}
+  \drawedgedof{v6}{v10}
+  \drawedgedof{v3}{v7}
+  \drawedgedof{v7}{v11}
+  \drawedgedof{v11}{v15}
+  \drawedgedof{v8}{v12}
+  \drawedgedof{v9}{v13}
+  \drawedgedof{v10}{v14}
+  \drawedgedof{v1}{v4}
+  \drawedgedof{v1}{v6}
+  \drawedgedof{v3}{v6}
+  \drawedgedof{v4}{v9}
+  \drawedgedof{v5}{v10}
+  \drawedgedof{v7}{v10}
+  \drawedgedof{v9}{v12}
+  \drawedgedof{v9}{v14}
+  \drawedgedof{v10}{v15}
+
+  % vertex DoFs
+  \drawvertexdof{v0}
+  \drawvertexdof{v1}
+  \drawvertexdof{v2}
+  \drawvertexdof{v3}
+  \drawvertexdof{v4}
+  \drawvertexdof{v5}
+  \drawvertexdof{v6}
+  \drawvertexdof{v7}
+  \drawvertexdof{v8}
+  \drawvertexdof{v9}
+  \drawvertexdof{v10}
+  \drawvertexdof{v11}
+  \drawvertexdof{v12}
+  \drawvertexdof{v13}
+  \drawvertexdof{v14}
+  \drawvertexdof{v15}
+
+  % draw a sample patch
+  \tkzDefShiftPoint[v5](-.3,-.12){v5patch}
+  \tkzDefShiftPoint[v9](.2,-.2){v9patch}
+  \tkzDefShiftPoint[v10](.12,.3){v10patch}
+  \filldraw[draw=none,fill=black,fill opacity=.15,rounded corners=8]
+    (v5patch) -- (v9patch) -- (v10patch) -- cycle;
+}

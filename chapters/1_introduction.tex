@@ -5,20 +5,39 @@
 \chapter{Introduction}
 \label{chapter:introduction}
 
-% * (numerically) solving PDEs is very important for lots of things:
-%   * climate
-%   * manufacturing
-%   * fluids...
-%   * ???
+% TODO: don't love this sentence
+The numerical solution of \glspl{pde} is ubiquitous across a wide range of applications, from climate modelling to structural mechanics and manufacturing.
+In order to solve them numerically, depending on the numerical method chosen, different elements of the geometry and/or function spaces of the physical problem must be \textit{discretised} such that they may be represented on a computer.
 
-\section{A motivating example: solving the Stokes equations using the finite element method}
+% Solving such problems requires enormous amounts of computational power
+% Software for solving them is important
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=1.5]{mesh_stencil.pdf}
+  \caption{
+    An example of a mesh stencil operation where cells are looped over and adjacent entities are accessed by the stencil (grey).
+    DoFs stored on the cells, edges, and vertices are represented by blue, red, and green dots respectively.
+  }
+  \label{fig:mesh_stencil}
+\end{figure}
+
+For a number of numerical methods such as the finite volume, finite difference, and finite element methods, a \textit{mesh stencil} approach is taken.
+With such methods the geometry of the problem is discretised to form a \textit{mesh} composed of topological entities termed \textit{cells}, with each having sub-entities such as faces, edges and vertices.
+Depending on the method and implementation choices, this mesh may be either \textit{structured}, where adjacent entities may be addressed by applying offsets, or \textit{unstructured}, where an indirection map of the form \ccode{A[B[i]]} is needed.
+To these topological entities are associated unknowns, termed \glspl{dof}, representing physical quantities in the PDE like, say, the pressure.
+
+For all of these methods, an integral part of their usage is the application of a stencil over mesh entities.
+One loops over topological entities, typically cells or faces, and computes some value using data that is `close' the current iterate (e.g. \cref{fig:mesh_stencil}).
+
+Mesh stencil computations crop up repeatedly in continuum mechanics simulations and developing methods for their application is the foundational concept behind this thesis.
+
+\section{Mesh stencils in practice: the finite element method}
 \label{sec:stokes_equations}
 
-As an introductory example to a calculation requiring iterating over a mesh, we consider solving the Stokes equations using the \gls{fem}.
-Our exposition will focus on the aspects of the computation that are relevant for \pyop3, for a more complete review of \gls{fem} we refer the reader to~\cite{brennerMathematicalTheoryFinite2008} and~\cite{larsonFiniteElementMethod2013}.
-
-The Stokes equations are a linearisation of the Navier-Stokes equations and are used to describe fluid flow for laminar (slow and calm) media.
-For domain $\Omega$ and boundary $\Gamma$, omitting any forcing terms for simplicity, they are given by
+As an introductory example to a mesh stencil calculation, we consider solving the Stokes equations, a linearisation of the Navier-Stokes equations in common use in the fluid dynamics community, using the \gls{fem}.
+Our exposition will focus on the aspects of the computation that are relevant for mesh stencils, for a more complete review of \gls{fem} we refer the reader to~\cite{brennerMathematicalTheoryFinite2008} and~\cite{larsonFiniteElementMethod2013}.
+The Stokes equations are given as follows: for domain $\Omega$ with boundary $\Gamma$, find the fluid velocity ($u$) and pressure ($p$) such that
 
 \begin{subequations}
   \begin{align}
@@ -26,23 +45,24 @@ For domain $\Omega$ and boundary $\Gamma$, omitting any forcing terms for simpli
     %
     \nabla \cdot u &= 0 \quad \textrm{in} \ \Omega, \\
     %
-    u &= g \quad \textrm{on} \ \Gamma.
+    u &= g \quad \textrm{on} \ \Gamma,
   \end{align}
   %
   \label{eq:strong_stokes}
 \end{subequations}
 
-with $u$ the fluid velocity, $p$ the pressure and $\nu$ the viscosity.
-We also prescribe Dirichlet boundary conditions for the velocity across the entire boundary, setting $u$ to the value of function $g$.
-Since we have a coupled system of two variables ($u$ and $p$), we refer to the Stokes system as being a \textit{mixed} problem.
+where $\nu$ is the viscosity and $g$ is some prescribed Dirichlet boundary condition fixing the velocity across the entire boundary.
+Forcing terms are omitted for simplicity.
+As we have a coupled system of two variables ($u$ and $p$), we refer to this system as being \textit{mixed}.
 
 \subsection{Deriving a weak formulation}
 
-% TODO: Add a forcing term $f$ so the RHS is non-zero so we can happily show the assembly diagram
+\todo[inline]{I need someone to check over my function spaces. In particular when do I use $V_0$ vs $V$?}
+\todo[inline]{Once that's done I need some consistent notation: $V_0$ or $\hat V$?}
 
 For the finite element method we seek the solution to the \textit{variational}, or \textit{weak}, formulation of these equations.
 These are obtained by multiplying each equation by a suitable \textit{test function} and integrating over the domain.
-For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions, drawn from function spaces $\hat V$ and $Q$ respectively, and integrating by parts this gives
+For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions and integrating by parts this gives
 
 % taken from 
 % https://nbviewer.org/github/firedrakeproject/firedrake/blob/master/docs/notebooks/06-pde-constrained-optimisation.ipynb
@@ -54,58 +74,53 @@ For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions, drawn from
     - \int \nu (\nabla u \cdot n) \cdot v \, \textrm{d}\Gamma
     - \int p n \cdot v \, \textrm{d}\Gamma
     &= 0
-    &\forall \ v \in \hat V
+    &\forall v \in \hat V
     \label{eq:weak_stokes_extra_V} \\
     %
     \int q \, \nabla \cdot u \, \textrm{d}\Omega
     &= 0
-    &\forall \ q \in Q.
-    \label{eq:weak_stokes_extra_Q}
+    &\forall q \in Q.
   \end{align}
-  \label{eq:weak_stokes_extra}
 \end{subequations}
 
 From these weak forms it is now possible to classify the function spaces for $u$ and $p$.
-For $u$, we already know that the space must be vector-valued, since it stores a velocity, and constrained to $g$ on the boundary.
+For $u$, we already know that the space must be vector-valued and constrained to $g$ on the boundary.
 \Cref{eq:weak_stokes_extra_V} further shows us that $u$ must have at least one weak derivative.
-We can therefore say that $u \in V$ where
+We can therefore say that $u \in V$ where, for dimension $d$,
 
 \begin{equation}
-  V = \{ \ v \in [H^1(\Omega)]^d : v |_{\Gamma} = g \ \}  \\
+  V = \{ \ v \in [H^1(\Omega)]^d : v |_{\Gamma} = g \ \}.
   \label{eq:stokes_velocity_space}
 \end{equation}
 
-$p$ is scalar-valued, no derivatives of $p$ are present in the weak formulation, nor are any boundary conditions applied to it and so we can write that $p \in Q$ where
+Unlike $u$, $p$ is scalar-valued, needs no derivatives of $p$, and does not have any boundary conditions applied to it, so we can write that $p \in Q$ where
 
 \begin{equation}
-  Q = \{ \ q \in L^2(\Omega) \ \}  \\
+  Q = \{ \ q \in L^2(\Omega) \ \}
   \label{eq:stokes_pressure_space}
 \end{equation}
 
+\todo[inline]{This is the bit I really don't know how to properly explain.}
+
 Since the values of $u$ at the boundary are already prescribed, the function space of the test function $v$ is defined to be zero at those nodes
 
-\begin{equation*}
+\begin{equation}
   \hat V = \{\ v \in [H^1(\Omega)]^d : v|_{\Gamma} = 0 \ \}.
-\end{equation*}
+\end{equation}
 
-This allows us to drop some terms from \cref{eq:weak_stokes_extra_V}, allowing us to state the final problem as follows:
-
-\vspace{1em}
-
-%TODO: Not sure how to format this best
-Find $(u, p) \in V \times Q$ such that
+This allows us to drop some terms from \cref{eq:weak_stokes_extra_V}, allowing us to state the final problem as follows: find $(u, p) \in V \times Q$ such that
 
 \begin{subequations}
   \begin{align}
     \int \nu \nabla u : \nabla v \, \textrm{d}\Omega
     - \int p \nabla \cdot v \, \textrm{d}\Omega
     &= 0
-    &\forall \ v \in \hat V
+    &\forall v \in \hat V
     \label{eq:weak_stokes_V} \\
     %
     \int q \, \nabla \cdot u \, \textrm{d}\Omega
     &= 0
-    &\forall \ q \in Q.
+    &\forall q \in Q.
     \label{eq:weak_stokes_Q}
   \end{align}
   \label{eq:weak_stokes}
@@ -113,47 +128,42 @@ Find $(u, p) \in V \times Q$ such that
 
 \subsection{Discretising the system of equations}
 
-In order to solve this weak formulation using the finite element method we discretise the function spaces in use by replacing them with a finite dimensional equivalent:
+In order to solve this weak formulation using the finite element method we discretise the function spaces in use by replacing them with finite dimensional equivalents:
 
-\begin{equation*}
-  V \to V_h \subset V,
-  \quad
-  \hat V \to \hat V_h \subset \hat V,
-  \quad
-  Q \to Q_h \subset Q.
-\end{equation*}
+\begin{align*}
+  &V \quad \to \quad V_h \subset V, \\
+  &\hat V \quad \to \quad \hat V_h \subset \hat V, \\
+  &Q \quad \to \quad Q_h \subset Q.
+\end{align*}
 
-Each of these discrete spaces is spanned by a set of basis functions so any function can be expressed as a linear combination of the basis functions and their coefficients.
+Each of these discrete spaces is spanned by a set of basis functions, so any function can be expressed as a linear combination of the basis functions and their coefficients.
 For example, we can write the function $u_h \in V_h$ as
 
-\begin{equation*}
-  u_h = \Sigma^N_{i=1} \hat u_i \psi^{V_h}_i
-\end{equation*}
+\begin{equation}
+  u_h = \sum^N_{i=1} \hat u_i \psi^{V_h}_i
+\end{equation}
 
 for basis functions $\psi^{V_h}_i$ and coefficients $\hat u_i$.
 
-Substituting these discrete function spaces back into \cref{eq:weak_stokes}, and discarding the basis coefficients for the arbitrary functions $v_h$ and $q_h$, we obtain the discrete problem:
-
-\vspace{1em}
-
-%TODO: Not sure how to format this best
-Find $(\hat u, \hat p)$ such that
+Substituting these discrete spaces back into \cref{eq:weak_stokes}, and discarding the basis coefficients for the arbitrary functions $v_h$ and $q_h$, we obtain the discrete problem: find $(u_h, p_h) \in V_h \times Q_h$ such that
 
 \begin{subequations}
   \begin{align}
-    \int \nu \hat u \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
-    - \int \hat p \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega
+    \int \nu u_h \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
+    - \int p_h \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega
     &= 0
-    &\forall \ \psi^{\hat V} \\
+    \quad \forall \psi^{\hat V} \\
     %
-    \int \psi^Q \, \nabla \cdot \hat u \psi^{V_h} \, \textrm{d}\Omega
+    \int \psi^Q \, u_h \nabla \cdot \psi^{V_h} \, \textrm{d}\Omega
     &= 0
-    &\forall \ \psi^{Q}
+    \quad \forall \psi^{Q},
   \end{align}
   \label{eq:weak_stokes_discrete}
 \end{subequations}
 
-This can be reformulated as the saddle point linear system
+which can be written as the (saddle point) linear system
+
+\todo[inline]{Do I want $V$ or $\hat V$ in the matrix? I feel like we should want the former...}
 
 \begin{equation}
   \left (
@@ -169,9 +179,9 @@ This can be reformulated as the saddle point linear system
   \right )
   \left (
   \begin{array}{c}
-    \hat u \\
+    u_h \\
     \hline
-    \hat p
+    p_h
   \end{array}
   \right )
   =
@@ -184,19 +194,24 @@ This can be reformulated as the saddle point linear system
   \label{eq:stokes_linear_system}
 \end{equation}
 
-Solving the Stokes equations using the finite element method therefore boils down to constructing, or \textit{assembling}, the left-hand-side matrix and the, here trivial, right-hand-side vector before solving for the coefficients $\hat u$ and $\hat p$.
+Solving the Stokes equations using the finite element method therefore boils down to constructing, or \textit{assembling}, the left-hand-side matrix and the - here trivial - right-hand-side vector before solving for the coefficients of $u_h$ and $p_h$.
 
 \subsection{Choosing a basis}
 
 \begin{figure}
   \centering
-  \begin{subfigure}{.3\textwidth}
+  \begin{subfigure}{.4\textwidth}
     \centering
     \includegraphics{lagrange_element_2.pdf}
-    \caption{P2, TODO}
+    \vspace{1em}
+    \caption{
+      The $P_2$ (Lagrange, degree 2) finite element for a triangle.
+      Point evaluation DoFs are associated with edges (red) and vertices (green).
+    }
     \label{fig:lagrange_element_2}
   \end{subfigure}
-  \begin{subfigure}{.68\textwidth}
+  %
+  \begin{subfigure}{.58\textwidth}
     \centering
     \begin{tabular}{c c c}
       \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof0.pdf}
@@ -212,16 +227,16 @@ Solving the Stokes equations using the finite element method therefore boils dow
       \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof5.pdf}
     \end{tabular}
     %
-    \caption{P2 basis functions, TODO}
+    \caption{
+      The basis functions of a $P_2$ finite element.
+      The images were reused (with permission) from DefElement~\cite{defelement}.
+    }
     \label{fig:lagrange_element_2_basis}
   \end{subfigure}
-  %
-  \caption{The $P_2$ (Lagrange, degree 2) finite element, \cite{defelement}}
 \end{figure}
 
-% TODO: Resolve \hatV_h vs V_h, think one goes away...
 In order to numerically evaluate the integrals in \cref{eq:stokes_linear_system} the basis functions $\psi^{V_h}$ and $\psi^Q$ must be known.
-In the finite element method these are discovered from the choice of \textit{finite element}.
+In the finite element method these are generated from the choice of \textit{finite element}.
 
 First formalised by Ciarlet~\parencite{ciarletElement2002}, a finite element is the triple $(K, P, N)$, where:
 
@@ -231,27 +246,30 @@ First formalised by Ciarlet~\parencite{ciarletElement2002}, a finite element is 
   \item $N$ is a set of linear functionals that form a basis for the dual space of $P$.
 \end{itemize}
 
-% TODO: Reword this because the point evaluation stuff is a bit confusingly worded
-A simple example of a finite element, the degree 2 Lagrange element, is shown in \cref{fig:lagrange_element_2}.
-For this element $K$ (the cell) is a triangle, $P$ (the function space) is the space of order 2 polynomials, and $N$ (the dual basis) is defined to be point evaluation at each of the nodes:
+A simple example of a finite element, the Lagrange degree 2 element, is shown in \cref{fig:lagrange_element_2}.
+For this element $K$ (the cell) is a triangle, $P$ (the function space) is the space of order 2 polynomials, and $N$ (the dual basis) is defined to be point evaluation at each of the nodes.
+That is to say, linear functional $l_i$, taking as input some function $v$, is defined to be
 
 \begin{equation*}
   l_i(v) = v(x_i),
 \end{equation*}
 
-where $l_i$ is the linear functional associated with node $i$, $v$ is some function in $P$ and $x_i$ are the coordinates of the $i$-th node.
+\noindent
+where $x_i$ is the coordinates of the $i$-th node.
 
-From these attributes, it is possible to determine a basis for $P$ by imposing that
+Given this definition, one can determine a basis, $\psi_j$, for $P$ by imposing that
 
-% TODO: define n_k
+\todo[inline]{Not sure how to write forall i, j bit. And $n_k$ currently undefined.}
+
 \begin{equation*}
-  l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, n_k.
+  l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, n_k,
 \end{equation*}
 
-In the case of the $P_2$ element this yields the basis functions
+\noindent
+which for the $P_2$ element yields the basis functions (\cref{fig:lagrange_element_2_basis}):
 
 % see https://defelement.com/elements/examples/triangle-lagrange-equispaced-2.html
-\begin{align*}
+\begin{align}
   &\psi_0 = 2x^2 + 4xy - 3x + 2y^2-3y+1,
   &
   &\psi_3 = 4xy, \\
@@ -262,77 +280,80 @@ In the case of the $P_2$ element this yields the basis functions
   %
   &\psi_2 = y(2y-1),
   &
-  &\psi_5 = 4x(-x-y+1),
-\end{align*}
+  &\psi_5 = 4x(-x-y+1).
+  \label{eq:basis_functions}
+\end{align}
 
-shown in \cref{fig:lagrange_element_2_basis}.
+\subsubsection{Mapping to reference space}
 
-As described, these basis functions belong to just the cell $K$.
-However, this is just the \textit{reference} cell.
-In the finite element method the problem domain $\Omega$ is broken apart into many disjoint cells - $\Omega = \Sigma_K \Omega_K$ - and the integrals are evaluated per cell.
-This tesselation of the domain is termed a \textit{mesh}.
+\todo[inline]{bit ick, reword}
 
-From \cref{fig:lagrange_element_2} one can see that the linear functionals, and hence the basis functions, are associated with different topological entities in the cell and this is emphasised by showing them in different colours.
-Inter-cell continuity is achieved by having \glspl{dof} on the vertices and edges, as these are shared between adjacent cells.
-If all \glspl{dof} are associated to the cell alone then the function space is said to be \textit{discontinuous}.
+The basis functions enumerated above are given in \textit{reference space}, that is, relative to the reference finite element.
+By contrast, the basis functions of the variational problem exist in \textit{physical space}: cells in the mesh are rarely exactly regular in shape.
+% not a lot of detail, revisit
+In order to be able to use the reference basis functions one needs to introduce Jacobian-like terms into the integrals termed \textit{pullbacks}.
+
+From \cref{fig:lagrange_element_2} one can see that the linear functionals, and hence the basis functions and DoFs, are associated with different topological entities, and this is emphasised by showing them in different colours.
+When the finite element definition above is transformed from \textit{reference space} to \textit{physical space}, DoFs associated with topological entities of the reference cell are associated with equivalent entities on the mesh.
+\Cref{fig:mesh_stencil} for example shows a mesh storing DoFs for a $P_3$ finite element.
+Just as cell sub-entities (e.g. edges and vertices) are shared between adjacent cells, so are the DoFs associated with those entities.
+
+
+\subsubsection{Choosing a basis for the Stokes equations}
 
 \begin{figure}
   \centering
-  %
-  \hfill
-  %
-  \begin{subfigure}{.4\textwidth}
+  \begin{subfigure}{.35\textwidth}
+    \centering
     \includegraphics{lagrange_element_3_vec.pdf}
     \label{fig:scott_vogelius_element_P3}
   \end{subfigure}
   %
-  \hfill
-  %
-  \begin{subfigure}{.4\textwidth}
+  \begin{subfigure}{.35\textwidth}
+    \centering
     \includegraphics{lagrange_element_2_dg.pdf}
   \end{subfigure}
   %
-  \hfill
-  %
-  \caption{Scott-Vogelius element (degree 3?), $[P_3]^2 \oplus P_2^\mathrm{disc}$}
+  \caption{
+    The Scott-Vogelius element, degree 3 ($[P_3]^2 \oplus P_2^\mathrm{disc}$).
+    The lower-order space (right) is discontinuous and hence all of the DoFs are marked as belonging to the cell (blue).
+  }
   \label{fig:scott_vogelius_element}
 \end{figure}
 
-The choice of basis functions used by the function spaces has significant implications for the convergence and stability of the model.
-For the Stokes equations in 2D, a common choice of element pair, or \textit{mixed} element, with properties matching the constraints given in \cref{eq:stokes_velocity_space} and \cref{eq:stokes_pressure_space} is the Scott-Vogelius element~\cite{scottNormEstimatesMaximal1985}.
-Shown in \cref{fig:scott_vogelius_element}, the element consists of a continuous vector-valued degree $k$ Lagrange element for the velocity space, and a discontinuous Lagrange element of degree $k-1$.
-Note that the Scott-Vogelius element is known to be inf-sup stable for degree $\geq 4$ but we only show degree 3 here for brevity~\cite{guzmanScottVogeliusFiniteElements2018}.
+The choice of basis functions used by the function spaces has significant implications for the convergence and stability of the method.
+For the two-dimensional Stokes equations, a common choice of element pair, or \textit{mixed} element, with properties matching the constraints given in \cref{eq:stokes_velocity_space} and \cref{eq:stokes_pressure_space} is the Scott-Vogelius element~\cite{scottNormEstimatesMaximal1985}.
+The element consists of a continuous vector-valued degree $k$ Lagrange element for the velocity space, and a discontinuous Lagrange element of degree $k-1$.
+This is shown in \cref{fig:scott_vogelius_element} for $k = 3$\footnote{The two-dimensional Scott-Vogelius element is technically known to be stable only for $k \geq 4$~\cite{guzmanScottVogeliusFiniteElements2018}, but we show $k = 3$ for simplicity.}.
 
 \subsection{Finite element assembly}
 
-If we consider assembly the top left block of the matrix in \cref{eq:stokes_linear_system} we see that we need to evaluate
+Having established the basis functions and pullbacks of the discrete function spaces we are now able to numerically evaluate, via a quadrature scheme, the integrals of \cref{eq:stokes_linear_system}.
+This step is referred to as \textit{local assembly}, and code for its evaluation is termed the \textit{local kernel}.
+The final piece required for finite element assembly is an outer loop, where local kernel is evaluated for each basis function in the discrete space.
+This process is termed \textit{global assembly}.
 
-\begin{equation*}
+If we again consider the Stokes problem above, to assemble the top left block of the matrix in \cref{eq:stokes_linear_system} we see that we need to evaluate
+
+\begin{equation}
   \int \nu \nabla \psi^{V_h}_i : \nabla \psi^{\hat V_h}_j \, \textrm{d}\Omega
-\end{equation*}
+\end{equation}
 
-for each possible $i$ and $j$.
+\noindent
+for each possible pair of basis functions $\psi^V_i$ and $\psi^V_j$, suggesting an assembly algorithm with quadratic complexity.
+This situation can be improved by observing that finite element basis functions are only non-zero in a small region around their owning mesh entity (e.g. \cref{fig:lagrange_element_2_basis}) - we say that they have \textit{local support}.
+This means that most of the integrals are \textit{zero by definition}, and the assembled matrix is \textit{sparse}.
 
-However, from \cref{fig:lagrange_element_2_basis} it can be seen that finite element basis functions are only non-zero in a small region around its assigned mesh entity - we say that they have \textit{local support}.
-This is significant for constructing matrices such as that in \cref{eq:stokes_linear_system} because most of the integrals are zero \textit{by definition}.
-This has two consequences:
-
-\begin{itemize}
-  \item
-    The assembled matrix is \textit{sparse}.
-
-  \item 
-    Assembly is more efficient done cell-wise. That is, one evaluates
-
-    \begin{equation*}
-      \int_K \nu \nabla \psi^{V_h}_K : \nabla \psi^{\hat V_h}_K \, \textrm{d}\Omega_K
-    \end{equation*}
-
-    for each cell $K$ and adds the results together.
-\end{itemize}
+% TODO: I think we only do this because it's a bit easier to think about - no specific reason...
+% Assembly is more efficient done cell-wise. That is, one evaluates
+%
+% \begin{equation*}
+%   \int_K \nu \nabla \psi^{V_h}_K : \nabla \psi^{\hat V_h}_K \, \textrm{d}\Omega_K
+% \end{equation*}
+%
+% for each cell $K$, adding the results together.
 
 % TODO: Decide on a consistent algorithm format
-% TODO: I should introduce the term "stencil"
 \begin{algorithm}
   \begin{verbatim}
     FOR EACH cell IN mesh.cells:
@@ -392,6 +413,16 @@ Representing this structure is one of the main challenges of this thesis and wil
 % application"
 % this crops up with subtle variations all over the place, changes to multitude of variables constitute a rewrite - also cannot layer UFL on top?
 % BECAUSE PRODUCTIVITY!
+
+% models always need to push what is possible, not just in terms of raw performance, but also cutting-edge numerical methods
+% constantly want to push scale - ever increasing demand for computational resources
+
+% developing software that meets this demand is a multidisciplinary effort
+% from scratch can take many person years to develop, and often specific to a particular system of equations or application
+
+% also composable (high-level) abstractions - do more with less code
+% the use of code generation allows for a separation of concerns
+
 
 % TODO:: cite dune, deal.ii, Firedrake, FENIcs, devito...?
 At this point we have established, excluding the local kernels and global solve, the algorithms and data structures necessary to solve a finite element problem.
