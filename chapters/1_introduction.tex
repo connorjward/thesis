@@ -51,6 +51,8 @@ The Stokes equations are given as follows: for domain $\Omega$ with boundary $\G
   \label{eq:strong_stokes}
 \end{subequations}
 
+\todo[inline]{I don't talk about the viscosity at all. It is convenient for later if it is in P3.}
+
 where $\nu$ is the viscosity and $g$ is some prescribed Dirichlet boundary condition fixing the velocity across the entire boundary.
 Forcing terms are omitted for simplicity.
 As we have a coupled system of two variables ($u$ and $p$), we refer to this system as being \textit{mixed}.
@@ -337,75 +339,99 @@ If we again consider the Stokes problem above, to assemble the top left block of
 
 \begin{equation}
   \int \nu \nabla \psi^{V_h}_i : \nabla \psi^{\hat V_h}_j \, \textrm{d}\Omega
+  \label{eq:stokes_top_left}
 \end{equation}
 
 \noindent
 for each possible pair of basis functions $\psi^V_i$ and $\psi^V_j$, suggesting an assembly algorithm with quadratic complexity.
-This situation can be improved by observing that finite element basis functions are only non-zero in a small region around their owning mesh entity (e.g. \cref{fig:lagrange_element_2_basis}) - we say that they have \textit{local support}.
+However, this may be improved by observing that finite element basis functions are only non-zero in a small region around their owning mesh entity (e.g. \cref{fig:lagrange_element_2_basis}) - we say that they have \textit{local support}.
 This means that most of the integrals are \textit{zero by definition}, and the assembled matrix is \textit{sparse}.
 
-% TODO: I think we only do this because it's a bit easier to think about - no specific reason...
-% Assembly is more efficient done cell-wise. That is, one evaluates
-%
-% \begin{equation*}
-%   \int_K \nu \nabla \psi^{V_h}_K : \nabla \psi^{\hat V_h}_K \, \textrm{d}\Omega_K
-% \end{equation*}
-%
-% for each cell $K$, adding the results together.
-
-% TODO: Decide on a consistent algorithm format
 \begin{algorithm}
-  \begin{verbatim}
-    FOR EACH cell IN mesh.cells:
-      FOR EACH coefficient IN expression:
-        collect the coefficients of basis functions that have non-zero support over cell
-      compute the integral numerically
-      add the values of the computed integrals into the global matrix or vector
-  \end{verbatim}
-  \caption{TODO}
+  \caption{
+    Algorithm for assembling a finite element data structure with a single coefficient in the expression.
+  }
+  %
+  \begin{algorithmic}[1]
+    \Require \textit{coefficient}, \textit{output} \Comment{Input and output variables}
+    \Require \textit{temp0}, \textit{temp1} \Comment{Work arrays}
+
+    \For{\textit{cell} \textbf{in} \textit{mesh.cells}}
+      \State \Call{Read}{\textit{coefficient}, \textit{cell}, \textit{temp0}}
+      \State \Call{Zero}{\textit{temp1}}
+      \State \Call{LocalKernel}{\textit{temp0}, \textit{temp1}} \Comment{Evaluate the integral for each cell}
+      \State \Call{Increment}{\textit{output}, \textit{temp1}} \Comment{Scatter the result}
+    \EndFor
+  \end{algorithmic}
   \label{alg:fem_assembly}
 \end{algorithm}
 
 \begin{figure}
   \centering
-  \includegraphics[scale=1.2]{fem_assembly.pdf}
-  \caption{TODO}
+  \includegraphics[scale=1.4]{fem_assembly.pdf}
+  \caption{
+    Diagram of the assembly process for \cref{eq:stokes_top_left}.
+    For each cell in the mesh the viscosity coefficient is packed into a temporary array before the local kernel is evaluated.
+    The result, a dense matrix, is then scattered to the global sparse matrix.
+  }
   \label{fig:fem_assembly}
 \end{figure}
 
-The algorithm for this cell-wise assembly process is summarised in \cref{alg:fem_assembly}.
-Given some code that evaluates the integral for a single cell the global algorithm is responsible for marshalling ``local" data in and out of it and hence we term it a \textit{stencil} algorithm.
-An example is shown in \cref{fig:fem_assembly}.
-Local viscosity data for a particular cell is \textit{packed} into a small temporary and the cell integral is evaluated.
-This produces a small dense matrix whose values must be scattered to entries in the global sparse matrix.
+In order to avoid this quadratic complexity, finite element assembly typically proceeds by iterating over cells and evaluating the local kernel on each cell.
+Only basis functions with non-zero support over the cell - DoFs on the cell or its sub-entities - need be considered for the assembly.
+The global assembly may therefore be expressed as the sum of cell-wise integrals
+
+\todo[inline]{define $\mathcal{T}$ somewhere above}
+
+\begin{equation}
+  \sum_{K \in \mathcal{T}} \int_K \nu \nabla \psi_i^K : \nabla \psi_j^K \, \textrm{d}\Omega,
+\end{equation}
+
+\noindent
+with $\phi^K$ are the basis functions over the cell.
+
+This process is shown in \cref{fig:fem_assembly}, and an algorithm for its execution is summarised in \cref{alg:fem_assembly}.
+From these, it is clear why finite element assembly is referred to as a mesh stencil process.
 
 \subsection{Finite element data structures}
 
 \begin{figure}
   \centering
   \includegraphics{scott_vogelius_element_dof_layout_packed.pdf}
-  \caption{TODO}
+  \caption{
+    The packing transformation taking the global data (top) to the packed local data (bottom) for a two-dimensional Scott-Vogelius function space.
+    The global data stores all DoFs for the entire function space whilst the packed data only contains the DoFs present in the current stencil iterate.
+    \\
+    The data layout has been split into multiple levels to emphasise the hierarchical nature of function spaces.
+    For instance, every edge in the mesh (red) for the velocity space $[P_3]^2$ ($V_h$) has 2 nodes: $n_0$ and $n_1$, with each node having 2 components: \labelComponent{0} and \labelComponent{1}.
+    \\
+    As the packed local data only exists as a temporary, its contents are parametrised by the current cell iterate, $c_i$.
+    Sub-entities are identified via a relation from this, for instance the first vertex incident on $c_i$ is represented by $f_0^v(c_i)$.
+  }
   \label{fig:scott_vogelius_element_dof_layout_packed}
 \end{figure}
 
-For the finite problem in \cref{eq:stokes_linear_system} one must store various arrays of unknowns in memory ($\nu$, $(\hat u, \hat p)^T$, etc).
-The vector $(\hat u, \hat p)^T$, for a 2-dimensional domain, contains
+Before we can write any assembly code we need to formalise what it means to pack and unpack the local data (lines~\ref{code:pack_demo} and~\ref{code:unpack_demo} in \cref{alg:fem_assembly}).
+This requires that the \textit{data layouts} of both the global and local data structures be defined.
+
+Despite the fact that the mesh is unstructured, and hence `adjacent' topological entities may be far from it when stored in memory, function spaces have an amount of inherent structure that must be taken into account when determining the right pack/unpack transformations.
+A potential structure for a two-dimensional Scott-Vogelius function space is demonstrated in \cref{fig:scott_vogelius_element_dof_layout_packed}.
+The top part of the figure represents the data layout for the global data structure and the bottom for the local packed one passed to the local kernel.
+The size of the global data layout is given by
 
 \begin{equation*}
-  2 ( n_\textnormal{cells} \times 1 + n_\textnormal{edges} \times 2 + n_\textnormal{vertices} \times 1 ) + n_\textnormal{cells} \times 6
+  \underbrace{2 ( 1 \times n_\textnormal{cells} + 2 \times n_\textnormal{edges} + 1 \times n_\textnormal{vertices} )}_{V_h} + \underbrace{6 \times n_\textnormal{cells}}_{Q_h},
 \end{equation*}
 
-unknowns, which are packed into a local temporary of
+\noindent
+and the size of the local layout is
 
 \begin{equation*}
-  2 ( 1 \times 1 + 3 \times 2 + 3 \times 1 ) + 6 = 26
+  \underbrace{2 ( 1 \times 1 + 2 \times 3 + 1 \times 3 )}_{V_h} + \underbrace{6 \times 1}_{Q_h} = 26.
 \end{equation*}
 
-numbers (per row and column) during assembly.
-This process is illustrated in \cref{fig:scott_vogelius_element_dof_layout_packed}.
-
-In this example it can be seen that both the global and local arrays have some non-trivial structure.
-Representing this structure is one of the main challenges of this thesis and will be described in more detail in \cref{chapter:axis_trees,chapter:indexing}.
+From \cref{fig:scott_vogelius_element_dof_layout_packed} it is clear that both the global and local data layouts have some inherent structure: DoFs for the different spaces $V_h$ and $Q_h$ are kept apart and nodes and components are stored contiguously.
+Representing this hierarchical structure in code is challenging and forms one of the main contributions of this thesis (\cref{chapter:axis_trees,chapter:indexing}).
 
 \section{Execution models for mesh stencil calculations}
 

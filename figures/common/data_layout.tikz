@@ -98,7 +98,3 @@
 \newcommand{\labelLayoutAxis}[1]{
   \node [at={(-1.8,\yshift+.5)},fill=none] {#1};
 }
-
-\newcommand{\labelComponent}[1]{
-  \textbf{x$_#1$}
-}
