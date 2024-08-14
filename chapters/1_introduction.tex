@@ -437,6 +437,7 @@ Representing this hierarchical structure in code is challenging and forms one of
 
 Developing software for numerical methods involving mesh stencils is difficult for a number of reasons:
 
+% Writing these codes by hand is prohibitively difficult: writing a performant and scalable simulation would take months or years of programmer effort and any changes to the \glspl{pde}, discretisation or hardware might constitute a substantial rewrite.
 % NOTE: I think that this should probably be put together into a simple paragraph, but not too sure
 \paragraph{It is time-consuming.}{
   A piece of scientific software can take many person-years to develop.
@@ -463,11 +464,12 @@ Clearly a scientist looking to solve a continuum mechanics problem should avoid 
 These packages may be broadly split into two categories: `library' packages and run-time code generation packages.
 
 Library packages work in the traditional way: the developers build a suite of routines, often in a compiled language like C or C++, and these are called by the user via the package's API.
-Examples of such packages include deal.ii~\cite{}, Dune-FEM~\cite{}, MFEM~\cite{}, libCEED~\cite{}.
+Examples of such packages include deal.ii~\cite{}, Dune-FEM~\cite{}, MFEM~\cite{}, libCEED~\cite{} nektar++~\cite{}.
 Whilst straightforward to implement, choosing a library-style approach for numerical software has a number of drawbacks:
 
 \begin{itemize}
   \item Either slow (generic functions, lots of internal logic), specialised to a particular application or a nightmare to maintain (large codebase) or templated (really hard to reason about).
+  \item OR, pushes responsibility for performance onto the user - provide the kernels!
   \item Portability is difficult too
   \item Commit to a lot of design choices early (e.g. data layout) - GPU paper shows that this can't always be fixed
 \end{itemize}
@@ -488,38 +490,28 @@ These methods are, however, fundamentally limited:
   Compile times and binary sizes can become excessive as every possible combination of parameters needs to be separately compiled.
 \end{itemize}
 
+Run-time code generation is a favourable alternative.
+Effectively templating on steroids - codegen can be done in a traditional programming language like Python, facilitating reasoning and debugging experience etc.
+% have full ability to reason about the program as actual data is accessible - can do search-space Halide-like stuff (inspector executor!)
+% % talk about BLIS, Spiral, FFTW, Halide etc
+% an underappreciated aspect of it is that there is far less code to maintain
+
+  % also composable (high-level) abstractions
+In addition, we get "no cost" high-level abstractions -> huge increase in productivity, separation of concerns (easier for domain experts to contribute), high-level reasoning, automation == layer abstractions on top.
+Example is the Firedrake/FEniCSx projects with UFL.
+% also devito
+% having a high-level representation of the problem enables optimisations best expressed at the level of the mathematics that would otherwise be very challenging to implement (e.g.~\cite{homolyaExposingExploitingStructure2017}).
+
 % but mention that it is harder to implement and can be harder to get top-tier performance as
 % performance is hidden behind a compiler
 % also a performance hit at runtime as compilation needs to happen then - but much less time than
 % compiling all of the templates!
-Run-time code generation is a favourable alternative.
-Effectively templating on steroids - codegen can be done in a traditional programming language like Python, facilitating reasoning and debugging experience etc.
+% also, importantly, if we can't generate code for things then we can't run them - can be hard to prototype new methods if they lie outside of the abstraction
+% "for the purposes of this thesis we regard these less as drawbacks and more as important avenues of research"
 
-  % also composable (high-level) abstractions - do more with less code
-In addition, we get "no cost" high-level abstractions -> separation of concerns (easier for domain experts to contribute), high-level reasoning, layer abstractions on top.
-Example is the Firedrake/FEniCSx projects with UFL.
-
-% RTCG has been shown to work fantastically well
-% % talk about BLIS, Spiral, FFTW, Halide etc? devito? Firedrake,fenicsx?
-% In addition to the step-change in programmer productivity, high-level abstractions also facilitate advanced performance optimisations that would be very difficult to implement for a low-level code.
-% Sometimes, high-level algorithmic changes (discretisation, solver, etc) are required to achieve acceptable performance on a given machine and having a high-level of abstraction means that tweaking these options is minimally invasive \parencite{betteridgeCodeGenerationProductive2021}.
-% Further, having a high-level representation of the problem enables optimisations best expressed at the level of the mathematics that would otherwise be very challenging to implement (e.g.~\cite{homolyaExposingExploitingStructure2017}).
-
-% and also needs to be flexible!
-% models always need to push what is possible, not just in terms of raw performance, but also cutting-edge numerical methods
-% constantly want to push scale - ever increasing demand for computational resources
-
-% for us, productivity is SO IMPORTANT
-% automation gives us productivity and also lets us build higher level abstractions (ref ch. 7)
-
-% =======================OLD=========================
-
-% At this point we have established, excluding the local kernels and global solve, the algorithms and data structures necessary to solve a finite element problem.
-% Subsequently, we are interested in how to manifest these in software.
-% Writing these codes by hand is prohibitively difficult: writing a performant and scalable simulation would take months or years of programmer effort and any changes to the \glspl{pde}, discretisation or hardware might constitute a substantial rewrite.
-% To counter this, numerous frameworks exist providing the building blocks from which a domain specialist, without expertise in high performance computing nor months of programmer time, might build a simulation.
-% This creates a separation of concerns between the framework maintainers, who specialise in low-level optimisation, and the users, who can instead reason about the problem in terms of the mathematics.
-%
+% we want an abstraction that better encompasses a wide range of different numerical methods and optimisations!
+% many of these packages target a particular numerical method (FEM, FDM), we want to be more generic!
+% hence the focus on the more general problem of mesh stencil computations.
 
 \subsection{Design requirements}
 
