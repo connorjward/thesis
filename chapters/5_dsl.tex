@@ -210,6 +210,27 @@ We now consider a more complex example that is more typical of a continuum mecha
 
 \end{example}
 
+\subsection{Optimisation}
+
+% inspector-executor model? probably best to put in chapter 5 where it is relevant
+% inspector-executor model. cite Saltz and Strout
+% two programs, an inspector that generates a schedule, and an executor that uses it. Executor
+% is a transformed original program.
+% these aim to improve data locality and parallelisation opportunities.
+% important point is that I/E strategies utilise runtime information to generate optimal schedules
+% this is very important for unstructured applications where the compilers would have a really hard time!
+\cite{stroutSparsePolyhedralFramework2018} % review article
+\cite{mirchandaneyPrinciplesRuntimeSupport1988} % old (general purpose) example
+\cite{arenazInspectorExecutorAlgorithmIrregular2004} % fem example but specifically parallelisation
+% perhaps also cite Luporini for sparse tiling? yes I think that would be good.
+% Interesting note: composing inspector-executor transformations is difficult.
+% see "The Sparse Polyhedral Framework: Composing Compiler-Generated Inspector-Executor Code"
+% DSLs like loopy and pyop3 can make this easier to handle.
+% mesh numbering is an example of an inspector-executor thing.
+% so is determining core and owned to overlap communication and computation
+% DSLs help a lot to implement this sort of thing because transformations can be a lot easier to
+% express using a high-level representation.
+
 \section{Data structures}
 \label{sec:data_structures}
 

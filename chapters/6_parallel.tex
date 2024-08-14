@@ -20,6 +20,7 @@ Ghost points are copies of owned points held on other processes so when consider
 Since FEM simulations often involve alternating assembly with solving and copying, and copying arrays can be expensive, \pyop3 reorders the data such that ghost unknowns are always stored after owned ones.
 This allows one to reuse the array between assembly and solving - solving just uses a truncated view.
 % this can also occur when one has constrained DoFs (i.e. non-physical) (e.g. boundary conditions) and these also want to be dropped from the global vector
+% \cite{rothwellImplementingRestrictedFunction2024}
 % compared to pyop2, mixed things are done truly at the end - building global vector used to involve copying (bottleneck on GPU)
 
 With axis trees, it is natural to express the partitioning of owned and ghost points at the level of an axis.
