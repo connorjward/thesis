@@ -463,7 +463,7 @@ Developing software for numerical methods involving mesh stencils is difficult f
 Clearly a scientist looking to solve a continuum mechanics problem should avoid writing their codeby hand from scratch and they should instead look to use one of the \textit{many} pre-existing packages as a toolkit to build their simulation.
 These packages may be broadly split into two categories: `library' packages and run-time code generation packages.
 
-Library packages work in the traditional way: the developers build a suite of routines, often in a compiled language like C or C++, and these are called by the user via the package's API.
+Library packages work in the traditional way: the developers build a suite of routines, often in a compiled language like C or \cplusplus, and these are called by the user via the package's API.
 Examples of such packages include deal.ii~\cite{}, Dune-FEM~\cite{}, MFEM~\cite{}, libCEED~\cite{} nektar++~\cite{}.
 Whilst straightforward to implement, choosing a library-style approach for numerical software has a number of drawbacks:
 
@@ -502,211 +502,174 @@ Example is the Firedrake/FEniCSx projects with UFL.
 % also devito
 % having a high-level representation of the problem enables optimisations best expressed at the level of the mathematics that would otherwise be very challenging to implement (e.g.~\cite{homolyaExposingExploitingStructure2017}).
 
+% "not a panacea"
 % but mention that it is harder to implement and can be harder to get top-tier performance as
 % performance is hidden behind a compiler
 % also a performance hit at runtime as compilation needs to happen then - but much less time than
 % compiling all of the templates!
 % also, importantly, if we can't generate code for things then we can't run them - can be hard to prototype new methods if they lie outside of the abstraction
 % "for the purposes of this thesis we regard these less as drawbacks and more as important avenues of research"
+This thesis focuses on the development of new abstractions for mesh stencil computations to facilitate the implementation of numerical methods and performance optimisations.
 
-% we want an abstraction that better encompasses a wide range of different numerical methods and optimisations!
-% many of these packages target a particular numerical method (FEM, FDM), we want to be more generic!
-% hence the focus on the more general problem of mesh stencil computations.
+\subsection{Further design considerations}
+\label{sec:mesh_stencil_requirements}
 
-\subsection{Design requirements}
+In addition to having the right high-level abstractions and backing code generation infrastructure, there a number of essential requirements that a mesh stencil package must meet in order for it to be effective.
+These requirements are:
 
-% NOTE: This needs a rewrite, key idea is to enumerate interface choices that impact productivity
-% Mention expressivity power?
-For the unstructured mesh traversal operation we are interested in, we need an abstraction that:
-
-\begin{itemize}
-  \item
-    Expresses operations in terms of loops, compact kernels and restricted data structures,
-  \item
-    Supports the indirection mappings necessary for unstructured meshes (e.g. the map from cells to supported DoFs), and
-\end{itemize}
-
-
-% we want things to be both performant and expressive - here we care about performance really
-
-% assembly can be a bottleneck (when?)
-% can be slow because of: data movement, payload or matrix insertion.
-
-\subsubsection{Distributed memory parallelism}
-\label{sec:intro_mpi}
-
-% large scale simulations need to be run on massively parallel machines, necessitates dist. memory (MPI)
-
-In massively parallel simulations the data structures are often too large to be stored in the memory of any individual node.
-Instead, they are \textit{distributed} between all of the processes, with each process owning, and seeing, only a small piece of the entire structure.
-
-In order to run simulations at scale global data structures are broken apart and each process stores and operates on its own local piece.
-
-% TODO: do not fade some out - just the shared ones.
-% NOTE: closure is novel concept...
 \begin{figure}
   \centering
   \includegraphics{split_mesh.pdf}
   \caption{
-    \pyop2 entity classes for a mesh distributed between 2 processes.
-    Points belonging to process 1 (left) are shown in red and points belonging to process 2 (right) are shown in blue.
-    \textit{Ghost} points are indicated by points whose colour match the other process, \textit{owned} points are faded and the rest are labelled \textit{core}.
-    We assume that one is only computing cell-wise integrals on the mesh and so the mesh overlap need only contain enough ghost points to ensure that all the cells have a complete closure.
+    Diagram showing the DoFs for a function distributed between 2 processes.
+    DoFs existing on multiple processes are represented by diamonds, with filled diamonds being those belonging to that process and hollow ones being ghost DoFs.
+    DoFs that are not duplicated across processes are shown as circles.
+    Sample (cell-wise) stencils are shown in grey to demonstrate that the ghost DoFs are required for the stencils to be computable.
   }
   \label{fig:pyop2_split_mesh}
 \end{figure}
 
-% TODO: I think it is better to not bother talking about "closed" meshes here. Then can move
-% some things back to DMPlex section. Hmm but overlap is important for PyOP2 exposition!
-% Can phrase as "local computations may require adjacent DoFs that "belong" on other processes - these are called "ghost" points and care must be taken to ensure that the values are kept up-to-date across processes.
+\subsubsection{Distributed memory parallelism}
 
-For unstructured meshes and vectors of mesh data it is usual to \textit{partition} the mesh.
-Since one needs all DoFs incident on the cell to compute things (need a closed local mesh) boundary values may be duplicated on adjacent processes (\cref{fig:star_forest}).
-These are termed \textit{ghost} points.
-The amount of overlap required depends on both the stencil and also the amount of redundant computation/frequency of transfers (look into this, Fabio's thesis, Devito?).
-
-The global matrix is also partitioned, usually by row, so each process only sees a portion of it
-
-% show the mesh figure here? not in chapter 2?
-It is often the case when solving PDEs that unknowns must be stored on multiple processes simultaneously.
-Consider the partitioned mesh shown in \cref{fig:???}.
-In order to be able to compute the cell-wise integrals for the finite element method, the cell stencils overlap with each other and the shared overlap region must be stored on both processes.
-Since unknowns must have only one owning process, their representation on other ranks are known as ``ghosts".
-
-
-% Now how to get good performance? reduce amount of communication + overlap computation and communication (non-blocking), avoid expensive comm patterns (like all to one rank)
+In massively parallel simulations the data structures are often too large to be stored in the memory of any individual node.
+Instead, they are \textit{distributed} between all of the processes, with each process owning, and seeing, only a small piece of the entire structure.
+For vectors it is usual to store the DoFs according to some partitioning of the mesh (\cref{fig:pyop2_split_mesh}).
+Depending on the stencil calculation, processes often need to store DoFs at their boundaries belonging to different processes; these entities are frequently referred to as \textit{ghost points}.
+For matrices the DoF partitioning process is less straightforward.
+Linear algebra libraries such as PETSc~\cite{petsc-user-ref,petsc-web-page,petsc-efficient} provide routines for accessing parallel matrices in a manner such that off-process DoF accesses are hidden.
+\textbf{Mesh stencil packages need to have support for distributed data structures as well as have the right routines for ensuring the correctness of the ghost points.}
 
 \subsubsection{Performance portability}
 
-% ie GPUs - they are now in the biggest supercomputers, good energy efficiency, bandwidth, FLOP/s
+Due to the search for ever-increasing computational power and energy efficiency, it is no longer possible to write a piece of low-level code and deploy it on all supercomputers.
+GPU machines now beginning to dominate the HPC landscape.
+Also ARM (RISC) CPUs are popular (e.g. Fugaku).
+Programming for these disparate architectures requires both new programming languages/models, in the case of GPUs, as well as high-level algorithmic changes~\cite{betteridgeCodeGenerationProductive2021} to get acceptable performance.
+The situation is further complicated by the programming models being vendor-specific with languages such as CUDA, HIP and Sycl all being specially designed to get performance from a particular vendor's accelerators.
+\textbf{A successful mesh stencil code should be able to switch between backends with only minimal changes to both user and internal code, and be reasonably performant for them all.}
 
-% potentially very effective for this sort of work - very parallel
+\todo[inline]{This bit seems a bit forced but I do want to make a point that implementing your own mesh, matrices, solvers etc is dumb. Perhaps this should just be "parallel sparse matrices".}
 
-% challenging programming model, different programming languages (and vendor specific) (apart from Kokkos etc), kernels need to be launched (can be slow, latency), memory transers between host and device
+\subsubsection{Interoperability with external software}
 
-% OpenMP? hybrid?
-% As with Firedrake and PETSc, MPI is chosen as the sole parallel abstraction; hybrid models also using shared memory libraries like OpenMP (cite) are not used because the posited performance advantages are contentious \parencite{knepleyExascaleComputingThreads2015} and would increase the complexity of the code.
+As described above, the work needed to successfully implement a piece of simulation software is enormous and prohibitive.
+\textbf{To make such an endeavour tractable, and maintainable in the long term, mesh stencil codes should avoid `reinventing the wheel' by leveraging existing software wherever possible.}
+In particular, meshing software is notoriously complicated to implement as a large array of features from geometry to partitioning and input/output require implementing; it is preferable to use existing, mature, implementations for such features (e.g. PETSc~\cite{petsc-user-ref,petsc-web-page,petsc-efficient}).
 
-\subsubsection{Interoperability with existing software}
+\begin{figure}
+  \centering
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{two_cell_mesh_lagrange.pdf}
+    \vspace{1em}
+  \end{subfigure}
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics{two_cell_mesh_lagrange_data_layout_flat.pdf}
+  \end{subfigure}
+  \caption{
+    Data layout for a $P_3$ function space on a two cell mesh.
+    The mesh data has been renumbered such that edge and vertex DoFs are `close' to their incident cell.
+  }
+  \label{fig:mesh_renumbering_demo}
+\end{figure}
 
-% PETSc is used in MFEM, FEniCS, MOOSE, deal.ii? so many, definitely a "standard"
+\subsubsection{Mesh renumbering}
 
-% high level algorithmic changes are essential for performance (JB paper) - want to use top quality solvers
-
-% also, need to reimplement a lot of things best done by existing packages (partitioning, I/O etc)
-
-% certainly hard to do in parallel, sparse matrices etc
-% PETSc is great, name check
-
-\subsubsection{Data locality optimisations}
-\label{sec:intro_mesh_numbering}
-
-% mesh numbering
-% --------------
-% cite PyOP2 paper, also perhaps extruded paper
-
-% Numbering can reference the FEM pseudo-code - we need cellwise data to be "close"
-% "put closure data close together"
-
-% \subsubsection{Data layout transformations}
+During the execution of a mesh stencil the input and output global data structures are accessed with indirection maps.
+Accessing the data indirectly incurs a performance penalty because it defeats hardware-implemented memory optimisations such as prefetching, where adjacent blocks of memory are loaded into a cache line together.
+To improve data locality, a common optimisation is to \textit{renumber the mesh entities} such that, say, edge DoFs are `close' to the DoFs of their incident cell (e.g. Algorithm 3 of~\cite{langeEfficientMeshManagement2016}).
+This increases both the chance that adjacent required DoFs will be loaded onto the same cache line (spatial locality), and also the chance that DoFs shared between successive iterates will already be in cache (temporal locality).
+An example of such a renumbering is shown in \cref{fig:mesh_renumbering_demo}; the data for the vector is arranged such that incident edge and vertex DoFs are adjacent in memory to their cell.
+Whilst not necessary for low-order methods, where DoFs are only stored on a single entity type, \textbf{a truly generic mesh stencil code needs to have support for `interleaving' DoFs of different entity types.}
 
 \begin{figure}
   \centering
   \includegraphics{scott_vogelius_element_dof_layout_swap.pdf}
   \caption{
-    TODO
+    An alternative, `struct-of-array' data layout for the Scott-Vogelius function space of \cref{fig:scott_vogelius_element_dof_layout_packed}.
+    Notice how the components of the vector space $V_h$ are now stored apart from one another.
   }
   \label{fig:scott_vogelius_element_dof_layout_swap}
 \end{figure}
 
-% many packages "commit early" to a particular representation, potentially sacrificing performance
+\subsubsection{Data layout flexibility}
 
-% TODO: cite AoS/SoA performance paper or something.
+In order to get optimal performance on different platforms, especially when transitioning from CPU to GPU architectures, the way in which data is laid out must be altered (e.g.~\cite{markallFiniteElementAssembly2013,sulyokImprovingLocalityUnstructured2018}).
+This poses a challenge to many simulation packages as they often commit to a particular representation of the data, typically one optimised for CPU execution, posing difficulties for achieving performance portability without a substantial rewrite of much of the software.
+One possible way in which this manifests is whether or not to use a `struct-of-array' (SoA) or `array-of-structs' (AoS) data layout.
+Applied to a finite element function space these data layouts can manifest as, say, having vector components stored adjacent to one another (AoS, \cref{fig:scott_vogelius_element_dof_layout_packed}) or separately (SoA, \cref{fig:scott_vogelius_element_dof_layout_swap}).
 
-% NOTE: do not talk about OP2/PyOP2 here, mentioned first below
+\textbf{As a consequence, we naturally want mesh stencil codes to be able to support a variety of data layout representations, ideally without any major changes to the code.}
+Taking a high-level abstraction approach is useful for this as a separation of concerns may be drawn between the semantics of the data and its materialisation.
+Examples of such abstractions providing high-level interfaces for constructing differing data layouts include Taichi~\cite{huTaichiLanguageHighperformance2019}, a DSL for graphics simulations, and TACO~\cite{kjolstadTacoToolGenerate2017}, a compiler for tensor algebra.
+Both packages separate the specification of the data layouts from the implementation of the algorithms and have been shown to have excellent performance.
 
-% Lastly, OP2 and \pyop2 both commit eagerly to storing the data in a particular format.
-% Depending on the problem at hand, better performance may be achieved by rearranging the way in which DoFs are stored such that data is streamed from memory in the most efficient manner possible.
-% An example demonstrating a different data layout for the data shown in \cref{fig:scott_vogelius_element_dof_layout} is shown in \cref{fig:scott_vogelius_element_dof_layout_swap}.
-% In the latter the vector component part of the data layout has been ``lifted" such that, for the $V_h$ function space, all \glspl{dof} corresponding with the 0th component are stored before all \glspl{dof} for the 1st component.
-% This is equivalent to transforming from an ``array-of-structs" (AoS) layout to a ``struct-of-arrays" (SoA) layout.
-% Neither layout is inherently faster than the other and different applications may want to use one over another.
-% Both OP2 and \pyop2 only support storing data in the AoS format (\cref{fig:scott_vogelius_element_dof_layout_pyop2}) and so cannot do this.
+\subsection{Existing mesh stencil packages}
 
-% TODO: mention taichi in this chapter somewhere as a similar project, maybe also TACO (and SPF?)
+% TODO: Maybe have macros to make sure the headings agree with above
+% FIXME: "Data layout flexibility" is far too vague here to have a tick or cross - perhaps "Dynamic data layouts"
+\begin{table}
+  \centering
 
-% % AoS-SoA etc? (taichi)
-% \textbf{Taichi} is a programming language embedded in C\+\+ for operating on complex data structures~\cite{huTaichiLanguageHighperformance2019}.
-% Just like \pyop3, Taichi declares data structures hierarchically and the data layout is kept distinct from the operations applied to them.
-% Taichi has no concept of a mesh, and it does not work on distributed machines.
-% https://www.taichi-lang.org/
-% very successful!
+  \begin{tblr}{|[1pt]l|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]}
+    \hline[1pt]
+    & \textbf{Liszt} & \textbf{Simit} & \textbf{Ebb} & \textbf{MeshTaichi} & \textbf{OP2} & \textbf{PyOP2} \\
+    \hline[1pt]
+    Distributed memory parallelism & \mytick & \mycross & \mycross & \mycross & \mytick & \mytick \\
+    \hline
+    Performance portability & \mytick & \mytick & \mytick & \mytick & \mytick & \mycross\footnotemark \\
+    \hline
+    Sparse matrix support & ? & \mytick & \mytick & \mytick & \mycross & \mytick \\
+    \hline
+    Mesh renumbering\footnotemark & \mycross & \mytick & \mycross & \mycross & \mytick & \mytick \\
+    \hline
+    Dynamic data layouts & \mycross & \mytick & \mytick & \mytick & \mycross & \mycross \\
+    \hline
+    Actively maintained & \mycross & \mycross & \mycross & \mytick & \mytick & \mytick \\
+    \hline[1pt]
+  \end{tblr}
+  \caption{Comparison of the features of some pre-existing mesh stencil packages.}
+  \label{tab:existing_stencil_code_capabilities}
+\end{table}
 
-% TODO: This should actually be covered in the indexing chapter.
-% \section{Renumbering for data locality}
-% \label{sec:renumbering}
-%
-% For memory-bound codes, performance is synonymous with data locality.
-% In the case of stencil codes like finite element assembly, one should aim to arrange the data such that the data required for a single stencil calculation is contiguous in memory and can be read from memory into cache with only a single instruction.
-%
-% For simulations involving unstructured meshes, data reorderings that provide perfect streaming access to memory are not possible and so renumbering strategies have been developed to try and maximise locality.
-% For example, the data layout shown in \cref{fig:two_cell_mesh_lagrange_data_layout_flat} approximates the strategy taken by \pyop2, cells are traversed according to some RCM ordering and the cell closures are packed next to the cell~\cite{langeEfficientMeshManagement2016}.
-% The is effective for finite element codes because finite element assembly (usually) involves iterating over cells and accessing the data in their closures.
-%
-% In \pyop3, we choose a simple approach and defer to PETSc to provide us with an appropriate RCM numbering for the points.
-% This is communicated to the axis tree by giving an axis, in this case the \pycode{"mesh"} one, a \pycode{numbering} argument.
-% This numbering consists of the flat indices of the axis and is exactly the object given to us from PETSc.
-% This is not quite the case in parallel (see \cref{chapter:parallel}).
+% FIXME: These don't label correctly
+\footnotetext{Proof-of-concept GPU support has been demonstrated for PyOP2~\cite{fenics2021-kulkarni}.}
+\footnotetext{Simit, OP2, and PyOP2 all support storing data on generic set-like structures so any DoF ordering may be achieved.}
 
-\subsection{Existing software}
+A number of mesh stencil packages already exist, each meeting a subset of the requirements laid out above (see \cref{tab:existing_stencil_code_capabilities}).
+\textbf{Liszt}~\cite{devitoLisztDomainSpecific2011}, \textbf{Simit}~\cite{kjolstadSimitLanguagePhysical2016}, \textbf{Ebb}~\cite{bernsteinEbbDSLPhysical2016}, and \textbf{MeshTaichi}~\cite{yuMeshTaichiCompilerEfficient2022} are DSLs for mesh stencil computations embedded in Scala, \cplusplus, Lua, and Python respectively.
+Each provides a rich API for expressing a variety of loop constructs and stencil operations that may be compiled and executed on a selection of different backends.
+Liszt has support for shared-memory, distributed-parallel, and GPU backends whereas Simit, Ebb, and MeshTaichi only support shared-memory and GPUs.
 
-% NOTE: A checklist comparing different packages was considered but I think it
-% shouldn't be included because there are too many unknowns. I don't know enough
-% about Liszt, Simit or Ebb and it makes things a bit more complicated to explain.
+In contrast with these expressive DSLs, \textbf{OP2}~\cite{mudaligeOP2ActiveLibrary2012} and \textbf{PyOP2}~\cite{rathgeberPyOP2HighLevelFramework2012} are mesh stencil packages with much more restrictive interfaces.
+Rather than providing a full problem-solving environment, OP2 and PyOP2 programs have a single entrypoint, termed a \textit{parallel loop}, that takes an externally provided local kernel along with an \textit{iteration set} and directly or indirectly addressed \textit{arguments}.
+This approach maps cleanly to FEM-style assembly loops such as that shown in \cref{alg:fem_assembly}, which in PyOP2 would be expressed as
 
-A number of packages exist that already meet most or all of these requirements:
+\begin{pyinline}
+  par_loop(local_kernel, cells, coefficient(cell_node_map, READ), output((cell_node_map, cell_node_map), INC))
+\end{pyinline}
 
-\paragraph{Liszt}{
-  is a \gls{dsl} embedded in Scala~\cite{devitoLisztDomainSpecific2011}.
-  Mesh connectivity is expressed through built-in topological relations and mesh data is associated with specific topological entities.
-  Liszt uses a custom mesh implementation with support for parallel partitioning and hence works in a distributed memory environment.
-  Liszt is also capable of generating code for use in a multi-threaded or GPU context.
-}
+\noindent
+OP2 is an \textit{active library} that provides source-to-source translation from C, \cplusplus or Fortran to a range of different backends.
+By contrast, PyOP2 is a reimplementation of the OP2 API in Python, using run-time code generation to compile the parallel loops.
+By using code generation, PyOP2 is easier to integrate with other code generation packages; in particular it is a core component of the Firedrake finite element framework~\cite{FiredrakeUserManual}, which is written in Python.
 
-\paragraph{Simit}{
-  is another \gls{dsl} for mesh simulations~\cite{kjolstadSimitLanguagePhysical2016}.
-  It has a unique design where mesh data structures have a dual representation: they can either be viewed as a hypergraph or as a multi-dimensional tensor.
-  This enables for both mesh-like queries to be applied to the data structures as well as enabling linear algebra operations to be expressed.
-  Simit is capable of targeting both CPUs and GPUs without needing to change the input code, though distributed memory computing is not available.
-}
+Of the packages that support distributed-memory parallelism, OP2 and PyOP2 differ from Liszt in that their abstractions have no native mesh type; instead dealing in more abstract \textit{sets} and \textit{mappings} between sets, delegating actual topological considerations to other packages such as PETSc DMPlex (\cref{sec:foundations_dmplex}).
+Being able to do this is convenient as building a mature unstructured mesh package is difficult, making the development and maintenance of the stencil package harder.
 
-\paragraph{Ebb}{
-  is another \gls{dsl} embedded in Lua~\cite{bernsteinEbbDSLPhysical2016}.
-  It uses a relational database model to describe the mesh and has a 3-layer infrastructure that separates simulation code from data structure specification and different code generation targets.
-  It has support for execution on GPUs but distributed memory computing is not available.
-}
+\subsection{The missing abstraction}
 
-% TODO: mention for these two that they are less expressive than the others.
-% TODO: How to write "C++"?
-\paragraph{OP2}{
-  Unlike the frameworks mentioned above, OP2 is an \textit{active library} that provides source-to-source translation from C, C++ or Fortran to target a range of different backends including OpenMP, CUDA and OpenCL~\cite{mudaligeOP2ActiveLibrary2012}.
-  OP2 uses a simplified model of a mesh where entities are represented as \textit{sets}.
-  One can store data on these sets and mappings exist between sets.
-  Computations are termed \textit{kernels} and are provided by the user.
-  Distributed memory computing is possible and OP2 is even able to interleave computation and communication to provide improved scaling.
-}
-
-\paragraph{\pyop2}{
-  is a reimplementation of OP2 in Python~\cite{rathgeberPyOP2HighLevelFramework2012}.
-  The same core abstraction of sets, mappings and kernels is used but runtime code generation is used instead of source-to-source translation.
-  \pyop2 currently only targets execution on CPUs though a proof-of-concept GPU extension has been created~\cite{fenics2021-kulkarni}.
-  Distributed memory computing is supported and \pyop2 can also assemble sparse matrices with PETSc~\cite{petsc-web-page,petsc-user-ref,petsc-efficient}.
-}
-% Not flexible:
-  % "Whilst appropriate for a great many operations, there are occasions where one needs to be able to execute multiple kernels or have nested loops - for example when developing certain types of preconditioners (e.g. \cite{gibsonSlateExtendingFiredrake2020}, \cite{farrellPCPATCHSoftwareTopological2021}).
-  % "In these cases one has to extend the compiler in a sui-generis manner to achieve the desired result, resulting in code that is harder to maintain and not composable with other features.
-
-\subsection{Data layout limitations}
+% TODO: make this consistent, and add "..."
+\begin{figure}
+  \centering
+  \includegraphics{scott_vogelius_element_dof_layout_topological.pdf}
+  \caption{
+    The closest possible data layout for \cref{fig:scott_vogelius_element_dof_layout} for a library that associates unknowns with topological entities.
+    Data for each topological entity are stored in separate arrays.
+  }
+  \label{fig:scott_vogelius_element_dof_layout_topological}
+\end{figure}
 
 \begin{figure}
   \centering
@@ -718,33 +681,32 @@ A number of packages exist that already meet most or all of these requirements:
   \label{fig:scott_vogelius_element_dof_layout_pyop2}
 \end{figure}
 
-\begin{figure}
-  \centering
-  \includegraphics{scott_vogelius_element_dof_layout_topological.pdf}
-  \caption{
-    The closest possible data layout for \cref{fig:scott_vogelius_element_dof_layout} for a library that associates unknowns with topological entities.
-    Data for each topological entity are stored in separate arrays.
-  }
-  \label{fig:scott_vogelius_element_dof_layout_topological}
-\end{figure}
 
-% * Liszt, Simit and Ebb are very flexible but they all tie data structures to topological entities. Data layouts
-%   like SV element one are not expressible as it requires interleaving/mesh numbering is not possible.
-%   * also unnatural to treat function spaces like this.
-% * old:
-  % "All of the frameworks described above have had to make a tradeoff between expressivity and flexibility (?).
-  % Liszt, Simit and Ebb are considerably more flexible than either of OP2 or \pyop2 because they can execute any program written in their respective \glspl{dsl}."
+All of the packages listed above follow one of two possible approaches to storing mesh data.
+Liszt, Ebb, and MeshTaichi all store mesh data by associating fields with mesh entities (e.g. vertices).
+This means that high-order function spaces that store DoFs on multiple entities (e.g. \cref{fig:scott_vogelius_element}) are difficult to express and would have to be stored in a manner similar to that shown in \cref{fig:scott_vogelius_element_dof_layout_topological}.
+Consequently, mesh renumbering data locality optimisations are impossible to express.
 
-% * OP2/PyOP2 (and Simit and Ebb?) use a set model that does not have this restriction (i.e. node sets) (ref figure)
-%   * however this makes the code hard to reason about as info is getting thrown away, also makes things hard to compose.
-% * old:
+By contrast, Simit, OP2, and PyOP2 are able to represent function space DoFs more generically as a \textit{set of nodes}.
+Being able to treat all mesh entities equivalently means that mesh renumbering is possible.
+However, this comes at the expense of topological information.
+By associating DoFs with \textit{nodes} instead of mesh points the system no longer knows to which mesh point a given node is related.
+% TODO: HERE!!! Need to have a stronger argument as to why composability is necessary. Are there other benefits?
+% I guess that I have produced a language *as elegant as Simit etc* (no offset maps at all) but with locality stuff too.
+% As a result, (bad composability, etc, how to say?)
+
+% I mean, OP2 looks great! but bad composability... like pyop2
+% also OP2 is clunky to use.
+
+% Not flexible:
+  % "Whilst appropriate for a great many operations, there are occasions where one needs to be able to execute multiple kernels or have nested loops - for example when developing certain types of preconditioners (e.g. \cite{gibsonSlateExtendingFiredrake2020}, \cite{farrellPCPATCHSoftwareTopological2021}).
+  % "In these cases one has to extend the compiler in a sui-generis manner to achieve the desired result, resulting in code that is harder to maintain and not composable with other features.
+
 % Further, the treatment of data as belonging to sets can lead to information being discarded.
 % Considering the data layout shown in \cref{fig:scott_vogelius_element_dof_layout}, \pyop2 would store it as a tuple of two \textit{node sets} (\cref{fig:scott_vogelius_element_dof_layout_pyop2}).
 % Compared with the ``lossless" representation in \cref{fig:scott_vogelius_element_dof_layout}, this approach simplifies the implementation because the data can now be stored as 2 rectangular arrays with shapes \pycode{(10, 2)} and \pycode{(6, 1)}.
 % However, this approach \textit{discards topological information}: the ``Mesh" layer of the representation is gone.
 % This means that the library user has to do the bookkeeping to correctly handle the mappings from mesh entities to nodes.
-
-\subsection{The missing abstraction}
 
 % This mostly belongs in chapter 3
 Clearly, there is something missing here.

@@ -66,6 +66,11 @@
 \newcommand{\checked}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}$\checkmark$}}
 \newcommand{\maybe}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}?}}
 
+\newcommand{\mytick}{$\checkmark$}
+
+\usepackage{pifont}
+\newcommand{\mycross}{\ding{55}}
+
 % ============================== FIGURES ==============================
 
 % rotate figures on a page
@@ -102,6 +107,10 @@
   \newminted[pyalg2]{python}{autogobble,linenos,escapeinside=??,highlightcolor=red!30}
   \newminted[mypyinline]{python}{autogobble,escapeinside=??,highlightcolor=red!30}
   \newminted[mycinline]{c}{autogobble,escapeinside=??,highlightcolor=red!30}
+
+% nicely format writing "C++"
+% https://tex.stackexchange.com/questions/4302/prettiest-way-to-typeset-c-cplusplus
+\newcommand{\cplusplus}{C\nolinebreak\hspace{-.05em}\raisebox{.4ex}{\tiny\bf +}\nolinebreak\hspace{-.10em}\raisebox{.4ex}{\tiny\bf +}}
 
 % custom environments
 % https://www.overleaf.com/learn/latex/Environments

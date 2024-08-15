@@ -1,138 +1,152 @@
 \documentclass[tikz]{standalone}
 \input{figures/common/preamble}
 
+\usepackage{minted}
+\usepackage{mymacros}
+
 \begin{document}
 \begin{tikzpicture}[xscale=.6,yscale=-.75]
 
 \input{figures/common/data_layout.tikz}
+\input{figures/common/misc.tikz}
 
-\newcommand{\drawGuideLines}[1]{
-  \foreach \x in {1,...,25} {
-    \draw [dotted] (\x,#1) -- ++ (0,1);
+\tikzmath{
+  \yshift = 0;
+}
+
+\newcommand{\drawGuideLines}[2]{
+  \foreach \x in {#1,...,#2} {
+    \draw [dotted] (\x,\yshift) -- ++ (0,1);
   }
 }
 
-% fields
-\drawBoxNew{(0,2)}{(20,3)}{white}
-\drawBoxNew{(20,2)}{(26,3)}{white}
-\drawGuideLines{2}
-\labelBox{(10,2.5)}{$V_h$}{white}
-\labelBox{(23,2.5)}{$Q_h$}{white}
+\newcommand{\drawGuideLinesInner}{
+  \drawGuideLines{1}{5}
+  \labelBoxNew{6}{\dots}{white}
 
-% vector
-\drawBoxNew{(0,4)}{(10,5)}{white}
-\drawBoxNew{(10,4)}{(20,5)}{white}
-\drawBoxNew{(20,4)}{(26,5)}{white}
+  \drawGuideLines{7}{12}
+  \labelBoxNew{13}{\dots}{white}
 
-\drawGuideLines{4}
+  \drawGuideLines{15}{20}
+  \labelBoxNew{21}{\dots}{white}
+}
 
-\labelBox{(5,4.5)}{\textbf{x$_0$}}{white}
-\labelBox{(15,4.5)}{\textbf{x$_1$}}{white}
-\labelBox{(23,4.5)}{\textbf{x$_0$}}{white}
+% spaces
+\labelLayoutAxis{\pycode{"space"}};
+
+\drawBoxNewNew{0}{14}{white}
+\drawBoxNewNew{14}{8}{white}
+
+\drawGuideLines{1}{12}
+\labelBoxNew{13}{\dots}{white}
+
+\drawGuideLines{15}{20}
+\labelBoxNew{21}{\dots}{white}
+
+\labelBoxNew{7}{$V_h$}{white}
+\labelBoxNew{18}{$Q_h$}{white}
+
+% components
+\tikzmath{
+  \yshift = \yshift + 2;
+}
+
+\labelLayoutAxis{\pycode{"component"}};
+\drawBoxNewNew{0}{7}{white}
+\drawBoxNewNew{7}{7}{white}
+\drawBoxNewNew{14}{8}{white}
+
+\drawGuideLinesInner
+
+\labelBoxNew{3.5}{\labelComponent{0}}{white}
+\labelBoxNew{10.5}{\labelComponent{1}}{white}
+\labelBoxNew{18}{\labelComponent{0}}{white}
 
 % points
-\drawBoxNew{(0,6)}{(1,7)}{bgvertdofcolor}
-\drawBoxNew{(1,6)}{(2,7)}{bgvertdofcolor}
-\drawBoxNew{(2,6)}{(3,7)}{bgvertdofcolor}
-\drawBoxNew{(3,6)}{(5,7)}{bgedgedofcolor}
-\drawBoxNew{(5,6)}{(7,7)}{bgedgedofcolor}
-\drawBoxNew{(7,6)}{(9,7)}{bgedgedofcolor}
-\drawBoxNew{(9,6)}{(10,7)}{bgcelldofcolor}
+\tikzmath{
+  \yshift = \yshift + 2;
+}
 
-\drawBoxNew{(10,6)}{(11,7)}{bgvertdofcolor}
-\drawBoxNew{(11,6)}{(12,7)}{bgvertdofcolor}
-\drawBoxNew{(12,6)}{(13,7)}{bgvertdofcolor}
-\drawBoxNew{(13,6)}{(15,7)}{bgedgedofcolor}
-\drawBoxNew{(15,6)}{(17,7)}{bgedgedofcolor}
-\drawBoxNew{(17,6)}{(19,7)}{bgedgedofcolor}
-\drawBoxNew{(19,6)}{(20,7)}{bgcelldofcolor}
+\labelLayoutAxis{\pycode{"mesh"}};
 
-\drawBoxNew{(20,6)}{(26,7)}{bgcelldofcolor}
+\drawBoxNewNew{0}{1}{bgvertdofcolor}
+\drawBoxNewNew{1}{1}{bgcelldofcolor}
+\drawBoxNewNew{2}{2}{bgedgedofcolor}
+\drawBoxNewNew{4}{1}{bgvertdofcolor}
+\drawBoxNewNew{5}{2}{white}
 
-\drawGuideLines{6}
+\drawBoxNewNew{ 7}{1}{bgvertdofcolor}
+\drawBoxNewNew{ 8}{1}{bgcelldofcolor}
+\drawBoxNewNew{ 9}{2}{bgedgedofcolor}
+\drawBoxNewNew{11}{1}{bgvertdofcolor}
+\drawBoxNewNew{12}{2}{white}
 
-\labelBox{(0.5,6.5)}{$v_0$}{bgvertdofcolor}
-\labelBox{(1.5,6.5)}{$v_1$}{bgvertdofcolor}
-\labelBox{(2.5,6.5)}{$v_2$}{bgvertdofcolor}
-\labelBox{(4,6.5)}{$e_0$}{bgedgedofcolor}
-\labelBox{(6,6.5)}{$e_1$}{bgedgedofcolor}
-\labelBox{(8,6.5)}{$e_2$}{bgedgedofcolor}
-\labelBox{(9.5,6.5)}{$c_0$}{bgcelldofcolor}
+\drawBoxNewNew{14}{6}{bgcelldofcolor}
+\drawBoxNewNew{20}{2}{white}
 
-\labelBox{(10.5,6.5)}{$v_0$}{bgvertdofcolor}
-\labelBox{(11.5,6.5)}{$v_1$}{bgvertdofcolor}
-\labelBox{(12.5,6.5)}{$v_2$}{bgvertdofcolor}
-\labelBox{(14,6.5)}{$e_0$}{bgedgedofcolor}
-\labelBox{(16,6.5)}{$e_1$}{bgedgedofcolor}
-\labelBox{(18,6.5)}{$e_2$}{bgedgedofcolor}
-\labelBox{(19.5,6.5)}{$c_0$}{bgcelldofcolor}
+\drawGuideLinesInner
 
-\labelBox{(23,6.5)}{$c_0$}{bgcelldofcolor}
+\labelBoxNew{ .5}{$v_7$}{bgvertdofcolor}
+\labelBoxNew{1.5}{$c_1$}{bgcelldofcolor}
+\labelBoxNew{3  }{$e_9$}{bgedgedofcolor}
+\labelBoxNew{4.5}{$v_2$}{bgvertdofcolor}
 
-% shape
-\drawBoxNew{(0,8)}{(1,9)}{bgvertdofcolor}
-\drawBoxNew{(1,8)}{(2,9)}{bgvertdofcolor}
-\drawBoxNew{(2,8)}{(3,9)}{bgvertdofcolor}
-\drawBoxNew{(3,8)}{(4,9)}{bgedgedofcolor}
-\drawBoxNew{(4,8)}{(5,9)}{bgedgedofcolor}
-\drawBoxNew{(5,8)}{(6,9)}{bgedgedofcolor}
-\drawBoxNew{(6,8)}{(7,9)}{bgedgedofcolor}
-\drawBoxNew{(7,8)}{(8,9)}{bgedgedofcolor}
-\drawBoxNew{(8,8)}{(9,9)}{bgedgedofcolor}
-\drawBoxNew{(9,8)}{(10,9)}{bgcelldofcolor}
-\drawBoxNew{(10,8)}{(11,9)}{bgvertdofcolor}
-\drawBoxNew{(11,8)}{(12,9)}{bgvertdofcolor}
-\drawBoxNew{(12,8)}{(13,9)}{bgvertdofcolor}
-\drawBoxNew{(13,8)}{(14,9)}{bgedgedofcolor}
-\drawBoxNew{(14,8)}{(15,9)}{bgedgedofcolor}
-\drawBoxNew{(15,8)}{(16,9)}{bgedgedofcolor}
-\drawBoxNew{(16,8)}{(17,9)}{bgedgedofcolor}
-\drawBoxNew{(17,8)}{(18,9)}{bgedgedofcolor}
-\drawBoxNew{(18,8)}{(19,9)}{bgedgedofcolor}
-\drawBoxNew{(19,8)}{(20,9)}{bgcelldofcolor}
+\labelBoxNew{ .5+7}{$v_7$}{bgvertdofcolor}
+\labelBoxNew{1.5+7}{$c_1$}{bgcelldofcolor}
+\labelBoxNew{3  +7}{$e_9$}{bgedgedofcolor}
+\labelBoxNew{4.5+7}{$v_2$}{bgvertdofcolor}
 
-\drawBoxNew{(20,8)}{(21,9)}{bgcelldofcolor}
-\drawBoxNew{(21,8)}{(22,9)}{bgcelldofcolor}
-\drawBoxNew{(22,8)}{(23,9)}{bgcelldofcolor}
-\drawBoxNew{(23,8)}{(24,9)}{bgcelldofcolor}
-\drawBoxNew{(24,8)}{(25,9)}{bgcelldofcolor}
-\drawBoxNew{(25,8)}{(26,9)}{bgcelldofcolor}
+\labelBoxNew{3+14}{$c_1$}{bgcelldofcolor}
 
-\drawGuideLines{8}
+% nodes
+\tikzmath{
+  \yshift = \yshift + 2;
+}
 
-\labelBox{(.5,8.5)}{\textbf{0}}{bgvertdofcolor}
-\labelBox{(1.5,8.5)}{\textbf{1}}{bgvertdofcolor}
-\labelBox{(2.5,8.5)}{\textbf{2}}{bgvertdofcolor}
-\labelBox{(3.5,8.5)}{\textbf{3}}{bgedgedofcolor}
-\labelBox{(4.5,8.5)}{\textbf{4}}{bgedgedofcolor}
-\labelBox{(5.5,8.5)}{\textbf{5}}{bgedgedofcolor}
-\labelBox{(6.5,8.5)}{\textbf{6}}{bgedgedofcolor}
-\labelBox{(7.5,8.5)}{\textbf{7}}{bgedgedofcolor}
-\labelBox{(8.5,8.5)}{\textbf{8}}{bgedgedofcolor}
-\labelBox{(9.5,8.5)}{\textbf{9}}{bgcelldofcolor}
-\labelBox{(10.5,8.5)}{\textbf{0}}{bgvertdofcolor}
-\labelBox{(11.5,8.5)}{\textbf{1}}{bgvertdofcolor}
-\labelBox{(12.5,8.5)}{\textbf{2}}{bgvertdofcolor}
-\labelBox{(13.5,8.5)}{\textbf{3}}{bgedgedofcolor}
-\labelBox{(14.5,8.5)}{\textbf{4}}{bgedgedofcolor}
-\labelBox{(15.5,8.5)}{\textbf{5}}{bgedgedofcolor}
-\labelBox{(16.5,8.5)}{\textbf{6}}{bgedgedofcolor}
-\labelBox{(17.5,8.5)}{\textbf{7}}{bgedgedofcolor}
-\labelBox{(18.5,8.5)}{\textbf{8}}{bgedgedofcolor}
-\labelBox{(19.5,8.5)}{\textbf{9}}{bgcelldofcolor}
+\labelLayoutAxis{\pycode{"node"}};
 
-\labelBox{(20.5,8.5)}{\textbf{0}}{bgcelldofcolor}
-\labelBox{(21.5,8.5)}{\textbf{1}}{bgcelldofcolor}
-\labelBox{(22.5,8.5)}{\textbf{2}}{bgcelldofcolor}
-\labelBox{(23.5,8.5)}{\textbf{3}}{bgcelldofcolor}
-\labelBox{(24.5,8.5)}{\textbf{4}}{bgcelldofcolor}
-\labelBox{(25.5,8.5)}{\textbf{5}}{bgcelldofcolor}
+\drawBoxNewNew{0}{1}{bgvertdofcolor}
+\drawBoxNewNew{1}{1}{bgcelldofcolor}
+\drawBoxNewNew{2}{1}{bgedgedofcolor}
+\drawBoxNewNew{3}{1}{bgedgedofcolor}
+\drawBoxNewNew{4}{1}{bgvertdofcolor}
+\drawBoxNewNew{5}{2}{white}
 
-% labels
-\node [at={(-1.8,2.5)},fill=none] {Spaces};
-\node [at={(-1.8,4.5)},fill=none] {Components};
-\node [at={(-1.8,6.5)},fill=none] {Points};
-\node [at={(-1.8,8.5)},fill=none] {Nodes};
+\drawBoxNewNew{0+7}{1}{bgvertdofcolor}
+\drawBoxNewNew{1+7}{1}{bgcelldofcolor}
+\drawBoxNewNew{2+7}{1}{bgedgedofcolor}
+\drawBoxNewNew{3+7}{1}{bgedgedofcolor}
+\drawBoxNewNew{4+7}{1}{bgvertdofcolor}
+\drawBoxNewNew{5+7}{2}{white}
+
+\drawBoxNewNew{0+14}{1}{bgcelldofcolor}
+\drawBoxNewNew{1+14}{1}{bgcelldofcolor}
+\drawBoxNewNew{2+14}{1}{bgcelldofcolor}
+\drawBoxNewNew{3+14}{1}{bgcelldofcolor}
+\drawBoxNewNew{4+14}{1}{bgcelldofcolor}
+\drawBoxNewNew{5+14}{1}{bgcelldofcolor}
+\drawBoxNewNew{6+14}{2}{white}
+
+\drawGuideLinesInner
+
+\labelBoxNew{ .5}{$n_0$}{bgvertdofcolor}
+\labelBoxNew{1.5}{$n_0$}{bgcelldofcolor}
+\labelBoxNew{2.5}{$n_0$}{bgedgedofcolor}
+\labelBoxNew{3.5}{$n_1$}{bgedgedofcolor}
+\labelBoxNew{4.5}{$n_0$}{bgvertdofcolor}
+
+\labelBoxNew{ .5+7}{$n_0$}{bgvertdofcolor}
+\labelBoxNew{1.5+7}{$n_0$}{bgcelldofcolor}
+\labelBoxNew{2.5+7}{$n_0$}{bgedgedofcolor}
+\labelBoxNew{3.5+7}{$n_1$}{bgedgedofcolor}
+\labelBoxNew{4.5+7}{$n_0$}{bgvertdofcolor}
+
+\labelBoxNew{ .5+14}{$n_0$}{bgcelldofcolor}
+\labelBoxNew{1.5+14}{$n_1$}{bgcelldofcolor}
+\labelBoxNew{2.5+14}{$n_2$}{bgcelldofcolor}
+\labelBoxNew{3.5+14}{$n_3$}{bgcelldofcolor}
+\labelBoxNew{4.5+14}{$n_4$}{bgcelldofcolor}
+\labelBoxNew{5.5+14}{$n_5$}{bgcelldofcolor}
 
 \end{tikzpicture}
 \end{document}

@@ -149,6 +149,6 @@
   \tkzDefShiftPoint[v5](-.3,-.12){v5patch}
   \tkzDefShiftPoint[v9](.2,-.2){v9patch}
   \tkzDefShiftPoint[v10](.12,.3){v10patch}
-  \filldraw[draw=none,fill=black,fill opacity=.15,rounded corners=8]
+  \filldraw[patch]
     (v5patch) -- (v9patch) -- (v10patch) -- cycle;
 }

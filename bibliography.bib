@@ -4116,6 +4116,15 @@
   file = {/home/connor/OneDrive/AppData/Zotero/Strout et al_2018_The Sparse Polyhedral Framework.pdf;/home/connor/.local/share/zotero/storage/GF69FP84/8436444.html}
 }
 
+@article{sulyokImprovingLocalityUnstructured2018,
+  title = {Improving {{Locality}} of {{Unstructured Mesh Algorithms}} on {{GPUs}}},
+  author = {Sulyok, András Attila and Balogh, Gábor Dániel and Reguly, István Zoltán and Mudalige, R},
+  date = {2018},
+  abstract = {To most efficiently utilize modern parallel architectures, the memory access patterns of algorithms must make heavy use of the cache architecture: successively accessed data must be close in memory (spatial locality) and one piece of data must be reused as many times as possible (temporal locality).},
+  langid = {english},
+  file = {/home/connor/.local/share/zotero/storage/JYIJ4MBD/Sulyok et al. - Improving Locality of Unstructured Mesh Algorithms.pdf}
+}
+
 @thesis{sunAbstractionsPerformanceOptimisations2021,
   title = {Abstractions and Performance Optimisations for Finite Element Methods},
   author = {Sun, Tianjiao},
@@ -4411,6 +4420,25 @@
   abstract = {This thesis describes a finite element framework for solving partial differential equations with highly varying spatial coefficients. The goal is to model the heat transfer in a heterogeneous powder medium of the selective laser melting process. An operator based framework is developed and the implementation details are discussed. The main idea of the work is based on the two level domain decomposition and construction of special operators to transfer the system between the coarse and fine levels. The system of equations is solved on a coarse level and the solution is transferred to the fine level. The operators are computed using Localized Orthogonal Decomposition (LOD) method. The method is applied to several numerical experiments and an optimal convergence rates in the H1 and L2 norms are observed. The computational efficiency of LOD is studied and its limitations are discussed.},
   langid = {english},
   file = {/home/connor/.local/share/zotero/storage/I4AGY7W2/Yashchuk - A multiscale finite element framework for additive.pdf}
+}
+
+@article{yuMeshTaichiCompilerEfficient2022,
+  title = {{{MeshTaichi}}: {{A Compiler}} for {{Efficient Mesh-Based Operations}}},
+  shorttitle = {{{MeshTaichi}}},
+  author = {Yu, Chang and Xu, Yi and Kuang, Ye and Hu, Yuanming and Liu, Tiantian},
+  date = {2022-12},
+  journaltitle = {ACM Transactions on Graphics},
+  shortjournal = {ACM Trans. Graph.},
+  volume = {41},
+  number = {6},
+  pages = {1--17},
+  issn = {0730-0301, 1557-7368},
+  doi = {10.1145/3550454.3555430},
+  url = {https://dl.acm.org/doi/10.1145/3550454.3555430},
+  urldate = {2024-08-15},
+  abstract = {Meshes are an indispensable representation in many graphics applications because they provide conformal spatial discretizations. However, mesh-based operations are often slow due to unstructured memory access patterns. We propose MeshTaichi, a novel mesh compiler that provides an intuitive programming model for efficient mesh-based operations. Our programming model hides the complex indexing system from users and allows users to write mesh-based operations using reference-style neighborhood queries. Our compiler achieves its high performance by exploiting data locality. We partition input meshes and prepare the wanted relations by inspecting users' code during compile time. During run time, we further utilize on-chip memory (shared memory on GPU and L1 cache on CPU) to access the wanted attributes of mesh elements efficiently. Our compiler decouples low-level optimization options with computations, so that users can explore different localized data attributes and different memory orderings without changing their computation code. As a result, users can write concise code using our programming model to generate efficient mesh-based computations on both CPU and GPU backends. We test MeshTaichi on a variety of physically-based simulation and geometry processing applications with both triangle and tetrahedron meshes. MeshTaichi achieves a consistent speedup ranging from 1.4× to 6×, compared to state-of-the-art mesh data structures and compilers.},
+  langid = {english},
+  file = {/home/connor/.local/share/zotero/storage/IYKP3APY/Yu et al. - 2022 - MeshTaichi A Compiler for Efficient Mesh-Based Op.pdf}
 }
 
 @unpublished{zhangPetscSFScalableCommunication2021,

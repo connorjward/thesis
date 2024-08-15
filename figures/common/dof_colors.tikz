@@ -10,4 +10,4 @@
 
 \tikzstyle {edge} = [draw=black,line width=1.2pt];
 
-\tkzSetUpStyle[draw=black,fill=black,line width=.7pt,fill opacity=.1,rounded corners=7]{patch}
+\tkzSetUpStyle[draw=none,fill=black,line width=.7pt,fill opacity=.15,rounded corners=8]{patch}
