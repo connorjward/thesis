@@ -357,10 +357,10 @@ This means that most of the integrals are \textit{zero by definition}, and the a
     \Require \textit{temp0}, \textit{temp1} \Comment{Work arrays}
 
     \For{\textit{cell} \textbf{in} \textit{mesh.cells}}
-      \State \Call{Read}{\textit{coefficient}, \textit{cell}, \textit{temp0}}
+      \State \Call{Read}{\textit{coefficient}, \textit{cell}, \textit{temp0}}\label{code:pack_demo}
       \State \Call{Zero}{\textit{temp1}}
       \State \Call{LocalKernel}{\textit{temp0}, \textit{temp1}} \Comment{Evaluate the integral for each cell}
-      \State \Call{Increment}{\textit{output}, \textit{temp1}} \Comment{Scatter the result}
+      \State \Call{Increment}{\textit{output}, \textit{temp1}} \Comment{Scatter the result}\label{code:unpack_demo}
     \EndFor
   \end{algorithmic}
   \label{alg:fem_assembly}
@@ -433,86 +433,72 @@ and the size of the local layout is
 From \cref{fig:scott_vogelius_element_dof_layout_packed} it is clear that both the global and local data layouts have some inherent structure: DoFs for the different spaces $V_h$ and $Q_h$ are kept apart and nodes and components are stored contiguously.
 Representing this hierarchical structure in code is challenging and forms one of the main contributions of this thesis (\cref{chapter:axis_trees,chapter:indexing}).
 
-\section{Software for mesh stencil calculations}
+\section{Software for continuum mechanics}
 
-Developing software for numerical methods involving mesh stencils is difficult for a number of reasons:
+\todo[inline]{This section is a bit off. The key points are there but the phrasing is not great.}
 
-% Writing these codes by hand is prohibitively difficult: writing a performant and scalable simulation would take months or years of programmer effort and any changes to the \glspl{pde}, discretisation or hardware might constitute a substantial rewrite.
-% NOTE: I think that this should probably be put together into a simple paragraph, but not too sure
-\paragraph{It is time-consuming.}{
-  A piece of scientific software can take many person-years to develop.
-  Finite element packages, for example, need to not only implement the assembly routines, but also need to have the right linear and nonlinear solvers, mesh implementation, input/output routines and many more.
-  This can take years of developer effort to implement.
-}
+Developing simulation software from scratch is very difficult, requiring multiple person-years of developer time and expertise from a range of disciplines.
+Instead, it is usual to use an existing `toolbox' package from which the simulation may be built.
+Using pre-existing packages substantially lower the barrier-to-entry for scientists and provide excellent performance and scalability whilst also being productive.
+% NOTE: Bit unclearly worded
+These packages may be broadly split into two categories: `hand-written' and those that rely on domain-specific compilers and high-level abstractions.
 
-\paragraph{It is a multidisciplinary effort.}{
-  Implementing a high-performance, parallel code requires expertise in a wide range of disciplines ranging from high-level numerical analysis and algorithms to low-level optimisation of loop nests and vectorisation.
-  A team of experts or a handful of very talented individuals are therefore needed.
-}
+\subsubsection{Hand-written packages}
 
-\paragraph{The code would be `brittle'.}{
-  Code written by hand is naturally specialised to the problem of interest.
-  Due to the complexity and tightly-coupled nature of the code this makes it difficult to extend its functionality to other circumstances.
-  Even solving continuum mechanics problems on different computers can require \textit{substantial} changes to the numerical methods being used in order to get good performance~\cite{betteridgeCodeGenerationProductive2021}, again a prohibitive cost for handwritten codes.
-}
+By far the simpler to produce, hand-written packages are composed of a set of functions and types, usually written in a compiled language like C or \cplusplus, that are called by the user via the package's API.
+Hand-written packages have seen tremendous success in the scientific community with packages such as BLAS~\cite{lawsonBasicLinearAlgebra1979}, a suite of linear algebra routines used in most scientific software.
+However, the successes of such packages has in part relied on the simplicity of the features that they implement.
+As the software gets more and more complex, more and more variants of the same program must be written in order to get optimal performance - an infeasible proposition.
+Further, hand-written codes necessarily combine the mathematical details of the problem with low-level optimisations in the code.
+This makes collaboration difficult, as code developers require expertise in both the mathematics and software optimisation, and also means that numerous assumptions about architecture, data layout, and many more are `baked-in' and exceedingly difficult to change at a later date (e.g. if porting the code to a GPU).
 
-\vspace{\baselineskip}
+For continuum mechanics problems, providing a general purpose toolbox package with a hand-written library is especially challenging.
+Most of the performance-critical code - the `hot loops' - is specialised to the choice of discretisation and PDE.
+In order to support a wide range of simulation types, PDE-solving packages like \texttt{deal.II}~\cite{dealII95,dealii2019design} and libCEED~\cite{brownLibCEEDFastAlgebra2021} require the user to provide custom kernels.
 
-% "library packages" vs "DSL packages"?
+\todo[inline]{This doesn't read very well, but I want to make a point that abstractions are "zero-cost" later on.}
 
-Clearly a scientist looking to solve a continuum mechanics problem should avoid writing their codeby hand from scratch and they should instead look to use one of the \textit{many} pre-existing packages as a toolkit to build their simulation.
-These packages may be broadly split into two categories: `library' packages and run-time code generation packages.
+To detangle different pieces of code, libraries may use higher-level abstractions such as object-oriented programming.
+Adding abstractions at this point leads to an increased overhead though as the compiled code needs to follow more pointers to access methods and adding functions and methods creates `black boxes' that the compiler struggles to optimise through.
 
-Library packages work in the traditional way: the developers build a suite of routines, often in a compiled language like C or \cplusplus, and these are called by the user via the package's API.
-Examples of such packages include deal.ii~\cite{}, Dune-FEM~\cite{}, MFEM~\cite{}, libCEED~\cite{} nektar++~\cite{}.
-Whilst straightforward to implement, choosing a library-style approach for numerical software has a number of drawbacks:
+\subsubsection{Domain-specific compiler packages}
 
-\begin{itemize}
-  \item Either slow (generic functions, lots of internal logic), specialised to a particular application or a nightmare to maintain (large codebase) or templated (really hard to reason about).
-  \item OR, pushes responsibility for performance onto the user - provide the kernels!
-  \item Portability is difficult too
-  \item Commit to a lot of design choices early (e.g. data layout) - GPU paper shows that this can't always be fixed
-\end{itemize}
-
-These issues may be resolved somewhat by `metaprogramming' - effectively \textit{compile-time} code generation - with techniques such as templating and using device-agnostic programming languages such as Kokkos and SYCL.
-These methods are, however, fundamentally limited:
+As an alternative approach, a number of packages instead use code generation to automate the process.
+Code generation operates on alternative, domain-specific high-level representations of the problem that may then be lowered, possibly via a series of intermediate representations, to an executable.
+Unlike hand-written codes, these high-level abstractions have `zero-cost' as they only exist at compile-time.
+Having multiple representations of the problem has a number of benefits:
 
 \begin{itemize}
   \item
-    Representing sufficient information about the program at compile-time is very challenging.
-    For example separate templated variables would be required for XXX, YYY and ZZZ.
-    Need to hardcode loop bounds at the innermost loops for performance reasons.
-
+    It allows for a separation of concerns between users and developers, facilitating contributions from users without a background in performance optimisation.
   \item
-  Template programming is notoriously complicated and difficult to debug.
-
+    High level representation is more productive to develop in.
   \item
-  Compile times and binary sizes can become excessive as every possible combination of parameters needs to be separately compiled.
+    By representing the problem at a high level, it is sometimes possible for the compiler to apply specialised optimisations that would be difficult to apply by hand.
+    Whilst always the case that any automatically generated code could also have been written by hand, compilers frequently generate code with comparable or even superior~\cite{ragan-kelleyHalideLanguageCompiler} performance to hand-written implementations.
+    An example of this is sum factorisation, a FLOP-reduction technique applicable to finite element simulations with tensor-product structure~\cite{homolyaExposingExploitingStructure2017}.
+    The compiler can even sometimes do auto-tuning, where a space of possible solutions is explored to find the fastest one.
+    Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler}, and the Sparse Polyhedral Framework (sparse linear algebra)~\cite{stroutSparsePolyhedralFramework2018}.
+    If done at runtime, auto-tuning is also sometimes referred to as an \textit{inspector-executor strategy}.
 \end{itemize}
 
-Run-time code generation is a favourable alternative.
-Effectively templating on steroids - codegen can be done in a traditional programming language like Python, facilitating reasoning and debugging experience etc.
-% have full ability to reason about the program as actual data is accessible - can do search-space Halide-like stuff (inspector executor!)
-% % talk about BLIS, Spiral, FFTW, Halide etc
-% an underappreciated aspect of it is that there is far less code to maintain
+Examples of continuum mechanics simulation packages using domain-specific compilers include the finite element libraries Dune-Fem~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, all using the same DSL for expressing weak forms UFL~\cite{alnaesUnifiedFormLanguage2014a}, and the finite difference library Devito~\cite{devito-api,luporiniArchitecturePerformanceDevito2020}, that uses Sympy~\cite{10.7717/peerj-cs.103} as its top-level DSL.
 
-  % also composable (high-level) abstractions
-In addition, we get "no cost" high-level abstractions -> huge increase in productivity, separation of concerns (easier for domain experts to contribute), high-level reasoning, automation == layer abstractions on top.
-Example is the Firedrake/FEniCSx projects with UFL.
-% also devito
-% having a high-level representation of the problem enables optimisations best expressed at the level of the mathematics that would otherwise be very challenging to implement (e.g.~\cite{homolyaExposingExploitingStructure2017}).
+Despite these benefits, DSLs have not been adopted wholesale into the continuum mechanics simulation community for a number of reasons:
 
-% "not a panacea"
-% but mention that it is harder to implement and can be harder to get top-tier performance as
-% performance is hidden behind a compiler
-% also a performance hit at runtime as compilation needs to happen then - but much less time than
-% compiling all of the templates!
-% also, importantly, if we can't generate code for things then we can't run them - can be hard to prototype new methods if they lie outside of the abstraction
-% "for the purposes of this thesis we regard these less as drawbacks and more as important avenues of research"
-This thesis focuses on the development of new abstractions for mesh stencil computations to facilitate the implementation of numerical methods and performance optimisations.
+\begin{itemize}
+  \item
+    Vast resources have been expended to produce hand-coded implementations with exceptional performance.
+    Current performance of generated code is not competitive and harder to improve given that it is hidden behind a compiler.
+  \item
+    Compilation at run-time can be slow.
+  \item
+    Abstractions are fundamentally limiting, numerical methods currently being researched may not be expressible in the abstraction and hence may be impossible to implement without redesigning the abstraction.
+\end{itemize}
 
-\subsection{Further design considerations}
-\label{sec:mesh_stencil_requirements}
+Clearly, further research to address these concerns is required.
+
+\subsection{Requirements for a mesh stencil compiler}
 
 In addition to having the right high-level abstractions and backing code generation infrastructure, there a number of essential requirements that a mesh stencil package must meet in order for it to be effective.
 These requirements are:
@@ -667,7 +653,6 @@ Being able to do this is convenient as building a mature unstructured mesh packa
 
 \subsection{The missing abstraction}
 
-% TODO: make this consistent, and add "..."
 \begin{figure}
   \centering
   \includegraphics{scott_vogelius_element_dof_layout_topological.pdf}
