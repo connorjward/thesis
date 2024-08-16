@@ -7,6 +7,7 @@
 % e.g. can do things like \cite{dasSlicingAnalysisIndirect1994} and "flatten" repeated indexing
 
 \chapter{Performance results}
+\label{chapter:performance}
 
 % Run on Pyramus
 % There are 3 possible performance bottlenecks in assembly: payload transfer (pyop3) and the computation and matrix insertion (neither pyop3)
@@ -36,6 +37,7 @@
 % worthless. Hard to prove that strong-scaling is relevant/might be slow elsewhere.
 
 \chapter{Summary}
+\label{chapter:summary}
 
 %pyop3 is like Ebb and Simit, but the data model is chosen to truly unify PETSc and N-dim arrays. We get maths-y optimisations that the others don't have, like mesh numbering and storing edge and vertex data together and mixed-type things. (plus obvs distributed parallel)
 %

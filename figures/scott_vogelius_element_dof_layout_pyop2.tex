@@ -6,127 +6,116 @@
 
 \input{figures/common/data_layout.tikz}
 
-\newcommand{\drawGuideLines}[1]{
-  \foreach \x in {1,...,19} {
-    \draw [dotted] (\x,#1) -- ++ (0,1);
-  }
+\tikzmath {
+  \spaceoffset = 13;
+}
 
-  \foreach \x in {22,...,26} {
-    \draw [dotted] (\x,#1) -- ++ (0,1);
+\newcommand{\drawGuideLines}{
+  \foreach \x in {1,...,10} {
+    \draw [dotted] (\x,\yshift) -- ++ (0,1);
   }
+  \labelBoxNew{11}{\dots}{white}
+
+  \foreach \x in {1,...,5} {
+    \draw [dotted] (\x+\spaceoffset,\yshift) -- ++ (0,1);
+  }
+  \labelBoxNew{6+\spaceoffset}{\dots}{white}
 }
 
 % fields
-\node [at={(-1,2.5)},fill=none] {Spaces};
-\drawBoxNew{(0,2)}{(20,3)}{white}
-\drawBoxNew{(21,2)}{(27,3)}{white}
+\tikzmath{
+  \yshift = 0;
+}
 
-\drawGuideLines{2}
+\labelLayoutAxis{\pycode{"space"}};
 
-\labelBox{(10,2.5)}{$V_h$}{white}
-\labelBox{(24,2.5)}{$Q_h$}{white}
+\drawBoxNewNew{0}{12}{white}
+\drawBoxNewNew{\spaceoffset}{7}{white}
+
+\drawGuideLines
+
+\labelBoxNew{6}{$V_h$}{white}
+\labelBoxNew{3.5+\spaceoffset}{$Q_h$}{white}
 
 % nodes
-\node [at={(-1,4.5)},fill=none] {Nodes};
+\tikzmath{
+  \yshift = \yshift + 2;
+}
 
-\drawBoxNew{(0,4)}{(2,5)}{bgvertdofcolor}
-\drawBoxNew{(2,4)}{(4,5)}{bgvertdofcolor}
-\drawBoxNew{(4,4)}{(6,5)}{bgvertdofcolor}
-\drawBoxNew{(6,4)}{(8,5)}{bgedgedofcolor}
-\drawBoxNew{(8,4)}{(10,5)}{bgedgedofcolor}
-\drawBoxNew{(10,4)}{(12,5)}{bgedgedofcolor}
-\drawBoxNew{(12,4)}{(14,5)}{bgedgedofcolor}
-\drawBoxNew{(14,4)}{(16,5)}{bgedgedofcolor}
-\drawBoxNew{(16,4)}{(18,5)}{bgedgedofcolor}
-\drawBoxNew{(18,4)}{(20,5)}{bgcelldofcolor}
+\labelLayoutAxis{\pycode{"node"}};
 
-\drawBoxNew{(21,4)}{(22,5)}{bgcelldofcolor}
-\drawBoxNew{(22,4)}{(23,5)}{bgcelldofcolor}
-\drawBoxNew{(23,4)}{(24,5)}{bgcelldofcolor}
-\drawBoxNew{(24,4)}{(25,5)}{bgcelldofcolor}
-\drawBoxNew{(25,4)}{(26,5)}{bgcelldofcolor}
-\drawBoxNew{(26,4)}{(27,5)}{bgcelldofcolor}
+\drawBoxNewNew{0}{2}{white}
+\drawBoxNewNew{2}{2}{white}
+\drawBoxNewNew{4}{2}{white}
+\drawBoxNewNew{6}{2}{white}
+\drawBoxNewNew{8}{2}{white}
+\drawBoxNewNew{10}{2}{white}
 
-\drawGuideLines{4}
+\drawBoxNewNew{0+\spaceoffset}{1}{white}
+\drawBoxNewNew{1+\spaceoffset}{1}{white}
+\drawBoxNewNew{2+\spaceoffset}{1}{white}
+\drawBoxNewNew{3+\spaceoffset}{1}{white}
+\drawBoxNewNew{4+\spaceoffset}{1}{white}
+\drawBoxNewNew{5+\spaceoffset}{2}{white}
 
-\labelBox{(1,4.5)}{\textbf{0}}{bgvertdofcolor}
-\labelBox{(3,4.5)}{\textbf{1}}{bgvertdofcolor}
-\labelBox{(5,4.5)}{\textbf{2}}{bgvertdofcolor}
-\labelBox{(7,4.5)}{\textbf{3}}{bgedgedofcolor}
-\labelBox{(9,4.5)}{\textbf{4}}{bgedgedofcolor}
-\labelBox{(11,4.5)}{\textbf{5}}{bgedgedofcolor}
-\labelBox{(13,4.5)}{\textbf{6}}{bgedgedofcolor}
-\labelBox{(15,4.5)}{\textbf{7}}{bgedgedofcolor}
-\labelBox{(17,4.5)}{\textbf{8}}{bgedgedofcolor}
-\labelBox{(19,4.5)}{\textbf{9}}{bgcelldofcolor}
+\drawGuideLines
 
-\labelBox{(21.5,4.5)}{\textbf{0}}{bgcelldofcolor}
-\labelBox{(22.5,4.5)}{\textbf{1}}{bgcelldofcolor}
-\labelBox{(23.5,4.5)}{\textbf{2}}{bgcelldofcolor}
-\labelBox{(24.5,4.5)}{\textbf{3}}{bgcelldofcolor}
-\labelBox{(25.5,4.5)}{\textbf{4}}{bgcelldofcolor}
-\labelBox{(26.5,4.5)}{\textbf{5}}{bgcelldofcolor}
+\labelBoxNew{1}{$n_0$}{white}
+\labelBoxNew{3}{$n_1$}{white}
+\labelBoxNew{5}{$n_2$}{white}
+\labelBoxNew{7}{$n_3$}{white}
+\labelBoxNew{9}{$n_4$}{white}
+
+\labelBoxNew{ .5+\spaceoffset}{$n_0$}{white}
+\labelBoxNew{1.5+\spaceoffset}{$n_1$}{white}
+\labelBoxNew{2.5+\spaceoffset}{$n_2$}{white}
+\labelBoxNew{3.5+\spaceoffset}{$n_3$}{white}
+\labelBoxNew{4.5+\spaceoffset}{$n_4$}{white}
 
 % DoFs
-\node [at={(-1,6.5)},fill=none] {DoFs};
+\tikzmath{
+  \yshift = \yshift + 2;
+}
 
-\drawBoxNew{(0,6)}{(1,7)}{bgvertdofcolor}
-\drawBoxNew{(1,6)}{(2,7)}{bgvertdofcolor}
-\drawBoxNew{(2,6)}{(3,7)}{bgvertdofcolor}
-\drawBoxNew{(3,6)}{(4,7)}{bgvertdofcolor}
-\drawBoxNew{(4,6)}{(5,7)}{bgvertdofcolor}
-\drawBoxNew{(5,6)}{(6,7)}{bgvertdofcolor}
-\drawBoxNew{(6,6)}{(7,7)}{bgedgedofcolor}
-\drawBoxNew{(7,6)}{(8,7)}{bgedgedofcolor}
-\drawBoxNew{(8,6)}{(9,7)}{bgedgedofcolor}
-\drawBoxNew{(9,6)}{(10,7)}{bgedgedofcolor}
-\drawBoxNew{(10,6)}{(11,7)}{bgedgedofcolor}
-\drawBoxNew{(11,6)}{(12,7)}{bgedgedofcolor}
-\drawBoxNew{(12,6)}{(13,7)}{bgedgedofcolor}
-\drawBoxNew{(13,6)}{(14,7)}{bgedgedofcolor}
-\drawBoxNew{(14,6)}{(15,7)}{bgedgedofcolor}
-\drawBoxNew{(15,6)}{(16,7)}{bgedgedofcolor}
-\drawBoxNew{(16,6)}{(17,7)}{bgedgedofcolor}
-\drawBoxNew{(17,6)}{(18,7)}{bgedgedofcolor}
-\drawBoxNew{(18,6)}{(19,7)}{bgcelldofcolor}
-\drawBoxNew{(19,6)}{(20,7)}{bgcelldofcolor}
+\labelLayoutAxis{\pycode{"component"}};
 
-\drawBoxNew{(21,6)}{(22,7)}{bgcelldofcolor}
-\drawBoxNew{(22,6)}{(23,7)}{bgcelldofcolor}
-\drawBoxNew{(23,6)}{(24,7)}{bgcelldofcolor}
-\drawBoxNew{(24,6)}{(25,7)}{bgcelldofcolor}
-\drawBoxNew{(25,6)}{(26,7)}{bgcelldofcolor}
-\drawBoxNew{(26,6)}{(27,7)}{bgcelldofcolor}
+\drawBoxNewNew{0}{1}{white}
+\drawBoxNewNew{1}{1}{white}
+\drawBoxNewNew{2}{1}{white}
+\drawBoxNewNew{3}{1}{white}
+\drawBoxNewNew{4}{1}{white}
+\drawBoxNewNew{5}{1}{white}
+\drawBoxNewNew{6}{1}{white}
+\drawBoxNewNew{7}{1}{white}
+\drawBoxNewNew{8}{1}{white}
+\drawBoxNewNew{9}{1}{white}
+\drawBoxNewNew{10}{2}{white}
 
-\drawGuideLines{6}
+\drawBoxNewNew{0+\spaceoffset}{1}{white}
+\drawBoxNewNew{1+\spaceoffset}{1}{white}
+\drawBoxNewNew{2+\spaceoffset}{1}{white}
+\drawBoxNewNew{3+\spaceoffset}{1}{white}
+\drawBoxNewNew{4+\spaceoffset}{1}{white}
+\drawBoxNewNew{5+\spaceoffset}{2}{white}
 
-\labelBox{(.5,6.5)}{\textbf{0$_0$}}{bgvertdofcolor}
-\labelBox{(1.5,6.5)}{\textbf{0$_1$}}{bgvertdofcolor}
-\labelBox{(2.5,6.5)}{\textbf{1$_0$}}{bgvertdofcolor}
-\labelBox{(3.5,6.5)}{\textbf{1$_1$}}{bgvertdofcolor}
-\labelBox{(4.5,6.5)}{\textbf{2$_0$}}{bgvertdofcolor}
-\labelBox{(5.5,6.5)}{\textbf{2$_1$}}{bgvertdofcolor}
-\labelBox{(6.5,6.5)}{\textbf{3$_0$}}{bgedgedofcolor}
-\labelBox{(7.5,6.5)}{\textbf{3$_1$}}{bgedgedofcolor}
-\labelBox{(8.5,6.5)}{\textbf{4$_0$}}{bgedgedofcolor}
-\labelBox{(9.5,6.5)}{\textbf{4$_1$}}{bgedgedofcolor}
-\labelBox{(10.5,6.5)}{\textbf{5$_0$}}{bgedgedofcolor}
-\labelBox{(11.5,6.5)}{\textbf{5$_1$}}{bgedgedofcolor}
-\labelBox{(12.5,6.5)}{\textbf{6$_0$}}{bgedgedofcolor}
-\labelBox{(13.5,6.5)}{\textbf{6$_1$}}{bgedgedofcolor}
-\labelBox{(14.5,6.5)}{\textbf{7$_0$}}{bgedgedofcolor}
-\labelBox{(15.5,6.5)}{\textbf{7$_1$}}{bgedgedofcolor}
-\labelBox{(16.5,6.5)}{\textbf{8$_0$}}{bgedgedofcolor}
-\labelBox{(17.5,6.5)}{\textbf{8$_1$}}{bgedgedofcolor}
-\labelBox{(18.5,6.5)}{\textbf{9$_0$}}{bgcelldofcolor}
-\labelBox{(19.5,6.5)}{\textbf{9$_1$}}{bgcelldofcolor}
+\drawGuideLines
 
-\labelBox{(21.5,6.5)}{\textbf{0$_0$}}{bgcelldofcolor}
-\labelBox{(22.5,6.5)}{\textbf{1$_0$}}{bgcelldofcolor}
-\labelBox{(23.5,6.5)}{\textbf{2$_0$}}{bgcelldofcolor}
-\labelBox{(24.5,6.5)}{\textbf{3$_0$}}{bgcelldofcolor}
-\labelBox{(25.5,6.5)}{\textbf{4$_0$}}{bgcelldofcolor}
-\labelBox{(26.5,6.5)}{\textbf{5$_0$}}{bgcelldofcolor}
+\labelBoxNew{ .5}{\labelComponent{0}}{white}
+\labelBoxNew{1.5}{\labelComponent{1}}{white}
+\labelBoxNew{2.5}{\labelComponent{0}}{white}
+\labelBoxNew{3.5}{\labelComponent{1}}{white}
+\labelBoxNew{4.5}{\labelComponent{0}}{white}
+\labelBoxNew{5.5}{\labelComponent{1}}{white}
+\labelBoxNew{6.5}{\labelComponent{0}}{white}
+\labelBoxNew{7.5}{\labelComponent{1}}{white}
+\labelBoxNew{8.5}{\labelComponent{0}}{white}
+\labelBoxNew{9.5}{\labelComponent{1}}{white}
+
+\labelBoxNew{ .5+\spaceoffset}{\labelComponent{0}}{white}
+\labelBoxNew{1.5+\spaceoffset}{\labelComponent{0}}{white}
+\labelBoxNew{2.5+\spaceoffset}{\labelComponent{0}}{white}
+\labelBoxNew{3.5+\spaceoffset}{\labelComponent{0}}{white}
+\labelBoxNew{4.5+\spaceoffset}{\labelComponent{0}}{white}
 
 \end{tikzpicture}
 \end{document}

@@ -607,8 +607,8 @@ Both packages separate the specification of the data layouts from the implementa
 
 \subsection{Existing mesh stencil packages}
 
-% TODO: Maybe have macros to make sure the headings agree with above
-% FIXME: "Data layout flexibility" is far too vague here to have a tick or cross - perhaps "Dynamic data layouts"
+\todo[inline]{Maybe have macros to make sure the headings agree with above (they currently don't!).}
+\todo[inline]{Maybe "sparse matrix support" isn't a useful one, kind of assumed - make it clear OP2 doesn't have this in the prose.}
 \begin{table}
   \centering
 
@@ -647,10 +647,17 @@ Rather than providing a full problem-solving environment, OP2 and PyOP2 programs
 This approach maps cleanly to FEM-style assembly loops such as that shown in \cref{alg:fem_assembly}, which in PyOP2 would be expressed as
 
 \begin{pyinline}
-  par_loop(local_kernel, cells, coefficient(cell_node_map, READ), output((cell_node_map, cell_node_map), INC))
+  par_loop(kernel,                                       # local kernel
+           cells,                                        # iteration set
+           coefficient(cell_node_map, READ),             # arguments
+           output((cell_node_map, cell_node_map), INC))
 \end{pyinline}
 
 \noindent
+However, not all mesh stencil algorithms fit this simple pattern.
+Occasionally one needs to be able to have nested loops, or execute multiple kernels in sequence.
+Convincing PyOP2 to perform these sorts of operations has been done (e.g.~\cite{gibsonSlateExtendingFiredrake2020,farrellPCPATCHSoftwareTopological2021}), but only in a sui-generis manner, resulting in code that is harder to maintain and not composable with other features.
+
 OP2 is an \textit{active library} that provides source-to-source translation from C, \cplusplus or Fortran to a range of different backends.
 By contrast, PyOP2 is a reimplementation of the OP2 API in Python, using run-time code generation to compile the parallel loops.
 By using code generation, PyOP2 is easier to integrate with other code generation packages; in particular it is a core component of the Firedrake finite element framework~\cite{FiredrakeUserManual}, which is written in Python.
@@ -665,7 +672,7 @@ Being able to do this is convenient as building a mature unstructured mesh packa
   \centering
   \includegraphics{scott_vogelius_element_dof_layout_topological.pdf}
   \caption{
-    The closest possible data layout for \cref{fig:scott_vogelius_element_dof_layout} for a library that associates unknowns with topological entities.
+    The closest possible data layout for \cref{fig:scott_vogelius_element_dof_layout_packed} for a library that associates unknowns with topological entities.
     Data for each topological entity are stored in separate arrays.
   }
   \label{fig:scott_vogelius_element_dof_layout_topological}
@@ -675,59 +682,63 @@ Being able to do this is convenient as building a mature unstructured mesh packa
   \centering
   \includegraphics{scott_vogelius_element_dof_layout_pyop2.pdf}
   \caption{
-    The data layout matching \cref{fig:scott_vogelius_element_dof_layout} as it would be stored by \pyop2.
+    The data layout matching \cref{fig:scott_vogelius_element_dof_layout_packed} as it would be stored by \pyop2.
     Data for each function space ($V_h$ and $Q_h$) are stored in separate arrays.
   }
   \label{fig:scott_vogelius_element_dof_layout_pyop2}
 \end{figure}
-
 
 All of the packages listed above follow one of two possible approaches to storing mesh data.
 Liszt, Ebb, and MeshTaichi all store mesh data by associating fields with mesh entities (e.g. vertices).
 This means that high-order function spaces that store DoFs on multiple entities (e.g. \cref{fig:scott_vogelius_element}) are difficult to express and would have to be stored in a manner similar to that shown in \cref{fig:scott_vogelius_element_dof_layout_topological}.
 Consequently, mesh renumbering data locality optimisations are impossible to express.
 
-By contrast, Simit, OP2, and PyOP2 are able to represent function space DoFs more generically as a \textit{set of nodes}.
-Being able to treat all mesh entities equivalently means that mesh renumbering is possible.
-However, this comes at the expense of topological information.
-By associating DoFs with \textit{nodes} instead of mesh points the system no longer knows to which mesh point a given node is related.
-% TODO: HERE!!! Need to have a stronger argument as to why composability is necessary. Are there other benefits?
-% I guess that I have produced a language *as elegant as Simit etc* (no offset maps at all) but with locality stuff too.
-% As a result, (bad composability, etc, how to say?)
-
-% I mean, OP2 looks great! but bad composability... like pyop2
-% also OP2 is clunky to use.
-
-% Not flexible:
-  % "Whilst appropriate for a great many operations, there are occasions where one needs to be able to execute multiple kernels or have nested loops - for example when developing certain types of preconditioners (e.g. \cite{gibsonSlateExtendingFiredrake2020}, \cite{farrellPCPATCHSoftwareTopological2021}).
-  % "In these cases one has to extend the compiler in a sui-generis manner to achieve the desired result, resulting in code that is harder to maintain and not composable with other features.
-
-% Further, the treatment of data as belonging to sets can lead to information being discarded.
-% Considering the data layout shown in \cref{fig:scott_vogelius_element_dof_layout}, \pyop2 would store it as a tuple of two \textit{node sets} (\cref{fig:scott_vogelius_element_dof_layout_pyop2}).
-% Compared with the ``lossless" representation in \cref{fig:scott_vogelius_element_dof_layout}, this approach simplifies the implementation because the data can now be stored as 2 rectangular arrays with shapes \pycode{(10, 2)} and \pycode{(6, 1)}.
-% However, this approach \textit{discards topological information}: the ``Mesh" layer of the representation is gone.
-% This means that the library user has to do the bookkeeping to correctly handle the mappings from mesh entities to nodes.
-
-% This mostly belongs in chapter 3
-Clearly, there is something missing here.
-The designs of the existing libraries all require that one either use topological information in a simplified way - associating data with particular mesh entities only - or that one take ownership of the data, discarding topological information that is helpful for having a composable abstraction.
-To get around this difficulty we have developed a new abstraction for data layouts, termed \textit{axis trees}, that bridges the gap between these worlds.
-Axis trees allow the user to describe complex data layouts of the sort shown in \cref{fig:scott_vogelius_element_dof_layout} fully, without needing to discard any of the topological information.
-As a convenient side benefit, expressing data layout transformations (\cref{sec:data_layout_transformations}) becomes natural to do.
-
-The axis tree abstraction is included in the new Python library \pyop3.
-\pyop3 is a near-total rewrite of \pyop2 that aims to substantially improve its expressivity power and composability.
-It has support for distributed memory parallelism and integrates with PETSc.
-
-% NOTE: I don't like including this but I think I have to be honest about this.
-% put in a box
-Disclaimer:
-Whilst all of the functionality of \pyop3 in the following thesis has been tested and shown to work, the time constraints of the PhD mean that \pyop3 is unfinished.
-Thus not all of the provided functionality has been merged into the \texttt{main} branch yet.
-This is considered very high priority future work for the project.
+By contrast, Simit, OP2, and PyOP2 are able to represent function space DoFs more generically as \textit{sets of nodes}.
+Being able to treat all mesh entities equivalently means that mesh renumbering is possible but comes at the expense of topological information.
+This is demonstrated in \cref{fig:scott_vogelius_element_dof_layout_pyop2}, which shows the data layout for a Scott-Vogelius function space as it would be stored in \pyop2.
+Observe that the topological information - the \pycode{"mesh"} layer - is no longer present, meaning that the relation between nodes and their owning mesh entities is lost.
+This is the principle reason why developing expressive DSLs for mesh stencil calculations is difficult: \textbf{topological information is essential for a composable abstraction}.
 
 \section{Thesis outline}
 
-The remainder of this work is structured as follows\dots
+In this thesis we develop abstractions and associated infrastructure to bridge this gap.
+The core of this novel work is a new abstraction for describing hierarchical data layouts, termed \textit{axis trees}.
+Axis trees allow the user to describe complex data layouts of the sort shown in \cref{fig:scott_vogelius_element_dof_layout_packed} fully, without needing to discard any of the topological information.
+As a convenient side benefit, expressing data layout transformations (\cref{sec:data_layout_transformations}) becomes natural to do.
+
+This is implemented in the new mesh stencil package \pyop3, a near-total rewrite of PyOP2 that aims to substantially improve its expressivity power and composability.
+
+The remainder of this thesis is structured as follows:
+
+\todo[inline]{This isn't very nice as a bulleted list, probably put into a paragraph.}
+
+\begin{itemize}
+  \item
+    \cref{chapter:foundations} introduces the pieces of scientific software that contributed to \pyop3's design, including its precursor PyOP2 and the unstructured mesh framework PETSc DMPlex.
+  \item
+    \cref{chapter:axis_trees} and \cref{chapter:indexing} present axis trees for the first time, as well as techniques for their symbolic manipulation (termed \textit{indexing}).
+  \item
+    \cref{chapter:execution_model} 
+  \item
+    \cref{chapter:parallel} discusses extensions to the base design to enable distributed-memory parallelism.
+  \item
+    \cref{chapter:firedrake} integrates \pyop3 into the finite element package Firedrake, replacing PyOP2, and details of this are discussed.
+  \item
+    \cref{chapter:performance} does some simple performance tests and \cref{chapter:summary} is for closing remarks.
+\end{itemize}
+
+\todo[inline]{
+  Not all of the algorithms that I present in the rest of the thesis have been merged into \pyop3 main because I ran out of time.
+  In particular the layout tabulation and parallel indexing bits haven't been added.
+  Do I need some sort of disclaimer on this?
+  This could potentially be a good place for that.
+}
+
+% NOTE: I don't like including this but I think I have to be honest about this.
+% put in a box
+% Disclaimer:
+% Whilst all of the functionality of \pyop3 in the following thesis has been tested and shown to work, the time constraints of the PhD mean that \pyop3 is unfinished.
+% Thus not all of the provided functionality has been merged into the \texttt{main} branch yet.
+% This is considered very high priority future work for the project.
 
 \end{document}
