@@ -5,168 +5,8 @@
 \chapter{Foundations}
 \label{chapter:foundations}
 
-% TODO: Reference the checklist from the previous chapter
-
-% NOTE: This is sooo hard to write well.
-\pyop3 was created to be a successor to \pyop2, and so it is instructive to review how \pyop2 works and identify any shortcomings.
-We will then review a number of libraries whose abstractions capture the missing behaviour.
-
-\section{\pyop2}
-% NOTE: should mention partial GPU support (cite Kaushik)
-% NOTE: should mention extruded (then mention at end of doc)
-
-Just like \pyop3, \pyop2 is an execution model for the application of compact computational kernels over unstructured meshes~\cite{rathgeberPyOP2HighLevelFramework2012}.
-It was introduced to provide the same abstractions as OP2~\cite{mudaligeOP2ActiveLibrary2012} but using runtime code generation instead of source-to-source translation.
-It is a core component of the Firedrake finite element framework~\cite{FiredrakeUserManual}.
-
-\subsection{Data structures}
-
-\pyop2 has no innate concept of what an unstructured mesh is.
-Instead, topological entities are treated as \textit{sets}, with \textit{mappings} between the different sets.
-
-There are 3 different types of data structures defined in \pyop2: globally constant values, vectors and matrices.
-These are termed \pycode{Globals}, \pycode{Dats} and \pycode{Mats} respectively.
-
-For more complex problems like the Stokes equations in \cref{sec:stokes_equations} the \glspl{dof} are associated with multiple types of topological entity.
-In \cref{fig:scott_vogelius_element_P3} for example the unknowns are associated with the cell, edges and vertices.
-This means that one has to associate the \glspl{dof} for that function space with a distinct \textit{node set}, rather than a set for a particular topological entity.
-As a consequence, the data structures do not know to what topological entity they refer and the library user must take responsibility for constructing the right maps from, say, cells to nodes.
-
-\subsection{Loops}
-
-In order to apply kernels to these data structures, a \textit{parallel loop} (\pycode{par_loop}) is constructed and executed.
-The loop takes as arguments a \textit{local kernel}, \textit{iteration set} and zero or more \textit{arguments} that provide the data structures needed by the local kernel.
-
-% mention loopy here briefly (cref{sec:pyop2_codegen})
-
-% arguments may need map from iteration set to its own (node) set, also accessors
-
-
-An example loop statement is shown in \cref{fig:pyop2_parloop}.
-
-\subsection{Code generation}
-\label{sec:pyop2_codegen}
-
-\begin{figure}
-  \includegraphics{pyop2_codegen_flowchart.pdf}
-  \caption{Simplified code generation pathway for a \pyop2 parallel loop.}
-  \label{fig:pyop2_codegen}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \begin{subfigure}{.49\textwidth}
-    \begin{pylisting}
-      knl = loopy.make_kernel(
-        "{ [i]: 0 <= i < n }",  # domains
-        "y[i] = 2*x[i]",        # instructions
-        [                       # arguments
-          loopy.GlobalArg("x", dtype=float),
-          loopy.GlobalArg("y", dtype=float),
-          loopy.ValueArg("n", dtype=int),
-        ],
-      )
-    \end{pylisting}
-    \caption{Python code to construct the kernel. Some arguments to \pycode{make_kernel} have been omitted for simplicity.}
-    \label{fig:loopy_codegen_kernel}
-  \end{subfigure}
-  %
-  \begin{subfigure}{.49\textwidth}
-    \inputminted[fontsize=\footnotesize]{c}{./scripts/artefacts/loopy_example_c_code_tidy.c}
-    \caption{The generated C code.}
-    \label{fig:loopy_codegen_c}
-  \end{subfigure}
-
-  \caption{
-    An example loopy kernel.
-    The kernel takes two array arguments, \pycode{x} and \pycode{y}, and sets the values in \pycode{y} to twice those in \pycode{x}.
-    Both arrays have the same unknown length \pycode{n} which is also passed in to the kernel as an argument.
-  }
-  \label{fig:loopy_codegen}
-\end{figure}
-
-The code generation pipeline is summarised in \cref{fig:pyop2_codegen}.
-Having constructed a parallel loop, \pyop2 executes it by first lowering the loop object through a sequence of intermediate representations before compiling and running the generated low-level code.
-
-The first intermediate representation is loopy~\cite{klocknerLooPyTransformationbased2014}, a polyhedral model inspired Python code generation library.
-
-With loopy, the main entry point is the declaration of a \pycode{LoopKernel}.
-To construct such a kernel, the user needs to specify \textit{domains}, \textit{instructions} and \textit{arguments}.
-An example loopy kernel is shown in \cref{fig:loopy_codegen_kernel}, with the generated C string shown in \cref{fig:loopy_codegen_c}.
-
-% TODO: talk about GPUs
-loopy is capable of generating code for multiple backends including CPUs and GPUs and so \pyop2 targeting loopy should, in principle, allow the same \pyop2 code to target different architectures.
-
-% TODO: talk about vectorisation (cite TJ)
-Once a \pycode{LoopKernel} has been created, loopy also provides a wealth of different code transformations such as loop tiling, vectorisation and loop-invariant code motion.
-
-\subsection{Parallel execution}
-\label{sec:pyop2_parallel}
-
-% NOTE: I am deciding to not try too hard to explain core/owned/ghost because I
-% think that the design is poor and I demonstrate something better later.
-
-\begin{algorithm}
-  \begin{verbatim}
-Trigger required halo exchanges
-FOR EACH item IN iterset.core:
-  compute(item)
-
-Await halo exchanges
-FOR EACH item IN iterset.owned:
-  compute(item)
-  \end{verbatim}
-  \caption{The \pyop2 parallel loop execution algorithm to interleave computation and communication.}
-  \label{alg:pyop2_comp_comm_overlap}
-\end{algorithm}
-
-By keeping careful track of the parallel decomposition of sets, \pyop2 is capable of interleaving computation and communication when executing parallel loops.
-To do so each set is split into 3 parts:
-
-\begin{itemize}
-  \item \textit{Core}: Set elements that do not require any data from other processes during a parallel loop.
-
-  \item \textit{Owned}: Set elements that belong to the current process but do require data from other processes.
-
-  \item \textit{Ghost}: Set elements present on a process that belong to another process.
-\end{itemize}
-
-  % Given this partitioning, \pyop2 then reorders the data such that it looks like:
-  %
-  % \begin{center}
-  %   \includegraphics{pyop2_partition.pdf}
-  % \end{center}
-
-% NOTE: closure is a new term here
-The number of \textit{ghost} points is known to the mesh already, as it has knowledge of its overlap.
-To determine the \textit{core} and \textit{owned} partitions one loops over the cells of a mesh and inspecting all the points in the closure of the cell.
-If any of the points in the closure are \textit{ghost}, then all other points in the closure are marked as \textit{owned}.
-Any remaining points without a label are labelled \textit{core}.
-
-From this partitioning it is possible to interleave computation and communication.
-Computations over points marked \textit{core} are not influenced by any ghost data and so can proceed before ghost data has been communicated. \textit{Owned} points need to have up-to-date ghost data and so must wait for all communication to be completed before beginning.
-This is shown in \cref{alg:pyop2_comp_comm_overlap}.
-
-% NOTE: This is an acceptable repeat of the sorts of things said in chapter 1.
-\subsection{Limitations}
-
-% NOTE: Not sure I have anything to actually ref here
-As mentioned in \cref{sec:???}, \pyop2 is negatively affected by a number of design choices that limit its suitability:
-
-% NOTE: bad spacing
-\paragraph{Poor composability}{
-  Associating mesh data with \textit{node sets} discards topological information and places a burden on the library user to keep track of the relations between the mesh topology and the nodes.
-}
-
-\paragraph{Inflexible interface}{
-  Not all mesh operations are expressible as a single kernel executed within a single loop over entities.
-  Algorithms for physics-based preconditioners such as hybridisation~\cite{gibsonSlateExtendingFiredrake2020} and additive Schwartz methods~\cite{farrellPCPATCHSoftwareTopological2021} involve multiple kernels and nested loops and so implementing them required sui-generis additions to \pyop2 that are difficult to extend.
-  It would be preferable to have an abstraction for mesh computations that was sufficiently flexible for these algorithms to be expressible.
-}
-
-\pyop3 aims to resolve both of these limitations with \pyop2 by rethinking the core abstractions.
-The design of a number of libraries were used as inspiration for approaches to solving these problems.
-These will be reviewed below.
+Before introducing \pyop3, it is instructive to review its `foundations', that is, pieces of software that inspired its design.
+In order these are: \numpy, PETSc DMPlex and \pyop2.
 
 \section{Relating unknowns to mesh topology: DMPlex}
 \label{sec:foundations_dmplex}
@@ -400,22 +240,18 @@ To transfer function data, PETSc composes the point star forest with a \ccode{Se
         %   dof_sf = component.sf.createSectionSF(section, ...)
         %   return dof_sf
 
-\section{A language for structured data: numpy}
+\section{A language for structured data: \numpy}
 
-numpy is ...
+Rather more well-known than \pyop2 or DMPlex, \numpy~\cite{harrisArrayProgrammingNumPy2020} is the de-facto package for scientific computation in Python.
+Underpinning a great many popular libraries, ...
 
-numpy has established itself as the de-facto approach for high level libraries to...
+%ndarray
 
-Much of the following thesis can be viewed as a generalisation of numpy-like abstractions, and so it is useful to establish the relevant terminology now.
-
-% (cite paper, search for "citing numpy")
-% although not a JIT, numpy is important for introducing ergonomic ways of
-% expressing array computations
-% there are some numpy JIT options out there: JAX, pytato, pytorch?
+Given that much of this thesis is dedicated to representing and transforming hierarchically structured data, it is valuable to review how this is done in \numpy as many of the concepts and syntactic elements are reused in \pyop3.
 
 \subsection{N-dimensional arrays}
 
-The key abstraction introduced by numpy is the \textit{N-dimensional array}, or \pycode{ndarray}.
+The key abstraction introduced by \numpy is the \textit{N-dimensional array}, or \pycode{ndarray}.
 It is an intuitive and widely used interface for operating on multi-dimensional data.
 
 % not suitable for pyop3 because we have more heterogeneous data layouts (but works for pyop2 node sets)
@@ -445,7 +281,7 @@ It is an intuitive and widely used interface for operating on multi-dimensional 
   \end{tabular}
 
   \caption{
-    Common indexing operations for numpy arrays.
+    Common indexing operations for \numpy arrays.
     The examples shown apply the index to the string array \pycode{["A", "B", "C", "D", "E", "F"]} (called \pycode{array} above).
     The array return type for single element indexing is marked as ``N/A" because a string is returned instead of an array.
   }
@@ -453,9 +289,9 @@ It is an intuitive and widely used interface for operating on multi-dimensional 
 \end{table}
 
 Broadcasting operations, that handle the entire array monolithically, are not adequate for many programs.
-numpy, therefore, allows for array \textit{indexing}, where portions of the full array are extracted to yield a new array.
+\numpy, therefore, allows for array \textit{indexing}, where portions of the full array are extracted to yield a new array.
 
-Some of the ways that a numpy array may be indexed are shown in \cref{tab:numpy_indexing_ops}:
+Some of the ways that a \numpy array may be indexed are shown in \cref{tab:numpy_indexing_ops}:
 
 \begin{itemize}
   \item \textbf{Single element indexing}
@@ -479,12 +315,207 @@ Some of the ways that a numpy array may be indexed are shown in \cref{tab:numpy_
 Although the examples provided are all for a 1-dimensional array, it is completely permissible to index N-dimensional arrays with a collection of these indexing operations, one per axis of the array.
 This collection of indices is termed a \textit{multi-index}.
 
-numpy draws a distinction between ``basic" indexing, single element indexing and slicing, and ``advanced" indexing like using integer arrays.
+\numpy draws a distinction between ``basic" indexing, single element indexing and slicing, and ``advanced" indexing like using integer arrays.
 For the former, the array returned from the indexing operation is a \textit{view}, whereas for the latter a \textit{copy} is returned.
 Alongside the obvious memory advantages, views are also preferable to copies because they are \textit{composable}.
 One can take views of views repeatedly without triggering a copy, allowing for changes to the indexed array to be propagated back to the original.
 
 % mention in chapter 4!
 % In \pyop3, as well as generalising the indexing operations above to axis trees, we overcome this shortcoming of numpy's advanced indexing such that views are always used regardless of the indexing method used.
+
+\section{PyOP2}
+
+% NOTE: should mention extruded (then mention at end of doc)
+
+As first introduced in \cref{sec:intro_existing_software}, PyOP2 is a library for doing mesh stencil calculations~\cite{rathgeberPyOP2HighLevelFramework2012}.
+It was originally introduced to provide the same abstractions as OP2~\cite{mudaligeOP2ActiveLibrary2012}, but using runtime code generation instead of source-to-source translation.
+It is a core component of the Firedrake finite element framework~\cite{FiredrakeUserManual}.
+
+\subsection{Data structures}
+
+\begin{table}
+  \centering
+  \begin{tblr}{|[1pt]l|[1pt]l|[1pt]l|[1pt]l|[1pt]}
+    \hline[1pt]
+    & \textbf{Global} & \textbf{Dat} & \textbf{Mat} \\
+    \hline[1pt]
+    Usage & Globally constant value & Distributed vector & Distributed matrix \\
+    \hline
+    Constructor & \pycode{GlobalDataSet} & \pycode{DataSet} & 2 \pycode{DataSets} \\
+    \hline
+    Storage type & \numpy \pycode{ndarray} & \numpy \pycode{ndarray} & PETSc \ccode{Mat} \\
+    \hline[1pt]
+  \end{tblr}
+  \caption{\pyop2 data structures.}
+  \label{tab:pyop2_data_types}
+\end{table}
+
+Like \numpy, \pyop2 data structures are composed of a semi-opaque piece of memory and a data layout descriptor providing semantic information about said memory.
+This data layout descriptor, termed a \emph{data set}, is constructed by taking a set, say, of vertices and associating some shape information with it.
+
+Summarised in \cref{tab:pyop2_data_types}, \pyop2 has three supported data structures: \pycode{Globals} (constants), \pycode{Dats} (vectors), and \pycode{Mats} (matrices).
+Each is constructed with a different data layout specification: \pycode{Globals} take a \pycode{GlobalDataSet}, \pycode{Dats} take a \pycode{DataSet}, and \pycode{Mats} take two \pycode{DataSets}, one each for the rows and columns.
+
+\pycode{Globals} and \pycode{Dats} both store data as \numpy arrays under the hood, whereas \pycode{Mats} use PETSc matrices (also termed \ccode{Mats}).
+
+For multi-field problems such as the Stokes example in \cref{chapter:introduction} one has \textit{mixed data sets}, which are simply a collection of regular data sets.
+Mixed data sets yield \pycode{MixedDats} which are, again, simply a collection of regular \pycode{Dats}.
+An example of a \pyop2 data layout for a multi-field problem is shown in \cref{fig:scott_vogelius_element_dof_layout_pyop2}.
+Observe that, since the DoFs are associated with multiple mesh entities, data is stored on a \emph{node set}, losing topological information (\cref{sec:pyop2_limitations}).
+
+\subsection{Parallel loops}
+
+\begin{listing}
+  \centering
+  \begin{minipage}{.9\textwidth}
+    \begin{pyalg2}
+      par_loop(kernel,                          # local kernel
+               src_set,                         # iteration set
+               dat0(READ, src_to_target_map),   # arguments
+               dat1(WRITE, src_to_target_map))
+    \end{pyalg2}
+  \end{minipage}
+  \caption{
+    Code to construct and execute a \pyop2 parallel loop.
+  }
+  \label{listing:pyop2_parloop_demo}
+\end{listing}
+
+In order to apply kernels to these data structures, a \textit{parallel loop} is constructed and executed.
+The loop takes as arguments a \textit{local kernel}, \textit{iteration set} and zero or more \textit{arguments} that provide the data structures needed by the local kernel.
+For an example parloop see \cref{listing:pyop2_parloop_demo}.
+
+\begin{itemize}
+  \item
+    \pycode{kernel} is the local kernel representing the stencil operation to be performed per iteration.
+    It may be either a string of C code or a \textit{loopy kernel} (see \cref{sec:pyop2_codegen}).
+  \item
+    \pycode{src_set} is the set that is iterated over.
+  \item
+    \pycode{dat0} and \pycode{dat1} are \pycode{Dat} objects (vectors) that are passed through to the local kernel.
+    Both associate data with some \pycode{target_set} and hence are addressed with the map \pycode{src_to_target_map}.
+    \pycode{dat0} is accessed using the \pycode{READ} access descriptor, meaning that it only needs to be packed and passed into the local kernel, whereas \pycode{dat1} is accessed with \pycode{WRITE}, so it only requires unpacking.
+\end{itemize}
+
+\subsubsection{Interleaving computation and communication}
+
+\begin{algorithm}
+  \caption{The PyOP2 parallel loop execution algorithm to interleave computation and communication.}
+  %
+  \begin{algorithmic}[1]
+    \State \Call{BeginHaloExchanges}{} \Comment{Begin sending halo data}
+
+    \For{\textit{item} \textbf{in} \textit{iterset.core}} \Comment{Do the computations that \textbf{do not} need halo data}
+      \State \Call{Compute}{\textit{item}}
+    \EndFor
+
+    \State \Call{AwaitHaloExchanges}{} \Comment{Wait for halo exchanges to complete}
+
+    \For{\textit{item} \textbf{in} \textit{iterset.owned}} \Comment{Do the computations that \textbf{do} need halo data}
+      \State \Call{Compute}{\textit{item}}
+    \EndFor
+  \end{algorithmic}
+  \label{alg:pyop2_comp_comm_overlap}
+\end{algorithm}
+
+By keeping careful track of the parallel decomposition of sets, \pyop2 is capable of interleaving computation and communication when executing parallel loops.
+To do so each set is split into 3 parts:
+
+\begin{description}
+  \item[\coreiter]
+    Set elements that do not require any data from other processes during a parallel loop.
+
+  \item[\ownediter]
+    Set elements that are owned by the current process but require data from other processes.
+
+  \item[\ghostiter]
+    Set elements present on a process that belong to another process.
+\end{description}
+
+From this partitioning it is possible to interleave computation and communication.
+Computations over \coreiter points do not read any ghost data, and hence can be executed without waiting for any communication to complete, whereas \ownediter points need valid ghost data and so must wait for all communication to be completed before beginning.
+This is shown in \cref{alg:pyop2_comp_comm_overlap}.
+
+To facilitate this algorithm, \pyop2 stores data in a partitioned manner, with \coreiter points preceding all \ownediter points and all \ownediter preceding all \ghostiter points:
+
+\begin{center}
+  \includegraphics{pyop2_partition.pdf}
+\end{center}
+
+This is convenient as it provides a no-copy method for dropping \ghostiter points - just return a truncated view of the same buffer - but, in our view, conflates several concepts that should be kept separate.
+This is discussed in detail in \cref{sec:communication_optimisations}.
+
+\subsection{Code generation}
+\label{sec:pyop2_codegen}
+
+\begin{figure}
+  \includegraphics{pyop2_codegen_flowchart.pdf}
+  \caption{Simplified code generation pathway for a \pyop2 parallel loop.}
+  \label{fig:pyop2_codegen}
+\end{figure}
+
+To turn the abstract parallel loop definition into executable, fast code, \pyop2 utilises run-time code generation.
+First, the parallel loop is \emph{lowered} to loopy (see below), which is then lowered to C code and compiled to a binary.
+This binary may then be called passing in the arguments from the original parallel loop.
+This process is summarised in \cref{fig:pyop2_codegen}.
+
+\subsubsection{Loopy}
+
+\begin{listing}
+  \centering
+  \begin{minipage}{.9\textwidth}
+    \inputminted{text}{./scripts/artefacts/pyop2_example_loopy_kernel_tidy.txt}
+  \end{minipage}
+  \caption{
+    Abbreviated textual representation of the loopy kernel generated for the example parallel loop in \cref{listing:pyop2_parloop_demo}.
+  }
+  \label{listing:pyop2_example_loopy_kernel}
+\end{listing}
+
+\begin{listing}
+  \centering
+  \begin{minipage}{.9\textwidth}
+    \inputminted{c}{./scripts/artefacts/pyop2_example_c_code_tidy.c}
+  \end{minipage}
+  \caption{
+    The C code generated from the loopy kernel in \cref{listing:pyop2_example_loopy_kernel}.
+  }
+  \label{listing:pyop2_example_c_code}
+\end{listing}
+
+Loopy~\cite{klocknerLooPyTransformationbased2014}, a polyhedral-model-inspired code generation library written in Python, is the primary intermediate representation of \pyop2.
+Given a parallel loop, \pyop2 generates a loopy \pycode{LoopKernel} which is then lowered to C code and compiled.
+In order to construct a \pycode{LoopKernel} the user needs to provide \emph{domains} (loops), \emph{instructions}, and \emph{arguments} (data passed into the kernel).
+For the parallel loop in \cref{listing:pyop2_parloop_demo}, the \pycode{LoopKernel} and generated C code are shown in \cref{listing:pyop2_example_loopy_kernel} and \cref{listing:pyop2_example_c_code} respectively.
+The local kernel, here omitted, is also (usually) a \pycode{LoopKernel} and would be included in the generated code as a separate function.
+
+Given its high level of abstraction, loopy is a convenient target for \pyop2 for a number of reasons:
+
+\begin{itemize}
+  \item
+    \pycode{LoopKernels} may be transformed to apply optimisations such as loop tiling, common subexpression elimination and vectorisation~\cite{sunStudyVectorizationMatrixfree2020}.
+  \item
+    Code may be generated for targets other than CPUs including the GPU languages OpenCL and CUDA.
+    This means that \pyop2 is capable of executing parallel loops on GPUs without making intrusive changes to the code - a fact demonstrated (as a proof-of-concept) by \cite{fenics2021-kulkarni}.
+\end{itemize}
+
+\subsection{Limitations}
+\label{sec:pyop2_limitations}
+
+As mentioned in \cref{sec:intro_missing_abstraction}, the design of \pyop2 has two key shortcomings:
+
+\begin{description}
+  \item[Inflexible interface]
+    Not all mesh operations are expressible as a single kernel executed within a single loop.
+    Algorithms for physics-based preconditioners such as hybridisation~\cite{gibsonSlateExtendingFiredrake2020} and additive Schwartz methods~\cite{farrellPCPATCHSoftwareTopological2021} involve multiple kernels and nested loops and so implementing them has required sui-generis additions to \pyop2 that are difficult to extend.
+
+  \item[Loses topological information]
+    Associating mesh data with \textit{node sets} discards topological information.
+    This places a burden on the library user to keep track of the relations between the mesh topology and the nodes, and also makes composition (e.g. of maps) harder.
+\end{description}
+
+\pyop3 aims to resolve both of these limitations with \pyop2 by rethinking the core abstractions.
+In particular it introduces a new abstraction for data layouts, superseding \pycode{DataSets}, that is capable of representing nodal data layouts without losing reference to the mesh topology.
+This new abstraction is called an \emph{axis tree}.
 
 \end{document}

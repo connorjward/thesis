@@ -198,26 +198,28 @@ Examples include:
 
 \subsection{Overlapping communication with computation}
 
-% NOTE: This is badly formatted, improve along with PyOP2 one!
 \begin{algorithm}
-  \begin{minted}[autogobble]{text}
-    reduce_leaves_to_roots_begin()
-
-    FOR EACH item IN iterset.core:
-      compute(item)
-
-    reduce_leaves_to_roots_end()
-    broadcast_roots_to_leaves_begin()
-
-    FOR EACH item IN iterset.root:
-      compute(item)
-
-    broadcast_roots_to_leaves_end()
-
-    FOR EACH item IN iterset.leaf:
-      compute(item)
-  \end{minted}
   \caption{The \pyop3 parallel loop execution algorithm to interleave computation and communication.}
+  \begin{algorithmic}[1]
+    \State \Call{ReduceLeavesToRootsBegin}{} \Comment{Begin updating \rootiter points}
+
+    \For{\textit{item} \textbf{in} \textit{iterset.core}} \Comment{Do the computations that \textbf{do not} need \rootiter data}
+      \State \Call{Compute}{\textit{item}}
+    \EndFor
+
+    \State \Call{ReduceLeavesToRootsEnd}{} \Comment{Finish updating \rootiter points}
+    \State \Call{BroadcastRootsToLeavesBegin}{} \Comment{Start updating \leafiter points}
+
+    \For{\textit{item} \textbf{in} \textit{iterset.root}} \Comment{Do the computations that \textbf{do} need \rootiter data but \textbf{do not} need \leafiter data}
+      \State \Call{Compute}{\textit{item}}
+    \EndFor
+
+    \State \Call{BroadcastRootsToLeavesEnd}{} \Comment{Finish updating \leafiter points}
+
+    \For{\textit{item} \textbf{in} \textit{iterset.leaf}} \Comment{Do the computations that \textbf{do} need \leafiter}
+      \State \Call{Compute}{\textit{item}}
+    \EndFor
+  \end{algorithmic}
   \label{alg:pyop3_comp_comm_overlap}
 \end{algorithm}
 

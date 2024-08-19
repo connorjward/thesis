@@ -1,5 +1,11 @@
 \ProvidesPackage{mymacros}
 
+% ============================== FONTS ==============================
+
+% choose a font that support textbf{textsc{XXX}}
+%https://tex.stackexchange.com/questions/27411/small-caps-and-bold-face
+\usepackage{newcomputermodern}
+
 % ============================== ACRONYMS ==============================
 \usepackage[acronym,nomain]{glossaries}
   \setacronymstyle{long-short}
@@ -40,6 +46,8 @@
 % source: https://tex.stackexchange.com/questions/13290/how-to-define-macros-with-numbers-in-them
 \def\pyop#1{\ifnum#1=2 {PyOP2}\else \ifnum#1=3 {\texttt{pyop3}}\fi \fi}
 
+\newcommand{\numpy}{NumPy }
+
 \newcommand{\pycode}{\mintinline[escapeinside=??]{python}}
 \newcommand{\ccode}{\mintinline{c}}
 
@@ -48,6 +56,12 @@
 % nicer maths arrays
 \newcommand{\lbrac}{\pmb{\bigl[}}
 \newcommand{\rbrac}{\pmb{\bigr]}}
+
+\newcommand{\coreiter}{\textsc{core} }
+\newcommand{\ownediter}{\textsc{owned} }
+\newcommand{\ghostiter}{\textsc{ghost} }
+\newcommand{\rootiter}{\textsc{root} }
+\newcommand{\leafiter}{\textsc{leaf} }
 
 % ============================== TABLES ==============================
 
@@ -61,7 +75,7 @@
 
 % checkbox
 % source https://tex.stackexchange.com/questions/16000/creating-boxed-check-mark
-\usepackage{amssymb}
+% \usepackage{amssymb}
 \newcommand{\unchecked}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}$\quad$}}
 \newcommand{\checked}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}$\checkmark$}}
 \newcommand{\maybe}{\makebox[0pt][l]{$\square$}\raisebox{.15ex}{\hspace{0.1em}?}}
