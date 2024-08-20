@@ -468,6 +468,7 @@ Code generation operates on alternative, domain-specific high-level representati
 Unlike hand-written codes, these high-level abstractions have `zero-cost' as they only exist at compile-time.
 Having multiple representations of the problem has a number of benefits:
 
+% TODO: I think performance should be its own paragraph, the others can be lumped together
 \begin{itemize}
   \item
     It allows for a separation of concerns between users and developers, facilitating contributions from users without a background in performance optimisation.
@@ -498,7 +499,14 @@ Despite these benefits, DSLs have not been adopted wholesale into the continuum 
 
 Clearly, further research to address these concerns is required.
 
+\todo[inline]{The takeaway from this section \textit{should} be that DSLs are great for continuum mechanics but that designing the right abstractions is both important and difficult.}
+% "good codegen relies on capturing behaviour via powerful abstractions"
+% else need sui-generis solutions that do not generalise/extend
+% "getting the abstraction right (and at the right level) lets us do things like sum factorisation (FInAT) and automatic adjoint (pyadjoint)"
+
 \subsection{Requirements for a mesh stencil compiler}
+
+\todo[inline]{This doesn't flow very well. Need to motivate the need for code generation and then say `and we want to do this for mesh stencils'.}
 
 In addition to having the right high-level abstractions and backing code generation infrastructure, there a number of essential requirements that a mesh stencil package must meet in order for it to be effective.
 These requirements are:
@@ -533,14 +541,6 @@ Also ARM (RISC) CPUs are popular (e.g. Fugaku).
 Programming for these disparate architectures requires both new programming languages/models, in the case of GPUs, as well as high-level algorithmic changes~\cite{betteridgeCodeGenerationProductive2021} to get acceptable performance.
 The situation is further complicated by the programming models being vendor-specific with languages such as CUDA, HIP and Sycl all being specially designed to get performance from a particular vendor's accelerators.
 \textbf{A successful mesh stencil code should be able to switch between backends with only minimal changes to both user and internal code, and be reasonably performant for them all.}
-
-\todo[inline]{This bit seems a bit forced but I do want to make a point that implementing your own mesh, matrices, solvers etc is dumb. Perhaps this should just be "parallel sparse matrices".}
-
-\subsubsection{Interoperability with external software}
-
-As described above, the work needed to successfully implement a piece of simulation software is enormous and prohibitive.
-\textbf{To make such an endeavour tractable, and maintainable in the long term, mesh stencil codes should avoid `reinventing the wheel' by leveraging existing software wherever possible.}
-In particular, meshing software is notoriously complicated to implement as a large array of features from geometry to partitioning and input/output require implementing; it is preferable to use existing, mature, implementations for such features (e.g. PETSc~\cite{petsc-user-ref,petsc-web-page,petsc-efficient}).
 
 \begin{figure}
   \centering
@@ -595,7 +595,6 @@ Both packages separate the specification of the data layouts from the implementa
 \label{sec:intro_existing_software}
 
 \todo[inline]{Maybe have macros to make sure the headings agree with above (they currently don't!).}
-\todo[inline]{Maybe "sparse matrix support" isn't a useful one, kind of assumed - make it clear OP2 doesn't have this in the prose.}
 \begin{table}
   \centering
 
@@ -606,8 +605,6 @@ Both packages separate the specification of the data layouts from the implementa
     Distributed memory parallelism & \mytick & \mycross & \mycross & \mycross & \mytick & \mytick \\
     \hline
     Performance portability & \mytick & \mytick & \mytick & \mytick & \mytick & \mycross\footnotemark \\
-    \hline
-    Sparse matrix support & ? & \mytick & \mytick & \mytick & \mycross & \mytick \\
     \hline
     Mesh renumbering\footnotemark & \mycross & \mytick & \mycross & \mycross & \mytick & \mytick \\
     \hline
@@ -684,6 +681,8 @@ Being able to treat all mesh entities equivalently means that mesh renumbering i
 This is demonstrated in \cref{fig:scott_vogelius_element_dof_layout_pyop2}, which shows the data layout for a Scott-Vogelius function space as it would be stored in \pyop2.
 Observe that the topological information - the \pycode{"mesh"} layer - is no longer present, emphasising that the relation between nodes and their owning mesh entities is lost.
 This is the principle reason why developing expressive DSLs for mesh stencil calculations is difficult: \textbf{topological information is essential for a composable abstraction}.
+
+\todo[inline]{Fundamentally, node sets do not \textit{look like} function spaces. Hence the abstraction is weak. We can point to things (e.g. pcpatch) where things break down, but fundamentally getting the abstraction right is a good thing in and of itself and is worth doing.}
 
 \section{Thesis outline}
 

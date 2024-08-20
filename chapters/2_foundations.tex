@@ -5,88 +5,103 @@
 \chapter{Foundations}
 \label{chapter:foundations}
 
-Before introducing \pyop3, it is instructive to review its `foundations', that is, pieces of software that inspired its design.
+Before introducing \pyop3, it is instructive to review its `foundations', that is, pieces of software that have inspired its design.
 In order these are: \numpy, PETSc DMPlex and \pyop2.
 
 \section{A language for structured data: \numpy}
 
-Rather more well-known than \pyop2 or DMPlex, \numpy~\cite{harrisArrayProgrammingNumPy2020} is the de-facto package for array-based computation in Python.
-Core to its functionality is the \emph{N-dimensional array}, or \pycode{ndarray}, which is an abstraction and interface for representing multi-dimensional arrays of data.
-Given that much of this thesis is dedicated to representing and transforming hierarchically structured data, it is valuable to review how this is done in \numpy, as many of the concepts and syntactic elements are reused in \pyop3.
+As we have established in \cref{chapter:introduction}, data structures for mesh-based computations have a non-trivial hierarchical structure that existing mesh stencil packages are incapable of representing in full.
+Prior to introducing \pyop3's abstraction for handling this (\emph{axis trees}, \cref{chapter:axis_trees}) it is valuable to examine existing techniques for handling hierarchically structured data.
+To that end we will review \numpy, the de-facto package for array-based computation in Python~\cite{harrisArrayProgrammingNumPy2020}.
+In addition to considering implementation details, elements of \numpy's interface will be presented since, given \numpy's ubiquity and the fact that \pyop3 is a Python DSL, \pyop3 aims to reuse as much of its terminology and syntax as possible.
 
 \subsection{N-dimensional arrays}
 
-To represent multi-dimensional arrays, \numpy combines a memory buffer, containing the actual values, with additional \emph{metadata} used to interpret the buffer.
-In particular, the metadata includes the \emph{shape} of the array, its data type, and \emph{stride} information.
-One could, for example, encode a $64 \times 64$ image as an \pycode{ndarray} with a 4096 byte buffer of values, a shape of \pycode{(64, 64)}, \pycode{uint8} as the data type, and strides of \pycode{(64, 1)}.
+\begin{figure}
+  \centering
 
+  \begin{subfigure}{.4\textwidth}
+    \centering
+    \includegraphics{numpy_ndarray.pdf}
+  \end{subfigure}
+  %
+  \begin{subfigure}{.58\textwidth}
+    \centering
+    \begin{tblr}{|[1pt]l|[1pt]l|[1pt]}
+      \hline[1pt]
+      \texttt{data} & \texttt{0x7ff...} \\
+      \hline
+      \texttt{data type} & \texttt{int32} \\
+      \hline
+      \texttt{shape} & \texttt{(2, 3, 2)} \\
+      \hline
+      \texttt{strides} & \texttt{(24, 8, 4)} \\
+      \hline[1pt]
+    \end{tblr}
+    \vspace{2em}
+  \end{subfigure}
+
+  \caption{
+    The data layout (left) and internal representation (right) of an \pycode{int32} \numpy array with shape \pycode{(2, 3, 2)}.
+    Strides are given in bytes for each axis.
+  }
+  \label{fig:numpy_ndarray}
+\end{figure}
+
+In \numpy, hierarchical data is represented by \emph{N-dimensional arrays}.
+These have a multi-level \emph{shape}, with each level called an \emph{axis} (e.g. \cref{fig:numpy_ndarray}, left).
+
+In order to access a value from the array a \emph{multi-index} - a list of integers, one per axis - must be provided.
+Given a multi-index, the correct value may be read from the array by computing an offset and then accessing the data at that offset.
+The function used to compute this offset is a function of each multi-index, for example, for the array shown in \cref{fig:numpy_ndarray}, the offset is given by
+
+\begin{equation*}
+  \textnormal{offset}(i_0, i_1, i_2) = 6 i_0 + 2 i_1 + i_2
+\end{equation*}
+
+\noindent
+where $i_0$, $i_1$, and $i_2$ are the values of the multi-index for axes 0, 1, and 2 respectively.
+The Python syntax for performing this access would be \pycode{array[i0, i1, i2]}.
+
+To represent arrays, \numpy internally combines a memory buffer, containing the actual values, with additional \emph{metadata} used to interpret the buffer.
+In particular, the metadata includes the \emph{shape} of the array, how to \emph{stride} through it, and its data type (e.g. \cref{fig:numpy_ndarray}, right).
 Representing data in this way allows array transformations to be expressed without needing to copy data.
 Arrays can be reshaped or transposed just by constructing a new metadata struct with alternative shape and/or stride information.
-Alternative representations for the same array are termed \emph{views}.
+These alternative representations for the same array are termed \emph{views}.
 
 \subsection{Indexing arrays}
 \label{sec:numpy_indexing_arrays}
 
 \begin{table}
-  \centering
-
   \begin{tblr}{|[1pt]l|[1pt]l|[1pt]l|[1pt]l|[1pt]}
     \hline[1pt]
     \textbf{Index operation} & \textbf{Example} & \textbf{Return value} & \textbf{Array return type} \\
     \hline[1pt]
-    Single element indexing & \pycode{array[1]} & \pycode{"B"} & N/A \\
-    \hline
     Slicing & \pycode{array[1:6:2]} & \pycode{["B", "D", "F"]} & View \\
     \hline
     Integer array indexing & \pycode{array[[0, 3, 4]]} & \pycode{["A", "D", "E"]} & Copy \\
     \hline[1pt]
   \end{tblr}
-
   \caption{
-    Common indexing operations for \numpy arrays.
+    Important indexing operations for \numpy arrays.
     The examples shown apply the index to the string array \pycode{["A", "B", "C", "D", "E", "F"]} (called \pycode{array} above).
-    The array return type for single element indexing is marked as `N/A' because a string is returned instead of an array.
   }
   \label{tab:numpy_indexing_ops}
 \end{table}
 
-% TODO: don't discuss these any more... rephrase
-Broadcasting operations, that handle the entire array monolithically, are not adequate for many programs.
-\numpy, therefore, allows for array \textit{indexing}, where portions of the full array are extracted to yield a new array.
+In addition to reshaping, arrays may also be \textit{indexed}, where portions of the full array are extracted to yield a new array.
+For \pyop3 the most relevant indexing operations (demonstrated in \cref{tab:numpy_indexing_ops}) are:
 
-Some of the ways that a \numpy array may be indexed are shown in \cref{tab:numpy_indexing_ops}:
+\begin{description}
+  \item[Slicing]
+    For affine indexing operations one can pass a Python \pycode{slice} object to index an axis.
+    One can index an axis of an array with the syntax \pycode{[start:stop:step]}, where omitting \pycode{start}, \pycode{stop} or \pycode{step} will default to 0, the end of the array, and 1 respectively.
+    Due to the regular access pattern of a slice, indexing \numpy arrays with them will return a view.
 
-\begin{itemize}
-  \item \textbf{Single element indexing}
-
-    Single element indexing takes an integer and simply returns the value stored at that point.
-
-  \item \textbf{Slicing}
-
-    Slices are a standard Python concept for describing ranges of indices and have the syntax \pycode{[start:stop:step]}.
-    Omitting \pycode{start}, \pycode{stop} or \pycode{step} will default to 0, the end of the array, and 1 respectively.
-    In the example shown in \cref{tab:numpy_indexing_ops} the slice \pycode{[1:6:2]} corresponds to asking for ``the values in the array from index 1 (inclusive) to index 6 (exclusive), striding by 2".
-
-  \item \textbf{Integer array indexing}
-
-    Integer array indexing returns a new array containing values stored at the requested indices, for the example in \cref{tab:numpy_indexing_ops} this simply being 0, 3 and 4.
-
-\end{itemize}
-
-% These operations work together with the header specs to figure out the right offsets.
-% changes the stride information in the metadata!
-
-Although the examples provided are all for a 1-dimensional array, it is completely permissible to index N-dimensional arrays with a collection of these indexing operations, one per axis of the array.
-This collection of indices is termed a \textit{multi-index}.
-
-\numpy draws a distinction between ``basic" indexing, single element indexing and slicing, and ``advanced" indexing like using integer arrays.
-For the former, the array returned from the indexing operation is a \textit{view}, whereas for the latter a \textit{copy} is returned.
-Alongside the obvious memory advantages, views are also preferable to copies because they are \textit{composable}.
-One can take views of views repeatedly without triggering a copy, allowing for changes to the indexed array to be propagated back to the original.
-
-% mention in chapter 4!
-% In \pyop3, as well as generalising the indexing operations above to axis trees, we overcome this shortcoming of numpy's advanced indexing such that views are always used regardless of the indexing method used.
-
+  \item[Integer array indexing]
+    For irregular access patterns, an array of indices may be used to select entries from a given axis.
+    In contrast with slices, this method is inherently irregular and so a copy of the array is returned, instead of a view.
+\end{description}
 
 \section{Relating unknowns to mesh topology: DMPlex}
 \label{sec:foundations_dmplex}

@@ -1,0 +1,45 @@
+\documentclass[tikz]{standalone}
+
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/data_layout.tikz}
+
+% top
+\coordinate (origin) at (0,0);
+\drawWhiteDof{(origin)}{};
+\drawWhiteDof{($(origin)+(1,0)$)}{};
+
+\coordinate (aleft) at (origin);
+\coordinate (aright) at ($(origin)+(1,0)$);
+
+\node [anchor=center] at (-2.5,.5) {\pycode{axis 0}};
+
+% middle
+\coordinate (origin) at ($(origin)+(-1,-2)$);
+\drawWhiteDof{(origin)}{};
+\drawWhiteDof{($(origin)+(1,0)$)}{};
+\drawWhiteDof{($(origin)+(2,0)$)}{};
+
+\draw [connector] (aleft) -- ($(origin)+(0,1)$);
+\draw [connector] (aright) -- ($(origin)+(3,1)$);
+
+\coordinate (bleft) at (origin);
+\coordinate (bright) at ($(origin)+(1,0)$);
+
+\node [anchor=center] at (-2.5,-1.5) {\pycode{axis 1}};
+
+% bottom
+\coordinate (origin) at ($(origin)+(-.5,-2)$);
+\drawWhiteDof{(origin)}{};
+\drawWhiteDof{($(origin)+(1,0)$)}{};
+
+\draw [connector] (bleft) -- ($(origin)+(0,1)$);
+\draw [connector] (bright) -- ($(origin)+(2,1)$);
+
+\node [anchor=center] at (-2.5,-3.5) {\pycode{axis 2}};
+
+\end{tikzpicture}
+\end{document}
