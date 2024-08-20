@@ -599,7 +599,7 @@ Summarised in \cref{alg:tabulate_offsets} it does the following:
 
   \item
     Lastly, both the dependent axes and current axis are looped over, incrementing and storing the offset in \pycode{offset_dat} each time.
-    This process is equivalent to that used by a PETSc \ccode{Section} during \ccode{PetscSectionSetUp()} (\cref{alg:petsc_section_tabulate}).
+    This process is equivalent to that used by a PETSc \ccode{PetscSection} during \ccode{PetscSectionSetUp()} (\cref{alg:petsc_section_tabulate}).
 \end{enumerate}
 
 It is significant to note that the loops over axes using the \pycode{iter()} method (lines~\ref{code:loop_dependent_axes} and~\ref{code:loop_current_axis}) are implemented in Python and hence are relatively slow to evaluate.

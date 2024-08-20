@@ -120,6 +120,7 @@ As described in \cref{sec:foundations_dmplex}, the mesh carries a point star for
 At present the ordering of axes for function spaces is fixed, but it would be straightforward to extend Firedrake to support alternative data layouts (see \cref{sec:axis_tree_alternative_layouts}, \cref{sec:indexing_data_layout_transformations}).
 
 \subsection{Mesh renumbering}
+\label{sec:firedrake_mesh_renumbering}
 
 An observant reader may have noticed that in the axis tree just introduced (\cref{fig:firedrake_axis_tree}) no interleaving of DoFs appears to be happening, which would be problematic for reasons of data locality (\cref{sec:intro_mesh_numbering}).
 This is in fact not the case: we have skipped a step in our explanation.
@@ -133,6 +134,8 @@ This is in fact not the case: we have skipped a step in our explanation.
 
 When the axis tree for the function space is created it is actually linear and ragged.
 The \pycode{"mesh"} axis only has one axis component that represents all of the mesh entities and the different entity types are separated via a slicing operation.
+By doing this we make explicit the `dual' nature of a DMPlex mesh (\cref{sec:foundations_dmplex}) - through indexing one can view mesh data \emph{either} as a flat array of points, or as one partitioned by entity type.
+
 This is demonstrated in \cref{fig:mesh_renumbering_transform}.
 The original mesh axis (left, labelled with indices $p_i$) is indeed interleaved as desired and the cell/edge/vertex axis tree partitioning only exists in the indexed axis tree.
 

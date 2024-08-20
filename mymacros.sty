@@ -31,7 +31,7 @@
 % source: https://tex.stackexchange.com/questions/650034/mathbb-font-for-lowercase-letters
 \usepackage[bb=libus]{mathalpha}
 
-\newcommand{\closure}{\mathbb{cl}}
+\newcommand{\plexclosure}{\mathbb{cl}}
 \newcommand{\support}{\mathbb{supp}}
 \newcommand{\plexstar}{\mathbb{st}}
 \newcommand{\cone}{\mathbb{cone}}
@@ -116,7 +116,7 @@
   \newminted[pylisting]{python}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
   % \newenvironment{env}{\VerbatimEnvironment\begin{pylisting}}{\end{pylisting}}
 
-  \newminted[clisting]{c}{fontsize=\footnotesize,bgcolor=gray!20,autogobble,linenos}
+  \newminted[calgorithm]{c}{autogobble,linenos}
 
   \newminted[pyalg2]{python}{autogobble,linenos,escapeinside=??,highlightcolor=red!30}
   \newminted[mypyinline]{python}{autogobble,escapeinside=??,highlightcolor=red!30}

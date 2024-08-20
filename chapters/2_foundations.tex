@@ -103,14 +103,13 @@ For \pyop3 the most relevant indexing operations (demonstrated in \cref{tab:nump
     In contrast with slices, this method is inherently irregular and so a copy of the array is returned, instead of a view.
 \end{description}
 
-\section{Relating unknowns to mesh topology: DMPlex}
+\section{Relating unknowns to mesh topology: PETSc DMPlex}
 \label{sec:foundations_dmplex}
 
-% NOTE: Where is PETSc first mentioned? Possibly here is a good place for more detail about it.
-% Should be mentioned in the introduction
-To tackle the problem of composability - sets discarding information about mesh topology - we look to DMPlex~\cite{knepleyMeshAlgorithmsPDE2009,langeEfficientMeshManagement2016,knepleyUnstructuredOverlappingMesh2015}.
-DMPlex is an abstraction for unstructured meshes bundled with PETSc, a scientific software toolkit providing implementations of parallel vectors and matrices as well as a plethora of linear and non-linear solvers~\cite{petsc-web-page,petsc-user-ref,petsc-efficient}.
-It has support for a range of complex mesh operations such as mesh refinement, I/O~\cite{hamEfficientNtoMCheckpointing2024}, all in parallel (\cref{sec:dmplex_parallel}).  % TODO: needs more...
+As previously mentioned, existing abstractions for mesh data typically fall short in one of two ways.
+They either:
+(a) assume that DoFs belong to a single entity type, or
+(b) delegate responsibility for handling the mesh entirely to the user and instead deal with the more abstract concept of \emph{nodes}.
 
 \begin{figure}
   \centering
@@ -123,170 +122,179 @@ It has support for a range of complex mesh operations such as mesh refinement, I
     \centering
     \includegraphics{dmplex_hasse.pdf}
   \end{subfigure}
-  \caption{TODO, mention Hasse diagram}
+  \caption{
+    The Hasse diagram (right) for a two-cell mesh (left).
+  }
   \label{fig:dmplex_hasse}
 \end{figure}
 
-With DMPlex, the unstructured mesh is represented as a \gls{dag} (\cref{fig:dmplex_hasse}).
-All topological entities are referred to as \textit{points}, with each entity type belonging to a particular \textit{strata} of the overall \gls{dag}.
-\textit{Arrows} connect points between strata to represent the connectivity of the different entities.
-For example every edge in a mesh (depth 1) has two arrows pointing at its two \textit{covered} vertices (depth 0).
-By treating all entities as points, DMPlex is capable of expressing unstructured meshes of any dimension.
+
+One piece of software offering a solution to this dilemma is DMPlex~\cite{knepleyMeshAlgorithmsPDE2009,knepleyUnstructuredOverlappingMesh2015,langeEfficientMeshManagement2016}, the unstructured mesh component of PETSc~\cite{petsc-efficient,petsc-user-ref,petsc-web-page}.
+DMPlex represents meshes as directed acyclic graphs (DAGs) where mesh entities, termed \emph{points}, are the vertices of the graph and entity covering relations are its edges (e.g. cells connect to facets).
+Since the DAG forms a partially-ordered set, it is common to visualise DMPlex instances as Hasse diagrams (\cref{fig:dmplex_hasse}).
+All entities with the same topological dimension are shown as different layers, or \emph{strata}, of the diagram.
+
+By treating mesh entities equivalently, DMPlex is able to express mesh algorithms generically (e.g. parallel mesh distribution~\cite{knepleyUnstructuredOverlappingMesh2015}, checkpointing~\cite{hamEfficientNtoMCheckpointing2024}) in an entirely dimension-independent fashion.
+Also, importantly, representing (interleaved) mesh data storing DoFs on different entities becomes trivial (\cref{sec:dmplex_data_layout}).
+
+It is this `dual' representation of mesh entities - as `flat' points and as a set of relations - that makes DMPlex so effective, and hence is an abstraction that we wish to represent in \pyop3.
+Indeed, in places the similarities between DMPlex's and \pyop3's abstractions are so strong that \textbf{one can consider \pyop3 to be the abstraction that automates DMPlex.}
+
+\subsection{Topological queries}
 
 \begin{figure}
   \centering
   \begin{subfigure}{.49\textwidth}
     \centering
     \includegraphics{dmplex_hasse_cone.pdf}
-    \caption{$\cone(0) = \{6,7,8\}$}
+    \caption{cone: $\cone(0) = \{6,7,8\}$}
   \end{subfigure}
   %
   \begin{subfigure}{.49\textwidth}
     \centering
     \includegraphics{dmplex_hasse_support.pdf}
-    \caption{$\support(8) = \{0,1\}$}
+    \caption{support: $\support(8) = \{0,1\}$}
   \end{subfigure}
+
+  \vspace{1em}
 
   \begin{subfigure}{.49\textwidth}
     \centering
     \includegraphics{dmplex_hasse_closure.pdf}
-    \caption{$\closure(0) = \{0,6,7,8,2,3,4\}$}
+    \caption{closure: $\plexclosure(0) = \{0,6,7,8,2,3,4\}$}
   \end{subfigure}
   %
   \begin{subfigure}{.49\textwidth}
     \centering
     \includegraphics{dmplex_hasse_star.pdf}
-    \caption{$\plexstar(3) = \{3,7,8,9,0,1\}$}
+    \caption{star: $\plexstar(3) = \{3,7,8,9,0,1\}$}
   \end{subfigure}
 
   \caption{
-    The possible DMPlex covering queries applied to the Hasse diagram from Figure~\ref{fig:dmplex_hasse}.
+    The possible DMPlex covering queries applied to the mesh from \cref{fig:dmplex_hasse}.
   }
   \label{fig:dmplex_queries}
 \end{figure}
 
-DMPlex has a simple query language that can be used to traverse the \gls{dag} and build appropriate stencils.
-It consists of two core operations: \textit{cone} and \textit{support}.
+To traverse the DAG and build appropriate stencils, DMPlex provides two core topological query operations: \emph{cone} and \emph{support}.
 The cone of a point, written $\cone(p)$, is the set of points that are pointed to from $p$.
 The support of a point, written $\support(p)$, is the dual of cone and yields the set of points that point to $p$.
 Transitive closures for both of these operations, where the operation is applied repeatedly and all points are accumulated, are also supplied by DMPlex.
-The transitive closure of cone is termed the \textit{closure} ($\closure(p)$) and the transitive closure of support is called the \textit{star} ($\plexstar(p)$).
+The transitive closure of cone is termed the \emph{closure} ($\plexclosure(p)$) and the transitive closure of support is called the \emph{star} ($\plexstar(p)$).
 These operations are shown in \cref{fig:dmplex_queries}.
 
 It is possible to compose these operations to yield larger stencils.
 For instance $\support(\cone(p))$ with $p$ a cell produces the set of cells sharing an edge with $p$ (and $p$ itself).
-Likewise, $\closure(\plexstar(p))$ is the \textit{adjacency} relation for finite element calculations: basis functions on points within this stencil have non-zero support with the basis functions on $p$.
+Likewise, $\plexclosure(\plexstar(p))$ is the \textit{adjacency} relation for finite element calculations: basis functions on points within this stencil have non-zero support with the basis functions on $p$.
 
 \subsection{Representing data layouts}
 \label{sec:dmplex_data_layout}
 
-\begin{figure}
-  \begin{clisting}
-    // set cell DoFs
-    DMPlexGetDepthStratum(dmplex, 2, &start, &end);
-    for (int cell=start; cell<end; cell++)
-      PetscSectionSetDof(section, cell, 2);
-
-    // set edge DoFs
-    DMPlexGetDepthStratum(dmplex, 1, &start, &end);
-    for (int edge=start; edge<end; edge++)
-      PetscSectionSetDof(section, edge, 4);
-
-    # set vertex DoFs
-    DMPlexGetDepthStratum(dmplex, 0, &start, &end);
-    for (int vertex=start; vertex<end; vertex++)
-      PetscSectionSetDof(section, vertex, 2);
-
-    PetscSectionSetUp(section);
-  \end{clisting}
+\begin{listing}
+  \centering
 
   \caption{
-    C code constructing an appropriate \ccode{Section} for a $[P_3]^2$ finite element (\cref{fig:scott_vogelius_element_P3}).
+    C code constructing an appropriate \ccode{PetscSection} for a $[P_3]^2$ finite element (\cref{fig:scott_vogelius_element_P3}).
     Some boilerplate code is omitted.
   }
-  \label{fig:section_p3}
-\end{figure}
+
+  \begin{minipage}{.9\textwidth}
+    \begin{calgorithm}
+      // set cell DoFs (2 per cell)
+      DMPlexGetDepthStratum(dmplex, 2, &start, &end);
+      for (int cell=start; cell<end; cell++)
+        PetscSectionSetDof(section, cell, 2);
+
+      // set edge DoFs (4 per edge)
+      DMPlexGetDepthStratum(dmplex, 1, &start, &end);
+      for (int edge=start; edge<end; edge++)
+        PetscSectionSetDof(section, edge, 4);
+
+      // set vertex DoFs (2 per vertex)
+      DMPlexGetDepthStratum(dmplex, 0, &start, &end);
+      for (int vertex=start; vertex<end; vertex++)
+        PetscSectionSetDof(section, vertex, 2);
+
+      PetscSectionSetUp(section);
+    \end{calgorithm}
+  \end{minipage}
+
+  \label{listing:section_p3}
+\end{listing}
 
 \begin{algorithm}
-  \begin{verbatim}
-counter = 0
-offset = 0
-FOR EACH point IN chart
-  renumbered_point = renumber(point)
-  offsets[counter] = offset
-  counter += 1
-  offset += PetscSectionGetDof(renumbered_point)
-  \end{verbatim}
-
   \caption{
-    The tabulation algorithm that determines the right offsets from a \ccode{Section}.
+    The tabulation algorithm that determines the right offsets from a \ccode{PetscSection}.
     This code is executed during \ccode{PetscSectionSetUp()}.
   }
+
+  \begin{algorithmic}[1]
+    \Require \textit{permutation}
+    \State \textit{counter} $\gets$ 0
+    \State \textit{offset} $\gets$ 0
+    \For{\textit{point} \textbf{in} \textit{mesh.points}}
+      \State \textit{offsets}[\textit{counter}] = \textit{offset}
+      \State \textit{counter} $\gets$ \textit{counter} + 1
+      \State \textit{renumbered} $\gets$ \textit{permutation}[\textit{point}]
+      \State \textit{offset} $\gets$ \textit{offset} + \Call{PetscSectionGetDof}{\textit{renumbered}}
+    \EndFor
+  \end{algorithmic}
+
   \label{alg:petsc_section_tabulate}
 \end{algorithm}
 
-In order to associate data with these mesh points, a user typical constructs a \ccode{Section} object.
-These are simple CSR-like data structures that associate mesh points with offsets into an array.
+In order to associate data with DMPlex points users must construct a \ccode{PetscSection}, a simple CSR-like data structure that associates mesh points with offsets into an array.
+To build one, a number of DoFs must be associated with each mesh point before calling \ccode{PetscSectionSetUp()} (shown in \cref{listing:section_p3}).
+This last step traverses the input points and accumulates the offset for each point, building the array that may then be queried later on (\cref{alg:petsc_section_tabulate}).
+To give a simple example, given the \gls{dof} count \ccode{[1, 0, 3, 2, 0, 1]} the \ccode{PetscSection} would tabulate the offsets to be \ccode{[0, 1, 1, 4, 6, 6]}.
 
-\ccode{Sections} are constructed by assigning a number of \glspl{dof} with each mesh point (\cref{fig:section_p3}).
-Once the number of \glspl{dof} has been specified, calling \ccode{PetscSectionSetUp()} traverses the input points and accumulates the offset for each point.
-As a simple example, given the \gls{dof} count \ccode{[1, 0, 3, 2, 0, 1]} the \ccode{Section} would tabulate the following offsets: \ccode{[0, 1, 1, 4, 6, 6]} (\cref{alg:petsc_section_tabulate}).
+\ccode{PetscSections} are able to express the renumbering locality optimisations described in \cref{sec:intro_mesh_numbering}.
+One simply provides the \ccode{PetscSection} with an optional \emph{permutation} that is accounted for during set up.
+This is demonstrated in \cref{alg:petsc_section_tabulate}.
 
-\ccode{Sections} are also able to express the sorts of renumbering locality optimisations described in \cref{sec:intro_mesh_numbering}.
-One simply provides the \ccode{Section} with a \textit{permutation} that is accounted for during set up (\cref{alg:petsc_section_tabulate}).
+\subsubsection{Limitations}
 
-Whilst a powerful tool for describing data layouts, \ccode{Sections} have a number of limitations:
+Whilst a powerful and flexible tool for describing data layouts, \ccode{PetscSections} have a number of shortcomings:
 
-\begin{itemize}
-  \item
-    \textbf{They are fully ragged}\\
-    \ccode{Sections} do not distinguish between different types of topological entity and so important structure cannot be represented.
+\begin{description}
+  \item[They are fully ragged]
+    \ccode{PetscSections} do not distinguish between different types of topological entity and so important structure cannot be represented.
     They only store DoF information per point in a completely unstructured way and are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
-    This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) that it would have been able to do were it to know of a constant loop extent.
-    Additionally, this variable size increases memory pressure as redundant arrays of constant sizes need to be streamed through memory.
+    This can prohibit the compiler from making certain optimisations (e.g. loop unrolling) with important performance implications.
+    Further, not knowing the loop sizes a priori means that an additional array needs to be passed about during the calculation, directly harming the performance of memory-bound codes.
 
-  \item
-    \textbf{Shape information is lost}\\
-    Though \ccode{Sections} allow one to directly associate \glspl{dof} with mesh entities of different dimension, they still lose information about the structure of the function space.
-    For instance, to a \ccode{Section}, a point with a single vector-valued node is indistinguishable from a point with multiple nodes.
-\end{itemize}
-
-These limitations prevent \pyop3 from directly using \ccode{Sections} to describe its data layouts, but it takes a similar approach:
-
-\begin{itemize}
-  \item All topological entities in the mesh should be equivalent,
-  \item Interleaved points require one to tabulate an array of offsets (\cref{alg:petsc_section_tabulate}).
-\end{itemize}
+  \item[Shape information is lost]
+    Though \ccode{PetscSections} allow one to directly associate DoFs with mesh entities of different dimension, they still lose information about the structure of the function space.
+    For instance, to a \ccode{PetscSection}, a point with a single vector-valued node is indistinguishable from a point with multiple nodes.
+\end{description}
 
 \subsection{Parallel}
 \label{sec:dmplex_parallel}
 
-As touched upon in \cref{sec:intro_mpi}, DMPlex works in parallel by partitioning the entire ``global" mesh into local pieces that are kept on each process.
-Each local piece of the mesh is \textit{closed}, meaning that all points in the cell closures are represented locally.
-This means that there are \textit{ghost} points kept on each process that are owned by other processes.
-
-\subsubsection{Star forests}
+As touched upon in \cref{sec:intro_???}, DMPlex works in distributed memory environments by partitioning the entire `global' mesh into local pieces that are kept on each process.
+To enable stencil calculations \emph{ghost} points are duplicated across processes.
 
 \begin{figure}
   \centering
-  %
+
   \begin{subfigure}{\textwidth}
     \centering
     \includegraphics{star_forest_point.pdf}
-    \caption{TODO}
-    \label{fig:star_forest_point}
   \end{subfigure}
-  %
+
   \begin{subfigure}{\textwidth}
     \centering
     \includegraphics{star_forest_dof.pdf}
-    \caption{TODO}
-    \label{fig:star_forest_dof}
   \end{subfigure}
-  %
-  \caption{TODO}
+
+  \caption{
+    Global (left) and local (right) views of a mesh (top) and $P_3$ function space (bottom) partitioned between three processes.
+    Ghost points/DoFs are shown as hollow circles.
+  }
   \label{fig:star_forest}
 \end{figure}
+
+% NOTE: !!!I AM HERE!!! (20/08/24)
 
 \begin{figure}
   \centering
@@ -326,7 +334,7 @@ An example of such a distribution is shown in Figure~\ref{???}.
 
 Upon construction a DMPlex holds a \textit{point star forest} that stores the information about ghost points (\cref{fig:star_forest_point}).
 This is insufficient for function data to be communicated correctly though because the number of \glspl{dof} associated with each entity can change.
-To transfer function data, PETSc composes the point star forest with a \ccode{Section} to produce a new star forest (\cref{fig:star_forest_dof}).
+To transfer function data, PETSc composes the point star forest with a \ccode{PetscSection} to produce a new star forest (\cref{fig:star_forest_dof}).
 
 % maybe use alg. from chapter 6 here?
 

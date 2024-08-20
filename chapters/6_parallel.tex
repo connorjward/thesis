@@ -145,11 +145,11 @@ In order to construct the correct DoF-to-DoF star forest a number of operations 
 
 \begin{enumerate}
   \item
-    A PETSc \ccode{Section} (\cref{sec:dmplex_data_layout}) is constructed for the axis component.
-    Since \ccode{Sections} are analogous to the tabulated offset arrays described in \cref{sec:layout_alg_ragged}, the algorithm is very similar to \cref{alg:tabulate_offsets}.
+    A PETSc \ccode{PetscSection} (\cref{sec:dmplex_data_layout}) is constructed for the axis component.
+    Since \ccode{PetscSections} are analogous to the tabulated offset arrays described in \cref{sec:layout_alg_ragged}, the algorithm is very similar to \cref{alg:tabulate_offsets}.
 
   \item
-    The point star forest and \ccode{Section} are composed by calling the function \ccode{PetscSFCreateSectionSF()} to yield a DoF-to-DoF mapping for the axis component.
+    The point star forest and \ccode{PetscSection} are composed by calling the function \ccode{PetscSFCreateSectionSF()} to yield a DoF-to-DoF mapping for the axis component.
 
   \item
     Star forests for each axis component are collected by traversing the axis tree (\cref{alg:compose_star_forests}).

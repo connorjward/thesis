@@ -561,6 +561,7 @@ The situation is further complicated by the programming models being vendor-spec
 \end{figure}
 
 \subsubsection{Mesh renumbering}
+\label{sec:intro_mesh_numbering}
 
 During the execution of a mesh stencil the input and output global data structures are accessed with indirection maps.
 Accessing the data indirectly incurs a performance penalty because it defeats hardware-implemented memory optimisations such as prefetching, where adjacent blocks of memory are loaded into a cache line together.
