@@ -271,77 +271,66 @@ Whilst a powerful and flexible tool for describing data layouts, \ccode{PetscSec
 \subsection{Parallel}
 \label{sec:dmplex_parallel}
 
-As touched upon in \cref{sec:intro_???}, DMPlex works in distributed memory environments by partitioning the entire `global' mesh into local pieces that are kept on each process.
-To enable stencil calculations \emph{ghost} points are duplicated across processes.
-
 \begin{figure}
   \centering
-
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics{star_forest_point.pdf}
-  \end{subfigure}
-
-  \begin{subfigure}{\textwidth}
-    \centering
-    \includegraphics{star_forest_dof.pdf}
-  \end{subfigure}
-
+  \includegraphics{star_forest_point.pdf}
   \caption{
-    Global (left) and local (right) views of a mesh (top) and $P_3$ function space (bottom) partitioned between three processes.
-    Ghost points/DoFs are shown as hollow circles.
+    Global (left) and process-local (right) views of a mesh partitioned between three processes.
+    The black dots represent the different mesh entities (the \emph{points}).
+    Ghost points are shown as hollow circles.
   }
-  \label{fig:star_forest}
+  \label{fig:dmplex_split_mesh}
 \end{figure}
 
-% NOTE: !!!I AM HERE!!! (20/08/24)
+As touched upon in \cref{sec:intro_???}, DMPlex works in distributed memory environments by partitioning the entire `global' mesh into local pieces that are kept on each process.
+To enable stencil calculations \emph{ghost} points are duplicated across processes.
+An example partitioned mesh is shown in \cref{fig:dmplex_split_mesh}.
 
 \begin{figure}
   \centering
-  \begin{subfigure}{.6\textwidth}
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
     \includegraphics{star_forest_abstract_mesh.pdf}
-    \caption{Star forest suitable for describing the point sharing in \cref{fig:star_forest_point}.}
+    \caption{Star forest suitable for describing the point sharing in \cref{fig:dmplex_split_mesh}.}
+    \label{fig:star_forest_abstract_mesh}
   \end{subfigure}
-  %
-  \begin{subfigure}{.39\textwidth}
+  \hspace{1em}
+  \begin{subfigure}[t]{.45\textwidth}
     \centering
     \includegraphics{star_forest_abstract_global.pdf}
     \caption{Star forest appropriate for storing the communication pattern of a globally consistent value.}
+    \label{fig:star_forest_abstract_global}
   \end{subfigure}
   \caption{
     Common star forest patterns.
     Each point is labelled with its owning process and root and leaf points are shown in black and white respectively.
   }
-  \label{fig:star_forest_abstract}
 \end{figure}
 
-% supports broadcasts from the root and reductions from the leaves
+Parallel communication in DMPlex is handled by \textit{star forests}~\cite{zhangPetscSFScalableCommunication2021}.
+Star forests relate equivalent points across processes as a collection (forest) of depth-1 trees (stars) consisting of a single \emph{root} and any number of \emph{leaves}.
+They support two main operations: \emph{broadcasts} from roots to leaves and \emph{reductions} from leaves to roots.
 
-Parallel communication in DMPlex is handled by \textit{star forest} objects (\ccode{PetscSF}) \parencite{zhangPetscSFScalableCommunication2021}.
-Star forests relate equivalent points across processes as a collection - or ``forest" - of ``stars".
-A ``star" is a directed graph with depth 1 and a single root.
+Star forests are a powerful abstraction for describing a range of different parallel communication patterns.
+For example,  a value shared globally across $n$ ranks can be represented as a star forest containing a single star with the root node on rank 0 and $n-1$ leaves, 1 for each other rank (\cref{fig:star_forest_abstract_global}).
+For distributed meshes, star forests encode point ownership by making each shared point into a separate star, with the owning rank the root and ghost ranks the leaves.
+A sketch of the star forest needed for \cref{fig:dmplex_split_mesh} is shown in \cref{fig:star_forest_abstract_mesh}.
+In DMPlex this object is referred to as the \emph{point star forest}.
 
-Star forests are effective for describing point-to-point MPI operations because they naturally encode the source and destination nodes as roots and leaves of the stars.
-They can flexibly describe a range of different communication patterns.
-For example, a value shared globally across $n$ ranks can be represented as a star forest containing a single star with the root node on rank 0 and $n-1$ leaves, 1 for each other rank.
-This is shown in Figure~\ref{fig:???}.
-Star forests are also suitable for describing the overlap between parts of a distributed mesh.
-In this case, each star in the forest represents a single point (cell, edge, vertex) in the mesh with the root on the ``owning" rank and leaves on the ranks where the point appears as a ``ghost".
-An example of such a distribution is shown in Figure~\ref{???}.
+\begin{figure}
+  \centering
+  \includegraphics{star_forest_dof.pdf}
 
-% Because local numbers on one process are related to local numbers on other processes no global enumeration of points is strictly required.
+  \caption{
+    Global (left) and process-local (right) views of a $P_3$ function space partitioned between three processes.
+    Ghost DoFs are shown as hollow circles.
+  }
+  \label{fig:dmplex_split_function_space}
+\end{figure}
 
-Upon construction a DMPlex holds a \textit{point star forest} that stores the information about ghost points (\cref{fig:star_forest_point}).
-This is insufficient for function data to be communicated correctly though because the number of \glspl{dof} associated with each entity can change.
-To transfer function data, PETSc composes the point star forest with a \ccode{PetscSection} to produce a new star forest (\cref{fig:star_forest_dof}).
-
-% maybe use alg. from chapter 6 here?
-
-        % def create_dof_sf_inner(axis: Axis, component: AxisComponent, ...):
-        %   section = create_section(axis, component)
-        %   dof_sf = component.sf.createSectionSF(section, ...)
-        %   return dof_sf
+In order to represent the parallel overlap of \emph{DoFs}, instead of points, a new star forest needs to be created.
+To produce it, DMPlex composes the point star forest with the \ccode{PetscSection} encoding the function space.
+This results in a \emph{DoF star forest} like that shown in \cref{fig:dmplex_split_function_space}.
 
 \section{PyOP2}
 
