@@ -106,6 +106,8 @@ For \pyop3 the most relevant indexing operations (demonstrated in \cref{tab:nump
 \section{Relating unknowns to mesh topology: PETSc DMPlex}
 \label{sec:foundations_dmplex}
 
+\todo[inline]{DMPlex provides a \textbf{data model}.}
+
 As previously mentioned, existing abstractions for mesh data typically fall short in one of two ways.
 They either:
 (a) assume that DoFs belong to a single entity type, or
@@ -246,7 +248,7 @@ Likewise, $\plexclosure(\plexstar(p))$ is the \textit{adjacency} relation for fi
 In order to associate data with DMPlex points users must construct a \ccode{PetscSection}, a simple CSR-like data structure that associates mesh points with offsets into an array.
 To build one, a number of DoFs must be associated with each mesh point before calling \ccode{PetscSectionSetUp()} (shown in \cref{listing:section_p3}).
 This last step traverses the input points and accumulates the offset for each point, building the array that may then be queried later on (\cref{alg:petsc_section_tabulate}).
-To give a simple example, given the \gls{dof} count \ccode{[1, 0, 3, 2, 0, 1]} the \ccode{PetscSection} would tabulate the offsets to be \ccode{[0, 1, 1, 4, 6, 6]}.
+To give a simple example, given the DoF count \ccode{[1, 0, 3, 2, 0, 1]} the \ccode{PetscSection} would tabulate the offsets to be \ccode{[0, 1, 1, 4, 6, 6]}.
 
 \ccode{PetscSections} are able to express the renumbering locality optimisations described in \cref{sec:intro_mesh_numbering}.
 One simply provides the \ccode{PetscSection} with an optional \emph{permutation} that is accounted for during set up.
@@ -370,7 +372,7 @@ Each is constructed with a different data layout specification: \pycode{Globals}
 For multi-field problems such as the Stokes example in \cref{chapter:introduction} one has \textit{mixed data sets}, which are simply a collection of regular data sets.
 Mixed data sets yield \pycode{MixedDats} which are, again, simply a collection of regular \pycode{Dats}.
 An example of a \pyop2 data layout for a multi-field problem is shown in \cref{fig:scott_vogelius_element_dof_layout_pyop2}.
-Observe that, since the DoFs are associated with multiple mesh entities, data is stored on a \emph{node set}, losing topological information (\cref{sec:pyop2_limitations}).
+Observe that, since the DoFs are associated with multiple mesh entities, data is stored on a \emph{node set}, losing topological information.
 
 \subsection{Parallel loops}
 

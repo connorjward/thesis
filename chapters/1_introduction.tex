@@ -25,7 +25,7 @@ In order to solve them numerically, depending on the numerical method chosen, di
 For a number of numerical methods such as the finite volume, finite difference, and finite element methods, a \textit{mesh stencil} approach is taken.
 With such methods the geometry of the problem is discretised to form a \textit{mesh} composed of topological entities termed \textit{cells}, with each having sub-entities such as faces, edges and vertices.
 Depending on the method and implementation choices, this mesh may be either \textit{structured}, where adjacent entities may be addressed by applying offsets, or \textit{unstructured}, where an indirection map of the form \ccode{A[B[i]]} is needed.
-To these topological entities are associated unknowns, termed \glspl{dof}, representing physical quantities in the PDE like, say, the pressure.
+To these topological entities are associated unknowns, termed degrees of freedom (DoFs), representing physical quantities in the PDE like, say, the pressure.
 
 For all of these methods, an integral part of their usage is the application of a stencil over mesh entities.
 One loops over topological entities, typically cells or faces, and computes some value using data that is `close' the current iterate (e.g. \cref{fig:mesh_stencil}).
@@ -102,7 +102,8 @@ Unlike $u$, $p$ is scalar-valued, needs no derivatives of $p$, and does not have
   \label{eq:stokes_pressure_space}
 \end{equation}
 
-\todo[inline]{This is the bit I really don't know how to properly explain.}
+\todo[inline]{Rewrite this bit. I think this step should be taken later, we should drop surface integral terms at a later point.}
+
 
 Since the values of $u$ at the boundary are already prescribed, the function space of the test function $v$ is defined to be zero at those nodes
 
@@ -165,7 +166,12 @@ Substituting these discrete spaces back into \cref{eq:weak_stokes}, and discardi
 
 which can be written as the (saddle point) linear system
 
-\todo[inline]{Do I want $V$ or $\hat V$ in the matrix? I feel like we should want the former...}
+\todo[inline]{Replace $V$ with $V_{0,h}$}
+% describe forward subst to remove constrained DoFs from the system somewhere! ref. Emma's dissertation
+
+% TODO: IMPORTANT! how are the boundary terms dropped if v is from V not V_0???
+
+\todo[inline]{Modify RHS and spaces to get BCs done correctly.}
 
 \begin{equation}
   \left (
@@ -506,10 +512,20 @@ Clearly, further research to address these concerns is required.
 
 \subsection{Requirements for a mesh stencil compiler}
 
-\todo[inline]{This doesn't flow very well. Need to motivate the need for code generation and then say `and we want to do this for mesh stencils'.}
+\todo[inline]{As David stressed, we need to talk about what a stencil language should look like/what it needs!}
+% i.e. the *essential* parts of the abstraction.
+% e.g. "ability to represent a wide range of kernels and stencil definitions" - execution model
+% also needs an appropriate "data model" (i.e. function spaces etc)
+% "stencil flexibility" and "data flexibility"
+% e.g. PyOP2 pre-commits to particular stencil patterns - leads to sui-generis...
+% TODO: Include these in the checklist!!!
 
 In addition to having the right high-level abstractions and backing code generation infrastructure, there a number of essential requirements that a mesh stencil package must meet in order for it to be effective.
 These requirements are:
+
+\todo[inline]{No, these are \emph{not} requirements, but desirable characteristics}
+
+\subsubsection{Distributed memory parallelism}
 
 \begin{figure}
   \centering
@@ -523,8 +539,6 @@ These requirements are:
   \label{fig:pyop2_split_mesh}
 \end{figure}
 
-\subsubsection{Distributed memory parallelism}
-
 In massively parallel simulations the data structures are often too large to be stored in the memory of any individual node.
 Instead, they are \textit{distributed} between all of the processes, with each process owning, and seeing, only a small piece of the entire structure.
 For vectors it is usual to store the DoFs according to some partitioning of the mesh (\cref{fig:pyop2_split_mesh}).
@@ -534,6 +548,9 @@ Linear algebra libraries such as PETSc~\cite{petsc-user-ref,petsc-web-page,petsc
 \textbf{Mesh stencil packages need to have support for distributed data structures as well as have the right routines for ensuring the correctness of the ghost points.}
 
 \subsubsection{Performance portability}
+
+\todo[inline]{Need to make it clear in the structure of this section that we want performance portability to be \emph{possible}, not necessarily delivered!}
+% motivates codegen, perhaps needn't be mentioned here but only above in the "abstraction/codegen" bit
 
 Due to the search for ever-increasing computational power and energy efficiency, it is no longer possible to write a piece of low-level code and deploy it on all supercomputers.
 GPU machines now beginning to dominate the HPC landscape.
@@ -561,7 +578,6 @@ The situation is further complicated by the programming models being vendor-spec
 \end{figure}
 
 \subsubsection{Mesh renumbering}
-\label{sec:intro_mesh_numbering}
 
 During the execution of a mesh stencil the input and output global data structures are accessed with indirection maps.
 Accessing the data indirectly incurs a performance penalty because it defeats hardware-implemented memory optimisations such as prefetching, where adjacent blocks of memory are loaded into a cache line together.
@@ -580,7 +596,9 @@ Whilst not necessary for low-order methods, where DoFs are only stored on a sing
   \label{fig:scott_vogelius_element_dof_layout_swap}
 \end{figure}
 
+\todo[inline]{does referencing this label work?}
 \subsubsection{Data layout flexibility}
+\label{sec:intro_data_layout_flex}
 
 In order to get optimal performance on different platforms, especially when transitioning from CPU to GPU architectures, the way in which data is laid out must be altered (e.g.~\cite{markallFiniteElementAssembly2013,sulyokImprovingLocalityUnstructured2018}).
 This poses a challenge to many simulation packages as they often commit to a particular representation of the data, typically one optimised for CPU execution, posing difficulties for achieving performance portability without a substantial rewrite of much of the software.
@@ -685,6 +703,14 @@ This is the principle reason why developing expressive DSLs for mesh stencil cal
 
 \todo[inline]{Fundamentally, node sets do not \textit{look like} function spaces. Hence the abstraction is weak. We can point to things (e.g. pcpatch) where things break down, but fundamentally getting the abstraction right is a good thing in and of itself and is worth doing.}
 
+\todo[inline]{
+  Need section stating "the contribution of this thesis is...".
+}
+% *abstraction* for mesh stencil computations with the following characteristics
+% an (incomplete) implementation of said abstractions, pyop3
+% "pyop3 is an execution model and data model"
+% "gives you things that can't even write in PyOP2..."
+
 \section{Thesis outline}
 
 In this thesis we develop abstractions and associated infrastructure to bridge this gap.
@@ -710,7 +736,7 @@ The remainder of this thesis is structured as follows:
   \item
     \cref{chapter:firedrake} integrates \pyop3 into the finite element package Firedrake, replacing PyOP2, and details of this are discussed.
   \item
-    \cref{chapter:performance} does some simple performance tests and \cref{chapter:summary} is for closing remarks.
+    \cref{chapter:demonstrator_applications} does some simple performance tests and \cref{chapter:summary} is for closing remarks.
 \end{itemize}
 
 \todo[inline]{
@@ -726,5 +752,9 @@ The remainder of this thesis is structured as follows:
 % Whilst all of the functionality of \pyop3 in the following thesis has been tested and shown to work, the time constraints of the PhD mean that \pyop3 is unfinished.
 % Thus not all of the provided functionality has been merged into the \texttt{main} branch yet.
 % This is considered very high priority future work for the project.
+
+% ^^^
+% I can get around this by making it clear that the principle contribution is the abstraction.
+% pyop3 is an incomplete implementation!
 
 \end{document}

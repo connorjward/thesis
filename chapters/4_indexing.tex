@@ -483,7 +483,7 @@ If we consider the prototypical finite element assembly loop (\cref{alg:fem_todo
   \end{subfigure}
 
   \caption{
-    Index transformation equivalent to indexing a numpy array with shape \pycode{(5, 3)} with indices \pycode{[p, ::]}, where \pycode{p} is an index coming from some outer loop.
+    Index transformation equivalent to indexing a \numpy array with shape \pycode{(5, 3)} with indices \pycode{[p, ::]}, where \pycode{p} is an index coming from some outer loop.
     The resulting array has shape \pycode{(3,)} because the outermost loop has been fully indexed by \pycode{p}.
   }
   \label{fig:loop_index_linear_tree_data_layout_all}
@@ -818,6 +818,8 @@ Note that, since $f$ and $g$ each have an associated arity, the resulting array 
   }
   \label{fig:index_linear}
 \end{figure}
+
+% when we index things at some point we must know the arrangement of the DoFs (when we pass to local kernel).
 
 The way that index trees prescribe the layout of the indexed axis tree means that one can compute with alternative data layouts (\cref{sec:axis_tree_alternative_layouts}) without needing to make any changes to the indexing code at all.
 

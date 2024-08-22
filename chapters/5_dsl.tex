@@ -235,7 +235,7 @@ We now consider a more complex example that is more typical of a continuum mecha
 \label{sec:data_structures}
 
 Thus far we have only considered
-Currently \pycode{Dats} use numpy arrays as the underlying data storage mechanism, but we intend to permit further array types to enable targeting accelerator architectures like CUDA GPUs (see \cref{sec:future_work}).
+Currently \pycode{Dats} use \numpy arrays as the underlying data storage mechanism, but we intend to permit further array types to enable targeting accelerator architectures like CUDA GPUs (see \cref{sec:future_work}).
 
 As well as \pycode{Dats}, \pyop3 has \pycode{Globals}, for global scalar values, and \pycode{Mats}, for matrices.
 % globals are really simple
@@ -245,6 +245,7 @@ As well as \pycode{Dats}, \pyop3 has \pycode{Globals}, for global scalar values,
 % think it's overkill. just needs a sentence
 
 \subsection{Matrices}
+\label{sec:impl_matrices}
 
 % initialisation...
 % uses PETSc, support for different formats (block, nest, CUDA, ...) - restricted dtype

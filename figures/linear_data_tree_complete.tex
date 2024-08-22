@@ -10,17 +10,17 @@
 
 % top
 \coordinate (origin) at (0,0);
-\drawWhiteDof{(origin)}{$a_0$};
-\drawWhiteDof{($(origin)+(1,0)$)}{$a_1$};
+\drawWhiteDof{(origin)}{$a_0^x$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$a_1^x$};
 
 \coordinate (aleft) at (origin);
 \coordinate (aright) at ($(origin)+(1,0)$);
 
 % middle
 \coordinate (origin) at ($(origin)+(-1,-2)$);
-\drawWhiteDof{(origin)}{$b_0$};
-\drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
-\drawWhiteDof{($(origin)+(2,0)$)}{$b_2$};
+\drawWhiteDof{(origin)}{$b_0^x$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$b_1^x$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$b_2^x$};
 
 \draw [connector] (aleft) -- ($(origin)+(0,1)$);
 \draw [connector] (aright) -- ($(origin)+(3,1)$);
@@ -30,8 +30,8 @@
 
 % bottom
 \coordinate (origin) at ($(origin)+(-.5,-2)$);
-\drawWhiteDof{(origin)}{$c_0$};
-\drawWhiteDof{($(origin)+(1,0)$)}{$c_1$};
+\drawWhiteDof{(origin)}{$c_0^x$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$c_1^x$};
 
 \draw [connector] (bleft) -- ($(origin)+(0,1)$);
 \draw [connector] (bright) -- ($(origin)+(2,1)$);

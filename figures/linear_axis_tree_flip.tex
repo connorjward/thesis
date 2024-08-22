@@ -1,0 +1,20 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/tree.tikz}
+
+\drawTreeNode{(b)}{(0  ,4)}{$b : \{\ \component{b0}{3}\ \}$};
+\drawTreeNode{(c)}{(0.4,2)}{$c : \{\ \component{c0}{2}\ \}$};
+\drawTreeNode{(a)}{(0.8,0)}{$a : \{\ \component{a0}{2}\ \}$};
+
+\underlineComponentNarrow{b}{b0};
+\drawTreeConnector{b}{b0}{(c)};
+
+\underlineComponentNarrow{c}{c0};
+\drawTreeConnector{c}{c0}{(a)};
+
+\end{tikzpicture}
+\end{document}
