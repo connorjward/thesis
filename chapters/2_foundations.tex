@@ -8,14 +8,14 @@
 Before introducing \pyop3, it is instructive to review its `foundations', that is, pieces of software that have inspired its design.
 In order these are: \numpy, PETSc DMPlex and \pyop2.
 
-\section{A language for structured data: \numpy}
+\section{A language for structured data: \numpy} \label{sec:numpy}
 
 As we have established in \cref{chapter:introduction}, data structures for mesh-based computations have a non-trivial hierarchical structure that existing mesh stencil packages are incapable of representing in full.
 Prior to introducing \pyop3's abstraction for handling this (\emph{axis trees}, \cref{chapter:axis_trees}) it is valuable to examine existing techniques for handling hierarchically structured data.
 To that end we will review \numpy, the de-facto package for array-based computation in Python~\cite{harrisArrayProgrammingNumPy2020}.
 In addition to considering implementation details, elements of \numpy's interface will be presented since, given \numpy's ubiquity and the fact that \pyop3 is a Python DSL, \pyop3 aims to reuse as much of its terminology and syntax as possible.
 
-\subsection{N-dimensional arrays}
+\subsection{N-dimensional arrays} \label{sec:numpy_ndarray}
 
 \begin{figure}
   \centering
@@ -143,6 +143,7 @@ It is this `dual' representation of mesh entities - as `flat' points and as a se
 Indeed, in places the similarities between DMPlex's and \pyop3's abstractions are so strong that \textbf{one can consider \pyop3 to be the abstraction that automates DMPlex.}
 
 \subsection{Topological queries}
+\label{sec:dmplex_queries}
 
 \begin{figure}
   \centering

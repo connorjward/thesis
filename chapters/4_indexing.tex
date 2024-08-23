@@ -212,9 +212,9 @@ The indexed axis tree resulting from the composition of these trees is shown to 
       \hline[1pt]
       \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
       \hline[1pt]
-      $\{d^t\}$ & $\{a^x,\ b\}$ & $\{i_a = \pycode{[0, 2][?$i_d$?]},\ i_b = 1\}$ \\
+      $\{d^t\}$ & $\{a^x,\ b\}$ & $\{i_a = \pycode{[0,2][?$i_d$?]},\ i_b = 1\}$ \\
       \hline
-      $\{d^u,\ e\}$ & $\{a^y,\ c\}$ & $\{i_a = i_d + 1,\ i_c = \pycode{[1, 2][?$i_e$?]}\}$ \\
+      $\{d^u,\ e\}$ & $\{a^y,\ c\}$ & $\{i_a = i_d + 1,\ i_c = \pycode{[1,2][?$i_e$?]}\}$ \\
       \hline[1pt]
     \end{tblr}
     \caption{
@@ -231,9 +231,9 @@ The indexed axis tree resulting from the composition of these trees is shown to 
       \hline[1pt]
       \textbf{Target path} & \SetCell{c}\textbf{Original layout} & \SetCell{c}\textbf{Substituted layout} \\
       \hline[1pt]
-      $\{a^x,\ b\}$ & $\textnormal{offset}(i_a, i_b) = 2 i_a + i_b$ & $\textnormal{offset}(i_d) = 2 ( \pycode{[0, 2][?$i_d$?]} ) + 1$ \\
+      $\{a^x,\ b\}$ & $\textnormal{offset}(i_a, i_b) = 2 i_a + i_b$ & $\textnormal{offset}(i_d) = 2 ( \pycode{[0,2][?$i_d$?]} ) + 1$ \\
       \hline
-      $\{a^y,\ c\}$ & $\textnormal{offset}(i_a, i_c) = 3 i_a + i_c + 6$ & $\textnormal{offset}(i_d, i_e) = 3(i_d+1) + \pycode{[1, 2][?$i_e$?]} + 6$ \\
+      $\{a^y,\ c\}$ & $\textnormal{offset}(i_a, i_c) = 3 i_a + i_c + 6$ & $\textnormal{offset}(i_d, i_e) = 3(i_d+1) + \pycode{[1,2][?$i_e$?]} + 6$ \\
       \hline[1pt]
     \end{tblr}
     \caption{
