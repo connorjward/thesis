@@ -39,51 +39,43 @@ As an introductory example to a mesh stencil calculation, we consider solving th
 Our exposition will focus on the aspects of the computation that are relevant for mesh stencils, for a more complete review of \gls{fem} we refer the reader to~\cite{brennerMathematicalTheoryFinite2008} and~\cite{larsonFiniteElementMethod2013}.
 The Stokes equations are given as follows: for domain $\Omega$ with boundary $\Gamma$, find the fluid velocity ($u$) and pressure ($p$) such that
 
-\begin{subequations}
-  \begin{align}
+\begin{equation} \label{eq:strong_stokes}
+  \begin{aligned}
     - \nu \Delta u + \nabla p &= 0 \quad \textrm{in} \ \Omega, \\
     %
     \nabla \cdot u &= 0 \quad \textrm{in} \ \Omega, \\
     %
     u &= g \quad \textrm{on} \ \Gamma,
-  \end{align}
-  %
-  \label{eq:strong_stokes}
-\end{subequations}
-
-\todo[inline]{I don't talk about the viscosity at all. It is convenient for later if it is in P3.}
+  \end{aligned}
+\end{equation}
 
 where $\nu$ is the viscosity and $g$ is some prescribed Dirichlet boundary condition fixing the velocity across the entire boundary.
 Forcing terms are omitted for simplicity.
-As we have a coupled system of two variables ($u$ and $p$), we refer to this system as being \textit{mixed}.
+As we have a coupled system of two variables ($u$ and $p$), we refer to it as being \textit{mixed}.
 
 \subsection{Deriving a weak formulation}
 
-\todo[inline]{I need someone to check over my function spaces. In particular when do I use $V_0$ vs $V$?}
-\todo[inline]{Once that's done I need some consistent notation: $V_0$ or $\hat V$?}
-
 For the finite element method we seek the solution to the \textit{variational}, or \textit{weak}, formulation of these equations.
 These are obtained by multiplying each equation by a suitable \textit{test function} and integrating over the domain.
-For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions and integrating by parts this gives
+For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions taken from spaces $V_0$ and $Q$ and integrating by parts this gives
 
 % taken from 
 % https://nbviewer.org/github/firedrakeproject/firedrake/blob/master/docs/notebooks/06-pde-constrained-optimisation.ipynb
 % and Larson and Bengzon (pg. 293)
-\begin{subequations}
-  \begin{align}
+\begin{equation} \label{eq:weak_stokes_full}
+  \begin{aligned}
     \int \nu \nabla u : \nabla v \, \textrm{d}\Omega
     - \int p \nabla \cdot v \, \textrm{d}\Omega
     - \int \nu (\nabla u \cdot n) \cdot v \, \textrm{d}\Gamma
     - \int p n \cdot v \, \textrm{d}\Gamma
     &= 0
-    &\forall v \in \hat V
-    \label{eq:weak_stokes_extra_V} \\
-    %
+    &\forall v \in V_0
+    \\
     \int q \, \nabla \cdot u \, \textrm{d}\Omega
     &= 0
     &\forall q \in Q.
-  \end{align}
-\end{subequations}
+  \end{aligned}
+\end{equation}
 
 From these weak forms it is now possible to classify the function spaces for $u$ and $p$.
 For $u$, we already know that the space must be vector-valued and constrained to $g$ on the boundary.
@@ -102,109 +94,119 @@ Unlike $u$, $p$ is scalar-valued, needs no derivatives of $p$, and does not have
   \label{eq:stokes_pressure_space}
 \end{equation}
 
-\todo[inline]{Rewrite this bit. I think this step should be taken later, we should drop surface integral terms at a later point.}
-
-
 Since the values of $u$ at the boundary are already prescribed, the function space of the test function $v$ is defined to be zero at those nodes
 
 \begin{equation}
-  \hat V = \{\ v \in [H^1(\Omega)]^d : v|_{\Gamma} = 0 \ \}.
+  V_0 = \{\ v \in [H^1(\Omega)]^d : v|_{\Gamma} = 0 \ \}.
 \end{equation}
 
-This allows us to drop some terms from \cref{eq:weak_stokes_extra_V}, allowing us to state the final problem as follows: find $(u, p) \in V \times Q$ such that
+By defining $v$ to vanish on the boundary we are able to drop the surface terms from \cref{eq:weak_stokes_full}, allowing us to restate the problem as follows: find $(u, p) \in V \times Q$ such that
 
-\begin{subequations}
-  \begin{align}
+\begin{equation*}
+  \begin{aligned}
     \int \nu \nabla u : \nabla v \, \textrm{d}\Omega
     - \int p \nabla \cdot v \, \textrm{d}\Omega
     &= 0
-    &\forall v \in \hat V
-    \label{eq:weak_stokes_V} \\
+    &\forall v \in V_0 \\
     %
     \int q \, \nabla \cdot u \, \textrm{d}\Omega
     &= 0
     &\forall q \in Q.
-    \label{eq:weak_stokes_Q}
-  \end{align}
-  \label{eq:weak_stokes}
-\end{subequations}
+  \end{aligned}
+\end{equation*}
+
+\todo[inline]{Long sentence. Also may talk about splitting the function space $V$ into $V_0 \oplus V_\Gamma$.}
+
+Lastly, we may split the solution $u$ into interior and boundary components $u_0 + u_\Gamma$ and, since $u_\Gamma$ is prescribed by the boundary condition and hence known, its terms may be moved to the right hand side, giving: find $(u_0, p) \in V_0 \times Q$ such that
+
+\begin{equation} \label{eq:weak_stokes}
+  \begin{aligned}
+    \int \nu \nabla u_0 : \nabla v \, \textrm{d}\Omega
+    - \int p \nabla \cdot v \, \textrm{d}\Omega
+    &=
+    - \int \nu \nabla u_\Gamma : \nabla v \, \textrm{d}\Omega
+    &\forall v \in V_0 \\
+    %
+    \int q \, \nabla \cdot u \, \textrm{d}\Omega
+    &= 0
+    &\forall q \in Q.
+  \end{aligned}
+\end{equation}
 
 \subsection{Discretising the system of equations}
 
 In order to solve this weak formulation using the finite element method we discretise the function spaces in use by replacing them with finite dimensional equivalents:
 
-\begin{align*}
-  &V \quad \to \quad V_h \subset V, \\
-  &\hat V \quad \to \quad \hat V_h \subset \hat V, \\
-  &Q \quad \to \quad Q_h \subset Q.
-\end{align*}
+\begin{equation*}
+  V_0 \to V_{0,h} \subset V_0,
+  \quad
+  \quad
+  Q \to Q_h \subset Q.
+\end{equation*}
 
 Each of these discrete spaces is spanned by a set of basis functions, so any function can be expressed as a linear combination of the basis functions and their coefficients.
-For example, we can write the function $u_h \in V_h$ as
+For example, we can write the function $u_{0,h} \in V_{0,h}$ as
+
+\begin{equation*}
+  u_{0,h} = \sum^N_{i=1} \hat u_i \psi^{V_{0,h}}_i
+\end{equation*}
+
+for basis functions $\psi^{V_{0,h}}_i$ and coefficients $\hat u_i$.
+
+Substituting these discrete spaces back into \cref{eq:weak_stokes}, and discarding the basis coefficients for the arbitrary functions $v_h$ and $q_h$, we obtain the discrete problem: find the vector $(\hat u, \hat p)$ such that
 
 \begin{equation}
-  u_h = \sum^N_{i=1} \hat u_i \psi^{V_h}_i
+  \begin{aligned}
+    \int \nu \hat u \nabla \psi^{V_{0,h}} : \nabla \psi^{V_{0,h}} \, \textrm{d}\Omega
+    - \int \hat p \psi^{Q_h} \nabla \cdot \psi^{V_{0,h}} \, \textrm{d}\Omega
+    &=
+    - \int \nu \nabla u_\Gamma : \nabla \psi^{V_{0,h}} \, \textrm{d}\Omega
+    \quad \forall \psi^{V_{0,h}} \\
+    %
+    \int \psi^{Q_h} \, \hat u \nabla \cdot \psi^{V_{0,h}} \, \textrm{d}\Omega
+    &= 0
+    \quad \forall \psi^{Q_h},
+  \end{aligned}
 \end{equation}
 
-for basis functions $\psi^{V_h}_i$ and coefficients $\hat u_i$.
-
-Substituting these discrete spaces back into \cref{eq:weak_stokes}, and discarding the basis coefficients for the arbitrary functions $v_h$ and $q_h$, we obtain the discrete problem: find $(u_h, p_h) \in V_h \times Q_h$ such that
-
-\begin{subequations}
-  \begin{align}
-    \int \nu u_h \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
-    - \int p_h \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega
-    &= 0
-    \quad \forall \psi^{\hat V} \\
-    %
-    \int \psi^Q \, u_h \nabla \cdot \psi^{V_h} \, \textrm{d}\Omega
-    &= 0
-    \quad \forall \psi^{Q},
-  \end{align}
-  \label{eq:weak_stokes_discrete}
-\end{subequations}
-
 which can be written as the (saddle point) linear system
-
-\todo[inline]{Replace $V$ with $V_{0,h}$}
-% describe forward subst to remove constrained DoFs from the system somewhere! ref. Emma's dissertation
-
-% TODO: IMPORTANT! how are the boundary terms dropped if v is from V not V_0???
-
-\todo[inline]{Modify RHS and spaces to get BCs done correctly.}
 
 \begin{equation}
   \left (
   \begin{array}{c|c}
-    \int \nu \nabla \psi^{V_h} : \nabla \psi^{\hat V_h} \, \textrm{d}\Omega
+    \int \nu \nabla \psi^{V_{0,h}} : \nabla \psi^{V_{0,h}} \, \textrm{d}\Omega
     &
-    - \int \psi^Q \nabla \cdot \psi^{\hat V_h} \, \textrm{d}\Omega \\
+    - \int \psi^{Q_h} \nabla \cdot \psi^{V_{0,h}} \, \textrm{d}\Omega \\
     \hline
-    \int \psi^Q \, \nabla \cdot \psi^{V_h} \, \textrm{d}\Omega
+    \int \psi^{Q_h} \, \nabla \cdot \psi^{V_{0,h}} \, \textrm{d}\Omega
     &
     0
   \end{array}
   \right )
   \left (
   \begin{array}{c}
-    u_h \\
+    \hat u \\
     \hline
-    p_h
+    \hat p
   \end{array}
   \right )
   =
   \left (
   \begin{array}{c}
-    0 \\ \hline 0
+    - \int \nu \nabla u_\Gamma : \nabla \psi^{V_{0,h}} \, \textrm{d}\Omega \\
+    \hline
+    0
   \end{array}
   \right )
   %
   \label{eq:stokes_linear_system}
 \end{equation}
 
-Solving the Stokes equations using the finite element method therefore boils down to constructing, or \textit{assembling}, the left-hand-side matrix and the - here trivial - right-hand-side vector before solving for the coefficients of $u_h$ and $p_h$.
+Solving the Stokes equations using the finite element method therefore boils down to constructing, or \textit{assembling}, the left-hand-side matrix and right-hand-side vector, before solving for the coefficients $\hat u$ and $\hat p$.
 
 \subsection{Choosing a basis}
+
+\todo[inline]{Needs a full caption}
 
 \begin{figure}
   \centering
@@ -243,7 +245,7 @@ Solving the Stokes equations using the finite element method therefore boils dow
   \end{subfigure}
 \end{figure}
 
-In order to numerically evaluate the integrals in \cref{eq:stokes_linear_system} the basis functions $\psi^{V_h}$ and $\psi^Q$ must be known.
+In order to numerically evaluate the integrals in \cref{eq:stokes_linear_system} the basis functions $\psi^{V_{0,h}}$ and $\psi^{Q_h}$ must be known.
 In the finite element method these are generated from the choice of \textit{finite element}.
 
 First formalised by Ciarlet~\parencite{ciarletElement2002}, a finite element is the triple $(K, P, N)$, where:
@@ -306,7 +308,6 @@ When the finite element definition above is transformed from \textit{reference s
 \Cref{fig:mesh_stencil} for example shows a mesh storing DoFs for a $P_3$ finite element.
 Just as cell sub-entities (e.g. edges and vertices) are shared between adjacent cells, so are the DoFs associated with those entities.
 
-
 \subsubsection{Choosing a basis for the Stokes equations}
 
 \begin{figure}
@@ -344,12 +345,12 @@ This process is termed \textit{global assembly}.
 If we again consider the Stokes problem above, to assemble the top left block of the matrix in \cref{eq:stokes_linear_system} we see that we need to evaluate
 
 \begin{equation}
-  \int \nu \nabla \psi^{V_h}_i : \nabla \psi^{\hat V_h}_j \, \textrm{d}\Omega
+  \int \nu \nabla \psi^{V_{0,h}}_i : \nabla \psi^{V_{0,h}}_j \, \textrm{d}\Omega
   \label{eq:stokes_top_left}
 \end{equation}
 
 \noindent
-for each possible pair of basis functions $\psi^V_i$ and $\psi^V_j$, suggesting an assembly algorithm with quadratic complexity.
+for each possible pair of basis functions $\psi^{V_{0,h}}_i$ and $\psi^{V_{0,h}}_j$, suggesting an assembly algorithm with quadratic complexity.
 However, this may be improved by observing that finite element basis functions are only non-zero in a small region around their owning mesh entity (e.g. \cref{fig:lagrange_element_2_basis}) - we say that they have \textit{local support}.
 This means that most of the integrals are \textit{zero by definition}, and the assembled matrix is \textit{sparse}.
 
