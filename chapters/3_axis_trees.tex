@@ -38,6 +38,8 @@ The fundamental characteristics of an axis tree are as follows:
     Axis components store a size attribute.
 \end{itemize}
 
+\todo[inline]{Need to be explicit about what an axis is.}
+
 Axis trees are analogous to the metadata of a \numpy array, or a \pyop2 \pycode{DataSet}: they exist alongside a block of memory and provide the information necessary to interpret it.
 Axis trees are especially similar to \numpy arrays in that they both describe multi-dimensional data and accept multi-indices that are transformed into offsets.
 Indeed, single-component axes in \pyop3 are equivalent to the axes of a \numpy array, hence the choice of name.
@@ -676,7 +678,7 @@ It does the following:
 The instructions \pycode{dependent_axes.iter()} (line~\ref{code:loop_dependent_axes}) and \pycode{axis.iter()} (line~\ref{code:loop_current_axis}) return iterators\footnotemark that, when looped over, yield a sequence of multi-indices that are used to index into \pycode{offset_dat}.
 
 \footnotetext{
-  At present in \pyop3 these iterators are implemented in Python, making them very slow to execute for large axes.
+  At present in \pyop3 these iterators are implemented in Python, making them very slow to execute for large axis trees.
   Accelerating this algorithm through either rewriting it in a faster language like C or using code generation is a high priority.
 }
 
