@@ -50,18 +50,31 @@ The core difference to these existing abstractions that axis trees bring is the 
 
 \begin{figure}
   \centering
-  \begin{subfigure}{.3\textwidth}
+  \begin{subfigure}{.9\textwidth}
+    \begin{pyalg2}
+      axis_a = Axis({"x": 2}, "a")
+      axis_b = Axis({"x": 3}, "b")
+      axis_c = Axis({"x": 2}, "c")
+      axes = AxisTree.from_iterable([axis_a, axis_b, axis_c])
+    \end{pyalg2}
+    \caption{\pyop3 code to build the axis tree.}
+  \end{subfigure}
+
+  \vspace{1em}
+
+  \begin{subfigure}[t]{.3\textwidth}
     \centering
     \includegraphics{linear_axis_tree_complete.pdf}
+    \caption{The axis tree.}
   \end{subfigure}
-  \begin{subfigure}{.3\textwidth}
+  \begin{subfigure}[t]{.3\textwidth}
     \centering
     \includegraphics{linear_data_tree_complete.pdf}
+    \caption{The data layout.}
   \end{subfigure}
   \caption{
-    Linear axis tree (left) and its resulting data layout (right).
+    A linear axis tree.
     The axes are labelled $a$, $b$, and $c$ and all have a single component, labelled $x$.
-    The red arrows go from parent component to child to show that child axes attach to particular components of the parent.
   }
   \label{fig:linear_axis_tree}
 \end{figure}
@@ -107,17 +120,33 @@ For single-component axes this ambiguity is not present and so in future compone
 \begin{example}{Multi-component axis trees}
 
 \begin{figure}
+  \begin{subfigure}{.9\textwidth}
+    \begin{pyalg2}
+      axis_a = Axis({"x": 2, "y": 2}, "a")
+      axis_b = Axis(3, "b")
+      axis_c = Axis(2, "c")
+      axes = AxisTree.from_nest({axis_a: [axis_b, axis_c]})
+    \end{pyalg2}
+    \caption{\pyop3 code to build the axis tree.}
+  \end{subfigure}
+
+  \vspace{1em}
+
   \begin{subfigure}{.4\textwidth}
     \centering
     \includegraphics{multi_component_axis_tree.pdf}
+    \caption{The axis tree.}
   \end{subfigure}
   \begin{subfigure}{.4\textwidth}
     \centering
     \includegraphics{multi_component_data_tree.pdf}
+    \caption{
+      The data layout.
+      The distinct components of axis $a$ are coloured red and blue for emphasis.
+    }
   \end{subfigure}
   \caption{
-    A simple multi-component axis tree (left) and its corresponding data layout (right).
-    The distinct components of axis $a$ are coloured red and blue for emphasis.
+    A simple multi-component axis tree.
   }
   \label{fig:multi_component_axis_tree_intro}
 \end{figure}
@@ -205,6 +234,23 @@ By avoiding assumptions about axis ordering, a user can create a data layout usi
 
 \begin{figure}
   \centering
+  \begin{subfigure}{.9\textwidth}
+    \begin{pyalg2}
+      # make the size array
+      axis_a = Axis(2, "a")
+      axis_b = Axis(2, "b")
+      size_axes = AxisTree.from_iterable([axis_a, axis_b])
+      size_dat = Dat(size_axes, data=[1, 0, 2, 1])
+
+      # make the full axis tree
+      axis_c = Axis(size_dat, "c")
+      axes = AxisTree.from_iterable([axis_a, axis_b, axis_c])
+    \end{pyalg2}
+    \caption{\pyop3 code to build the axis tree.}
+  \end{subfigure}
+
+  \vspace{1em}
+
   \begin{minipage}{.35\textwidth}
     \begin{center}
       \includegraphics{ragged_axis_tree.pdf}

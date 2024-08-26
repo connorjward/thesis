@@ -5,6 +5,8 @@
 \chapter{Indexing}
 \label{chapter:indexing}
 
+\todo[inline]{It seems a bit clunky to have "example" sections only at the start when the whole chapter is built from examples.}
+
 Just like \numpy, data structures in \pyop3 can be indexed.
 Compared with \numpy where indexing is accomplished with a list of index-like objects, one for each axis (\cref{sec:numpy_indexing_arrays}), \pyop3 needs a more complicated solution to accomodate for the fact that data structures are now tree-like.
 Instead of lists of indices, \pyop3 instead uses \emph{index trees}.
@@ -61,24 +63,28 @@ this time returning a new axis tree and aggregated index information from each o
 Code for this operation is shown in \cref{alg:index_axis_tree}.
 The index tree is traversed and the function \pycode{index_handler()}, representing the transformation in \cref{eq:index_transform}, is called on each index, with the resulting axis tree and index information aggregated together and returned.
 
-\subsubsection{Index information}
+\subsubsection{Mapping from indexed to unindexed axis trees}
 
 In addition to having a new axis tree with new sizes and labels, for indexing to work \pyop3 needs to know how the new and old axis trees relate.
 In particular, it needs to be able to take multi-indices given for the new axis tree (the \emph{source}) and map them to multi-indices for the old tree (the \emph{target}).
 Represented by the `index information' shown above, the multi-index relations are represented by two mappings:
 
-\begin{description}
-  \item[Target paths] A map connecting labels of the source tree with labels of the target.
-  \item[Target expressions] A map connecting index expressions of the source tree with those of the target.
-\end{description}
+\begin{itemize}
+  \item
+    \textbf{Target paths} \\
+    A map connecting labels of the source tree with labels of the target.
+  \item
+    \textbf{Target expressions} \\
+    A map connecting index expressions of the source tree with those of the target.
+\end{itemize}
 
 With these, \pyop3 has sufficient information to:
-(1) select the right \emph{layout function} from the target axis tree, and
+(1) select the right layout function from the target axis tree, and
 (2) substitute index expressions into the layout function, resulting in a \emph{substituted layout function} that accepts multi-indices of the source axis tree instead of the target.
-This approach allows \pyop3 to represent indexing operations symbolically as \emph{views}, regardless of the indexing operation applied.
+This approach allows \pyop3 to represent indexing operations symbolically as views, regardless of the indexing operation applied.
 This contrasts with \numpy where only `simple' indexing operations are supported without copying the array.
 
-\begin{example}{Linear index trees}
+\begin{example}{Linear index trees} \label{example:linear_index_tree}
 
 \begin{figure}
   \centering
@@ -91,7 +97,7 @@ This contrasts with \numpy where only `simple' indexing operations are supported
       dat = Dat(axes)
 
       # index the array
-      indexed_dat = dat[::2, 1::]
+      indexed_dat = dat[::2, 1::]?\label{code:index_linear_apply}?
     \end{pyalg2}
 
     \caption{\pyop3 indexing code.}
@@ -116,55 +122,62 @@ This contrasts with \numpy where only `simple' indexing operations are supported
   \label{fig:index_linear}
 \end{figure}
 
-To illustrate this with a simple example, consider the indexing operation shown in \cref{fig:index_linear_tree_all}.
-It shows a slicing operation applied to a linear axis tree with shape \pycode{(5, 3)} and axes labelled $a$ and $b$.
-The index tree is also linear and consists of two \textit{slice} objects over the axes $a$ and $b$ respectively with the former taking every other entry in $a$ (\pycode{[::2]}) and the latter taking all but the first entry in $b$ (\pycode{[1::]}).
-The indexed axis tree resulting from the composition of these trees is shown to the right: only the selected indices from axes $a$ and $b$ are present and the axes have been relabelled (arbitrarily) $c$ and $d$.
+To illustrate axis tree indexing with a simple example, we consider the operation shown in \cref{fig:index_linear_transform}.
+In it we index a linear axis tree using two slices, one for each of the axes (labelled $a$ and $b$).
+Code for the transformation is shown in \cref{fig:index_linear_code}.
 
-% \noindent
-% To give an example, \pyop3 represents slices as \pycode{Slice} index objects with \pycode{AffineSliceComponent} index components.
-% Each \pycode{Slice} object has a \emph{target axis}, the label of the axis getting sliced, and each \pycode{AffineSliceComponent} has a \emph{target component}, the label of the axis component getting sliced.
-% Having more than one \pycode{AffineSliceComponent} is supported to allow for slicing of different axis components.
-%
-% As well as a target component label, \pycode{AffineSliceComponents} also store \pycode{start}, \pycode{stop}, and \pycode{step} attributes, just like a normal Python \pycode{slice} object.
-% \pycode{Subsets} are also represented as a slice component, storing an integer array instead of \pycode{start}, \pycode{stop}, \pycode{step} values.
-%
-% Graphically, one can represent slices like
-%
-% \begin{center}
-%   \includegraphics{demo_slice.pdf}
-% \end{center}
-%
-% \noindent
-% indicating, in this case, a slice of axis $a$ using subset \pycode{[0,2]} for component $x$ and affine slice \pycode{[1::]} for component $y$.
+From \cref{fig:index_linear} we may make several observations:
 
-  % target path
-    % It allows \pyop3 to know where the source axes came from so it can select the right layout functions (\cref{sec:layouts}) from the target tree.
-    % In \cref{fig:index_linear_tree_exprs}, the target path shows that source axes $c$ and $d$ map back to $a$ and $b$ in the original array.
+\begin{itemize}
+  \item
+    The indexed axis tree (\cref{fig:index_linear_transform}, right) is smaller than the unindexed one and it has new labels: $c$ and $d$ instead of $a$ and $b$.
 
-  % target exprs.
-    % In \cref{fig:index_linear_tree_exprs} the two target expressions are shown to be $i_a = 2 i_c$ and $i_b = i_d + 1$, telling us that $c_m$ maps to $a_{2m}$ and that $d_n$ maps to $b_{n+1}$ respectively.
+  \item
+    The mapping between old and new axis entries are indicated by their labels.
+    For example, the notation $c_2/a_4$ means that axis entry $c_2$ maps to $a_4$ in the original axis tree.
 
+  \item
+    Both slices in the index tree (\cref{fig:index_linear_transform}, middle) have a single component.
+    No component labels are specified as the input axis tree is linear and so there is no ambiguity.
+
+  \item
+    The \pycode{Dat} in \cref{fig:index_linear_code} is not explicitly indexed with an index tree.
+    Instead it is indexed with the pair of slices \pycode{[::2, 1::]} (line~\ref{code:index_linear_apply}) that are internally converted into an index tree.
+    This syntactic sugar facilitates writing concise code and means that the syntax here is identical to the equivalent \numpy code for an array with shape \pycode{(5, 3)}.
+\end{itemize}
+
+Alongside the creation of a new axis tree, indexing the array produces the following index information:
 
 \begin{center}
-  \begin{tblr}{|[1pt]c|[1pt]c|[1pt]c|[1pt]}
+  \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
     \hline[1pt]
-    \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+    \textbf{Target path} & \textbf{Target expressions} \\
     \hline[1pt]
-    $\{ c,\ d \}$ & $\{a,\ b\}$ & $\{i_a = 2 i_c,\ i_b = i_d+1\}$ \\
+    $\{ c, d \} \to \{a, b\}$ & $\{i_a = 2 i_c,\ i_b = i_d+1\}$ \\
     \hline[1pt]
   \end{tblr}
 \end{center}
 
-\begin{center}
-  \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
-    \hline[1pt]
-    \textbf{Target path} & \SetCell{c}\textbf{Original layout} & \SetCell{c}\textbf{Substituted layout} \\
-    \hline[1pt]
-    $\{a,\ b\}$ & $\textnormal{offset}(i_a, i_b) = 3 i_a + i_b$ & $\textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1$ \\
-    \hline[1pt]
-  \end{tblr}
-\end{center}
+Here, the target path store the fact that the path through the source tree $\{c,d\}$ is equivalent to the path through the target tree $\{a,b\}$.
+The target expressions capture the semantics of the slices.
+Indexing axis $a$ with the slice \pycode{[::2]}, for example, means that entries in the new axis ($c$) map to even entries in $a$ - which is exactly the index expression $i_a = 2i_c$.
+
+Given this information, we may now construct a substituted layout function for addressing the original array with multi-indices of the indexed axis tree.
+From the target path we know that the correct, unsubstituted, layout function is
+
+\begin{equation*}
+  \textnormal{offset}(i_a, i_b) = 3 i_a + i_b,
+\end{equation*}
+
+\noindent
+which, applying the target expression substitutions, produces the substituted layout function
+
+\begin{equation*}
+  \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1
+\end{equation*}
+
+\noindent
+as desired.
 
 \end{example}
 
@@ -187,13 +200,13 @@ The indexed axis tree resulting from the composition of these trees is shown to 
                             AffineSliceComponent("y", start=1)])
       index_b = ScalarIndex("b", 1)
       index_c = Slice("c", [Subset([1, 2])])
-      index_tree = IndexTree.from_nest({index_a: [index_b, index_c]})
+      index_tree = IndexTree.from_nest({index_a: [index_b, index_c]})?\label{code:multi_component_make_index_tree}?
 
       # index the array
       indexed_dat = dat[index_tree]
     \end{pyalg2}
 
-    \caption{\pyop3 code that indexes a multi-component array with an index tree.}
+    \caption{\pyop3 indexing code.}
     \label{fig:multi_component_slice_code}
   \end{subfigure}
 
@@ -203,76 +216,68 @@ The indexed axis tree resulting from the composition of these trees is shown to 
     \centering
     \includegraphics[scale=.9]{multi_component_slice_transform.pdf}
     \caption{
-      Diagram of the data layout transformation.
-      ...
+      The axis tree transformation.
     }
     \label{fig:multi_component_slice_transform_flowchart}
   \end{subfigure}
 
   \caption{
-    TODO
+    The axis tree transformation resulting from indexing a multi-component axis tree with a multi-component index tree.
   }
   \label{fig:multi_component_slice}
 \end{figure}
 
+As a further example of indexing transformations we consider a multi-component index tree (\cref{fig:multi_component_slice}).
+Compared with the linear case there are a number of changes:
+
+\begin{itemize}
+  \item
+    The slice over axis $a$ now has two components, one slicing the $x$ axis component and one the $y$ component.
+    This means that the indexed axis tree (\cref{fig:multi_component_slice_transform_flowchart}, right) has two components also.
+
+  \item
+    Some of the slices now include \emph{subsets}.
+    Instead of providing \pycode{start}, \pycode{stop}, and \pycode{step} arguments an integer array is provided.
+    This is equivalent to `integer array indexing' for \numpy (\cref{sec:numpy_indexing_arrays}).
+
+  \item
+    Instead of a slice, axis $b$ is indexed with a \emph{scalar index}.
+    This accesses just one of the indices in $b$ and so the index transformation does not need to produce a new axis tree.
+
+  \item
+    Unlike the linear case, it is no longer possible to hide the index tree behind syntactic sugar and it must instead be explicitly constructed (\cref{fig:multi_component_slice_code}, line~\ref{code:multi_component_make_index_tree}).
+\end{itemize}
+
+Indexing the array as described produces the following target path and target expressions:
+
 \begin{center}
-  \begin{tblr}{|[1pt]c|[1pt]c|[1pt]c|[1pt]}
+  \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
     \hline[1pt]
-    \textbf{Source path} & \textbf{Target path} & \textbf{Target expressions} \\
+    \textbf{Target path} & \textbf{Target expressions} \\
     \hline[1pt]
-    $\{d^t\}$ & $\{a^x,\ b\}$ & $\{i_a = \pycode{[0,2][?$i_d$?]},\ i_b = 1\}$ \\
+    $\{d^t\} \to \{a^x,b\}$ & $\{i_a = \pycode{[0,2][?$i_d$?]},\ i_b = 1\}$ \\
     \hline
-    $\{d^u,\ e\}$ & $\{a^y,\ c\}$ & $\{i_a = i_d + 1,\ i_c = \pycode{[1,2][?$i_e$?]}\}$ \\
+    $\{d^u,e\} \to \{a^y,c\}$ & $\{i_a = i_d + 1,\ i_c = \pycode{[1,2][?$i_e$?]}\}$ \\
     \hline[1pt]
   \end{tblr}
 \end{center}
 
+Unlike the linear case above, having subsets introduces index expressions like $\pycode{[0,2][?$i_d$?]}$, and the scalar index of axis $b$ means that $i_b$ is simply a constant, rather than an expression of some other axis index.
+With these target paths and expressions it is now straightforward to again determine appropriate substituted layouts for the indexed axis tree:
+
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
     \hline[1pt]
-    \textbf{Target path} & \SetCell{c}\textbf{Original layout} & \SetCell{c}\textbf{Substituted layout} \\
+    \textbf{Path} & \SetCell{c}\textbf{Original layout} & \SetCell{c}\textbf{Substituted layout} \\
     \hline[1pt]
-    $\{a^x,\ b\}$ & $\textnormal{offset}(i_a, i_b) = 2 i_a + i_b$ & $\textnormal{offset}(i_d) = 2 ( \pycode{[0,2][?$i_d$?]} ) + 1$ \\
+    $\{a^x, b\}$ & $\textnormal{offset}(i_a, i_b) = 2 i_a + i_b$ & $\textnormal{offset}(i_d) = 2 ( \pycode{[0,2][?$i_d$?]} ) + 1$ \\
     \hline
-    $\{a^y,\ c\}$ & $\textnormal{offset}(i_a, i_c) = 3 i_a + i_c + 6$ & $\textnormal{offset}(i_d, i_e) = 3(i_d+1) + \pycode{[1,2][?$i_e$?]} + 6$ \\
+    $\{a^y, c\}$ & $\textnormal{offset}(i_a, i_c) = 3 i_a + i_c + 6$ & $\textnormal{offset}(i_d, i_e) = 3(i_d+1) + \pycode{[1,2][?$i_e$?]} + 6$ \\
     \hline[1pt]
   \end{tblr}
 \end{center}
 
 \end{example}
-
-With these two pieces of information, it is now possible to implement view-like semantics for indexed axis trees.
-One simply has to:
-
-\begin{enumerate}
-  \item
-    Use the target path to select the appropriate layout function from the target axis tree.
-  \item
-    Modify the layout function by substituting the target indices in the function with the source indices as described by the target expressions attribute of the indexed tree.
-  \item
-    Evaluate the offset using the new layout function (that is now a function of the source indices rather than the target indices).
-\end{enumerate}
-
-% example 1 - now shown in the table...
-Applying these steps using the indexing operation of \cref{fig:index_linear_tree_all}, we have:
-
-\begin{enumerate}
-  \item
-    % TODO: Provide more detail about source paths and how this is retrieved.
-    The target paths are $\{c \to a,\ d \to b\}$, so the selected layout function is
-    \begin{equation*}
-      \textnormal{offset}(i_a, i_b) = 3 i_a + i_b.
-    \end{equation*}
-  \item
-    Substituting the target expressions in \cref{fig:index_linear_tree_exprs}, we get the new layout function
-    \begin{equation*}
-      \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1.
-    \end{equation*}
-  \item
-    The original axis tree may now be addressed using the source indices $i_c$ and $i_d$.
-\end{enumerate}
-
-% describe something about subsets for the second example.
 
 \subsection{Index composition}
 \label{sec:index_composition}
@@ -290,7 +295,7 @@ Applying these steps using the indexing operation of \cref{fig:index_linear_tree
     \end{pyalg2}
 
     \caption{\pyop3 indexing code.}
-    \label{fig:map_code}
+    \label{fig:index_composition_code}
   \end{subfigure}
 
   \vspace{1em}
@@ -298,60 +303,74 @@ Applying these steps using the indexing operation of \cref{fig:index_linear_tree
   \begin{subfigure}{\textwidth}
     \centering
     \includegraphics{index_composition_transform.pdf}
-    \caption{
-      TODO
-    }
+    \caption{The axis tree transformation.}
     \label{fig:index_composition_transform}
   \end{subfigure}
 
-  \vspace{1em}
-
-  \begin{subfigure}{\textwidth}
-    \centering
-    \begin{tblr}{|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]}
-      \hline[1pt]
-      \textbf{Source path} & \textbf{Int. path} & \textbf{Int. expressions} & \textbf{Target path} & \textbf{Target expressions} \\
-      \hline[1pt]
-      $\{e\}$ & $\{ c,\ d \}$ & $\{ i_c = i_e + 1,\ i_d = 1 \}$ & $\{a,\ b\}$ & $\{i_a = 2 (i_e+1),\ i_b = 2\}$ \\
-      \hline[1pt]
-    \end{tblr}
-    \caption{TODO}
-    \label{fig:index_composition_axis_info}
-  \end{subfigure}
-
-  \vspace{1em}
-
-  \begin{subfigure}{\textwidth}
-    \centering
-    \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
-      \hline[1pt]
-      \textbf{Target path} & \SetCell{c}\textbf{Original layout} & \SetCell{c}\textbf{Substituted layout} \\
-      \hline[1pt]
-      $\{a,\ b\}$ & $\textnormal{offset}(i_a, i_b) = 3 i_a + i_b$ & $\textnormal{offset}(i_c) = 6 (i_e+1) + 2$ \\
-      \hline[1pt]
-    \end{tblr}
-    \caption{TODO}
-    \label{fig:index_composition_subst_layout}
-  \end{subfigure}
-
   \caption{
-    The composition of an already indexed axis tree (from \cref{fig:index_linear_tree_all}) with another index tree.
-    Since a scalar index is used, the axis tree ``loses shape" and is transformed from one with shape (3, 2) to one with shape (2,).
-    The resulting axis tree can still be mapped correctly back to the original unindexed axis tree.
+    The composition of an already indexed axis tree (from \cref{fig:index_linear}) with another index tree.
   }
-  \label{fig:index_composition_linear_tree_all}
+  \label{fig:index_composition}
 \end{figure}
 
-Since indexing an axis tree gives back another (indexed) axis tree, it is possible to index the newly created tree using the same code as before.
-Index composition is useful in cases where one wants to handle array views in the same way that one might handle unindexed arrays.
-This could occur, for instance, if one were to index a vector-valued array to give a view of the array as though it were scalar-valued.
-Since the axis trees of both the vector-valued view and the scalar-valued array are identical they may be treated the same way by \pyop3.
-
+Since indexing an axis tree just gives back another axis tree, it is straightforward to repeat the process and index the axis tree again.
 An example composition operation is shown in \cref{fig:index_composition}.
-The indexed array from \cref{fig:index_linear} is used as input and the array is further sliced.
+Using the indexed array from \cref{fig:index_linear} we index it again to produce another indexed axis tree that remains capable of mapping multi-indices back to the original target axis tree.
 
-% how does it differ from the others? intermediate paths and expressions
+If we disregard the prior indexing information and simply treat the transformation as we would a `normal' indexing operation, we get the following index information:
 
+\begin{center}
+  \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
+    \hline[1pt]
+    \textbf{Target path} & \textbf{Target expressions} \\
+    \hline[1pt]
+    $\{e\} \to \{ c, d \}$ & $\{ i_c = i_e + 1,\ i_d = 1 \}$ \\
+    \hline[1pt]
+  \end{tblr}
+\end{center}
+
+\noindent
+The circumstances here are different to previous examples because the `source' axis tree (\cref{fig:index_composition_transform}, left) is already indexed, and hence more work is needed to fully map back to the unindexed target axis tree.
+From \cref{example:linear_index_tree} we know that the index information for the `source' tree is given by:
+
+\begin{center}
+  \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
+    \hline[1pt]
+    \textbf{Target path} & \textbf{Target expressions} \\
+    \hline[1pt]
+    $\{ c, d \} \to \{a, b\}$ & $\{i_a = 2 i_c,\ i_b = i_d+1\}$ \\
+    \hline[1pt]
+  \end{tblr}
+\end{center}
+
+\noindent
+Which may now be \emph{composed} with the new indexing information to produce:
+
+\begin{center}
+  \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
+    \hline[1pt]
+    \textbf{Target path} & \textbf{Target expressions} \\
+    \hline[1pt]
+    $\{e\} \to \{a, b\}$ & $\{i_a = 2 (i_e+1),\ i_b = 2\}$ \\
+    \hline[1pt]
+  \end{tblr}
+\end{center}
+
+\noindent
+Enabling one to produce appropriate substituted layouts relating the source and target axis trees:
+
+\begin{center}
+  \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
+    \hline[1pt]
+    \textbf{Path} & \SetCell{c}\textbf{Original layout} & \SetCell{c}\textbf{Substituted layout} \\
+    \hline[1pt]
+    $\{a,b\}$ & $\textnormal{offset}(i_a, i_b) = 3 i_a + i_b$ & $\textnormal{offset}(i_e) = 6 (i_e+1) + 2$ \\
+    \hline[1pt]
+  \end{tblr}
+\end{center}
+
+This ability to compose indexing operations means that \pyop3 is able to to represent \emph{all} indexed arrays symbolically, as views.
+This contrasts with \numpy which is only capable of doing this for `simple' indexing operations and otherwise resorts to a copy.
 
 \section{Indexing with outer loops}
 \label{sec:outer_loops}

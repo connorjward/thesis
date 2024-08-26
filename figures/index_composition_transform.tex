@@ -15,17 +15,17 @@
 \coordinate (origin) at (0,0);
 
 % top
-\drawWhiteDofSmall{(origin)}{$c_0$\,($a_0$)};
-\drawWhiteDofSmall{($(origin)+(1,0)$)}{$c_1$\,($a_2$)};
-\drawWhiteDofSmall{($(origin)+(2,0)$)}{$c_2$\,($a_4$)};
+\drawWhiteDofSmall{(origin)}{$c_0/a_0$};
+\drawWhiteDofSmall{($(origin)+(1,0)$)}{$c_1/a_2$};
+\drawWhiteDofSmall{($(origin)+(2,0)$)}{$c_2/a_4$};
 
 \coordinate (aleft) at ($(origin)+(1,0)$);
 \coordinate (aright) at ($(origin)+(2,0)$);
 
 % bottom
 \coordinate (origin) at ($(aleft)+(-.5,-2)$);
-\drawWhiteDofSmall{(origin)}{$d_0$\,($b_1$)};
-\drawWhiteDofSmall{($(origin)+(1,0)$)}{$d_1$\,($b_2$)};
+\drawWhiteDofSmall{(origin)}{$d_0/b_1$};
+\drawWhiteDofSmall{($(origin)+(1,0)$)}{$d_1/b_2$};
 
 \draw [connector] (aleft) -- ($(origin)+(0,1)$);
 \draw [connector] (aright) -- ($(origin)+(2,1)$);
@@ -38,8 +38,8 @@
 
 \coordinate (origin) at (4,0);
 
-\drawTreeNode{(top)}{(origin)}{slice($c$: \{ \subnode{top0}{(\pycode{1::})} \})};
-\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{scalar($d$, 1)};
+\drawTreeNode{(top)}{(origin)}{$\textnormal{slice}(c : \{\ \component{top0}{\pycode{[1::]}}\ \})$};
+\drawTreeNode{(bottom)}{($(origin)+(.75,-2)$)}{$\textnormal{scalar}(d, 1)$};
 \underlineComponent{top}{top0};
 \drawTreeConnector{top}{top0}{(bottom)};
 
@@ -53,8 +53,8 @@
 \coordinate (origin) at (8.5,-1);
 
 % top
-\drawWhiteDofSmall{(origin)}{$e_0$\,($a_2$)};
-\drawWhiteDofSmall{($(origin)+(1,0)$)}{$e_1$\,($a_4$)};
+\drawWhiteDofSmall{(origin)}{$e_0/a_2$};
+\drawWhiteDofSmall{($(origin)+(1,0)$)}{$e_1/a_4$};
 
 \end{tikzpicture}
 \end{document}
