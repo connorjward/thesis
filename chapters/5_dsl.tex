@@ -4,72 +4,110 @@
 
 % TODO: mention that:
 % \pyop3 uses pymbolic\footnote{https://documen.tician.de/pymbolic/index.html} to store and manipulate the symbolic expressions.
-
-\chapter{The execution model}
-\label{chapter:execution_model}
-
 % TODO: Discuss how data dependencies are (not) handled.
 % TODO: It's written in Python, but that's fine because it's a compiler - Julia/another faster language would not help us
 % TODO: embedded DSL is used for interoperability with other libraries, and Python is everywhere, can also use parser of parent language (reference UFL for its thoughts on this?)
 
-Thus far we have established a new abstraction for mesh-like data structures, and an approach for symbolically representing smaller ``packed" parts of them.
-We now move on to consider their concrete implementation, and how to express computations with them.
+\chapter{\pyop3}
+\label{chapter:pyop3}
 
-\section{Code generation}
+The contributions of this thesis may be split into two parts:
+(a) the development of novel \emph{abstractions} for mesh stencils, and
+(b) the \emph{implementation} of these abstractions as part of a working piece of software.
+Whereas the previous two chapters have focussed on the former of these, in this chapter we present information pertaining to contribution (b).
+Namely, we present the new mesh stencil package \pyop3.
+
+\section{The execution model}
+
+The interface to \pyop3 may be thought of as being two different parts: the \emph{data model} and the \emph{execution model}.
+The former of these has already been introduced, being the subject of the last two chapters: data structures, axis trees, and index trees.
+Here we present details of the latter.
+
+In \pyop3, the execution model refers to the elements of the language used to express actual computations.
+It has been designed to resemble the pseudocode for mesh stencil algorithms (e.g. \cref{alg:fem_assembly}) as closely as possible within the constraints of an embedded DSL.
+Its core components therefore are \emph{loops}, \emph{assignments}, and \emph{function calls}.
+
+\subsection{Code generation}
+
+In order to use \pyop3, users create symbolic \emph{loop expressions} from these core components, matching the algorithm they wish to apply.
+Then, behind the scenes, runtime code generation is used to \emph{lower} the symbolic expression down to executable code.
 
 \begin{figure}
   \centering
   \includegraphics{codegen_flowchart.pdf}
   \caption{
     The code generation pipeline for the compilation of a loop expression into a callable function.
-    The input (``Loop expression") and output (``Compiled function") are shown in blue whilst the intermediate processes are red.
-    The dashed line from input expression to output function is included to represent the fact that the compiled function additionally requires data from the input loop expression in order to be usable.
+    The input (`Loop expression') and output (`Compiled function') are shown in blue whilst the intermediate processes are red.
+    The dashed line from input expression to output function is included to represent the fact that the compiled function requires additional data from the loop expression in order to be executable.
   }
   \label{fig:codegen_flowchart}
 \end{figure}
 
-% pyop3 has loop expressions that are lowered to loopy kernels that are lowered to C/etc
-% (ref loopy ch. 2)
-% "like pyop2, pyop3 uses loopy as an intermediate representation..."
-
-% (paragraph)
-% pyop3 takes a similar approach to loopy in that computations are expressed in a transformable representation
-% pyop3 does things at a higher level... (ref later bits)
-% (transformations can be split into functional ones and optimisation ones)
-% "At present no optimisations are applied to either the \pyop3 or loopy internal representations.
-% This is considered future work and some potentially fruitful optimising transformations are detailed in \cref{sec:future_work}.
-
-% % dual role of loop expression: codegen spec *and* data to pass through (ref. figure)
-
-\begin{example}
-\label{example:assign_codegen}
-
-"we start with something simple..."
+This code generation pipeline is shown in \cref{fig:codegen_flowchart}.
+Loop expressions are lowered first to loopy (\cref{sec:pyop2_codegen}) and then to C, before calling a traditional compiler to build the compiled library.
+To execute the computation, the compiled function is then called using appropriate data from the input loop expression.
+For example, the simple loop expression
 
 \begin{pyinline}
-  axes = AxisTree.from_iterable([5, 3])
+  loop(p,
+       kernel(dat0[f(p)], dat1[p]))
+\end{pyinline}
+
+\noindent
+executing some local kernel (\pycode{kernel}) for each loop index entry (\pycode{p}), expects, at a minimum, two arguments to the generated code: one for \pycode{dat0} and another for \pycode{dat1}.
+Further arguments may be necessary if, say, \pycode{dat0} is ragged and requires a tabulated layout function or if map \pycode{f} is a lookup table.
+
+Both \pyop3 loop expressions and loopy kernels are \emph{transformable representations}, so, as the code is compiled, these layers are able to reason about the program and transform it to alternative but equivalent forms.
+This is typically done for optimisation purposes but \pyop3 also uses the technique more functionally to facilitate compilation.
+The former of these is discussed in \cref{sec:codegen_optimisation} whilst the latter is explained in the forthcoming examples.
+
+\begin{example}{Constant assignment}
+\label{example:assign_codegen}
+
+As a first example of the code generation process in \pyop3, we consider the following assignment operation:
+
+\begin{pyinline}
+  axes = AxisTree.from_iterable([Axis(5), Axis(3)])
   dat = Dat(axes)
-  # set entries to [0, 666, 666, 0, 0, 0, 0, 666, 666, 0, 0, 0, 0, 666, 666]
   dat[::2, 1:].assign(666)
 \end{pyinline}
 
-% (what does this do)
-% dat[::2, 1:] is a view, creates assignment expression that is eagerly evaluated
+\noindent
+Here, we assign the scalar value \pycode{666} to entries in the indexed linear array \pycode{dat[::2, 1:]}.
+Since a newly initialised \pycode{Dat} starts with a memory buffer of all zeros, following this operation the entries in \pycode{dat} will be
+
+\begin{equation*}
+  \pycode{[0, 666, 666, 0, 0, 0, 0, 666, 666, 0, 0, 0, 0, 666, 666]}.
+\end{equation*}
+
+When the \pycode{assign()} method is called, the following single-node loop expression is produced:
 
 \begin{center}
   \includegraphics{codegen_example1_expr.pdf}
 \end{center}
 
-% we have a single node in our pyop3 expression
-% no transformations of the IR are necessary - single node (show)
+To generate code for this expression, the expression tree is descended and appropriate loopy constructs - domains, instructions, and arguments - are generated.
+These are then used to construct a complete loopy kernel.
 
-To generate code from this expression the expression tree is descended and the appropriate loopy constructs are emitted.
-In this case, as the expression tree only has a single node, this traversal is trivial.
-% (old)
-% % single pass
-% % tree is traversed in a pre-order fashion (parents visited first)
-% % loops emit domains and perhaps assignments (ragged)
-% % then terminals (i.e. function calls and assignments) also emit domains and assignments
+Given that the example only has a single node the traversal of the loop expression is trivial.
+
+Before processing the \pycode{write} node we make the following observations:
+
+\begin{itemize}
+  \item
+    If we assume the axes of the indexed array to be labelled $c$ and $d$, mapping from $a$ and $b$ respectively then the indexed array has the following structure:
+
+    \begin{center}
+      \includegraphics{codegen_example1_axis_tree.pdf}
+    \end{center}
+
+  \item
+    The substituted layout function (\cref{chapter:indexing}) is therefore given by
+
+    \begin{equation*}
+      \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1.
+    \end{equation*}
+\end{itemize}
 
 \begin{listing}
   \centering
@@ -82,36 +120,43 @@ In this case, as the expression tree only has a single node, this traversal is t
   \label{listing:codegen_example1_loopy_kernel}
 \end{listing}
 
-To emit code for the \pycode{Assignment} node...
-% loop over source axes...
-% talk about substituted layouts here, connects source axis indices back to offset
-The resulting loopy kernel is shown in \cref{listing:codegen_example1_loopy_kernel}.
+We are now in a position to generate code for the node:
+
+\begin{enumerate}
+  \item
+    Loops are generated for the axes of the \emph{indexed} array and the mapping from axis label to loop index name is recorded.
+    In this case, two loops with extents 3 and 2 would be created.
+    If the former has a loop index called \pycode{"i_0"} and the latter \pycode{"i_1"} then the mapping $\{ c \to \pycode{"i_0"},\ d \to \pycode{"i_1"}\}$ is also stored.
+
+  \item
+    The assignment instruction is generated with the appropriate substituted layout function, replacing axis indices as appropriate.
+    For this example this produces the instruction:
+
+    \begin{pyinline}
+      dat[6*i_0 + i_1 + 1] = 666
+    \end{pyinline}
+\end{enumerate}
 
 \begin{listing}
+  \caption{
+    The C code generated from the loopy kernel in \cref{listing:codegen_example1_loopy_kernel}.
+  }
   \centering
   \begin{minipage}{.9\textwidth}
     \inputminted{c}{./scripts/artefacts/codegen_example1_c_code_tidy.c}
   \end{minipage}
-  \caption{
-    TODO
-  }
   \label{listing:codegen_example1_c_code}
 \end{listing}
 
-Having generated a loopy kernel, \pyop3 instructs loopy to generate a C string from it (\cref{listing:codegen_example1_c_code}).
-This C code may then be compiled and run.
-The arguments to the generated code (here simply \ccode{array0}) are managed by \pyop3 internally that passes the correct pointers.
-% (old)
-% Once at the level of a loopy kernel, the rest of the compilation becomes straightforward.
-% Depending on the \textit{target} attribute belonging to a kernel, loopy can generate an appropriate string of C code that \pyop3 writes to a file and compiles with a traditional C compiler (e.g. gcc).
-% Once compiled, \pyop3 can load the function pointer from the shared object file, allowing it to be executed.
-% This process is unchanged from \pyop2.
-
-% Unsurprisingly it looks very similar to the input loopy kernel (\cref{lst:codegen_example_loopy_kernel}).
+The actual loopy kernel generated for this expression is shown in \cref{listing:codegen_example1_loopy_kernel}, and the subsequently generated C code in \cref{listing:codegen_example1_c_code}.
+Note that the input array has been passed through as an argument in the generated code but that it has been given a new name: \pycode{array_0}.
+This is because kernel arguments are renamed during code generation to avoid unnecessary cache misses.
 
 \end{example}
 
 \begin{example}  % outer loops and maps
+
+  % TODO: make sure to describe "loop per axis"
 
 We now consider a more complex example that is more typical of a continuum mechanics simulation:
 
@@ -214,25 +259,10 @@ We now consider a more complex example that is more typical of a continuum mecha
 \end{example}
 
 \subsection{Optimisation}
+\label{sec:codegen_optimisation}
 
-% inspector-executor model? probably best to put in chapter 5 where it is relevant
-% inspector-executor model. cite Saltz and Strout
-% two programs, an inspector that generates a schedule, and an executor that uses it. Executor
-% is a transformed original program.
-% these aim to improve data locality and parallelisation opportunities.
-% important point is that I/E strategies utilise runtime information to generate optimal schedules
-% this is very important for unstructured applications where the compilers would have a really hard time!
-\cite{stroutSparsePolyhedralFramework2018} % review article
-\cite{mirchandaneyPrinciplesRuntimeSupport1988} % old (general purpose) example
-\cite{arenazInspectorExecutorAlgorithmIrregular2004} % fem example but specifically parallelisation
-% perhaps also cite Luporini for sparse tiling? yes I think that would be good.
-% Interesting note: composing inspector-executor transformations is difficult.
-% see "The Sparse Polyhedral Framework: Composing Compiler-Generated Inspector-Executor Code"
-% DSLs like loopy and pyop3 can make this easier to handle.
-% mesh numbering is an example of an inspector-executor thing.
-% so is determining core and owned to overlap communication and computation
-% DSLs help a lot to implement this sort of thing because transformations can be a lot easier to
-% express using a high-level representation.
+% "At present no optimisations are applied to either the \pyop3 or loopy internal representations.
+% This is considered future work and some potentially fruitful optimising transformations are detailed in \cref{sec:future_work}.
 
 \section{Data structures}
 \label{sec:data_structures}
