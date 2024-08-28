@@ -1,0 +1,33 @@
+\documentclass[tikz]{standalone}
+
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}[remember picture]
+
+\input{figures/common/tree.tikz}
+\input{figures/common/data_layout.tikz}
+
+\coordinate (origin) at (11.5,0);
+
+% top
+\drawWhiteDof{(origin)}{$c_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$c_1$};
+
+\coordinate (aleft) at ($(origin)+(0,0)$);
+\coordinate (aright) at ($(origin)+(1,0)$);
+
+% bottom
+\coordinate (origin) at ($(aleft)+(-1,-2)$);
+\drawWhiteDof{(origin)}{$b_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$b_1$};
+\drawWhiteDof{($(origin)+(2,0)$)}{$b_2$};
+
+\draw [connector] (aleft) -- ($(origin)+(0,1)$);
+\draw [connector] (aright) -- ($(origin)+(3,1)$);
+
+\end{tikzpicture}
+\end{document}

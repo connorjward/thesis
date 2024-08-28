@@ -10,7 +10,10 @@
 
 \input{figures/common/ast.tikz}
 
-\node (one) [element] at (0,0) {\pycode{write(dat[::2, 1:], 666)}};
+\node (parent) [element,anchor=center] at (0,0) {\pycode{loop(ia := axis_a.index())}};
+\node (child) [element,anchor=center] at (0,1.5) {\pycode{kernel(dat0[map0(ia), :], dat1[ia])}};
+
+\draw (parent) -- (child);
 
 \end{tikzpicture}
 \end{document}

@@ -154,48 +154,74 @@ This is because kernel arguments are renamed during code generation to avoid unn
 
 \end{example}
 
-\begin{example}  % outer loops and maps
+\begin{example}{Outer loops and maps}
 
-  % TODO: make sure to describe "loop per axis"
+We now consider a more complex example that better represents the sorts of computations that might occur within a continuum mechanics simulation:
 
-We now consider a more complex example that is more typical of a continuum mechanics simulation:
+\todo[inline]{Should make this a listing instead. Then we can reference it. Also it doesn't format terribly well. Also then we can reference particular line numbers.}
 
 \begin{pyinline}
-  a = Axis(5, "a")
-  b = Axis(3, "b")
-  dat0 = Dat(AxisTree.from_iterable([a, b]))
-  dat1 = Dat(a)
-
-  # map0 maps from axis "a" to itself
+  axis_a = Axis(5, "a")
+  axis_b = Axis(3, "b")
+  dat0 = Dat(AxisTree.from_iterable([axis_a, axis_b]))
+  dat1 = Dat(axis_a)
   map0 = Map({"a": MapComponent("a", arity=2, ...)})
 
   loop(
-    ia := a.index(),
+    ia := axis_a.index(),
     kernel(dat0[map0(ia), :], dat1[ia]),
   )
 \end{pyinline}
 
-% SEMANTICS
-% add loop expression and kernel (explain)
-% % loop expressions, made of a loop index and statements
+We remark upon the following:
 
-% dat0 is a lot like an indexing example from before... (ref)
+\begin{itemize}
+  \item
+    \pycode{dat0} is a two-dimensional array with shape \pycode{(5, 3)} and axis labels $a$ and $b$, whereas \pycode{dat1} is one-dimensional with shape \pycode{(5,)}, having only axis $a$ in its axis tree.
 
-% In this loop expression a number of terms require further explanation.
-% Firstly, \pycode{dat0} and \pycode{dat1} are defined to be arrays with shape \pycode{(8, 3)} and \pycode{(5,)} respectively, with their axis trees appearing as follows:
-%
-% \begin{center}
-%   \includegraphics{codegen_example_dat_axes.pdf}
-% \end{center}
-%
-% \pycode{dat1} is entirely indexed by the loop index \pycode{p}, and so the indexed array \pycode{dat1[p]} only has size 1.
-% The situation for \pycode{dat0} is more complicated.
-% \pycode{map0} is a map from axis $a$ to axis $x$ with arity 2, and the slice notation ``\pycode{:}" indicates a full slice over the inner axis $y$.
-% The indexed object \pycode{dat0[map0(p), :]} passed through to \pycode{kernel} therefore has size 6.
-%
-% Lastly, the local kernel (\pycode{kernel}) is defined to be some function taking two arguments with size 6 and intent \pycode{READ}, and size 1 and intent \pycode{INC} respectively.
+  \item
+    \pycode{map0} maps entries in axis $a$ to other entries in axis $a$.
+    It has arity 2.
 
-%TRANSFORM
+  \item
+    The \pycode{loop} expression declares that one should:
+
+    \begin{itemize}
+      \item
+        Loop over the 5 entries in axis $a$.
+      \item
+        Evaluate the local kernel (\pycode{kernel}) passing in indexed versions of \pycode{dat0} and \pycode{dat1}.
+    \end{itemize}
+
+  \item
+    \pycode{dat0} is indexed with an arity 2 tabulated map and a slice, giving it an indexed axis tree like:
+
+    \begin{center}
+      \includegraphics{codegen_example2_axis_tree.pdf}
+    \end{center}
+
+    \noindent
+    and substituted layout
+
+    \begin{equation*}
+      \textnormal{offset}(L^p_a,i_b, i_c) = 3 \pycode{[...][?$L^p_a$?,?$i_c$?]} + i_b.
+    \end{equation*}
+
+    \noindent
+    where \pycode{[...][?$L^p_a$?,?$i_c$?]} is the lookup expression for the tabulated map.
+
+  \item
+    \pycode{dat1} is fully indexed by the loop index and so contains just a single entry.
+    It simply has the substituted layout
+
+    \begin{equation*}
+      \textnormal{offset}(L^p_a) = L^p_a.
+    \end{equation*}
+
+  \item
+    \pycode{kernel} is a function taking two arguments with size 6 and intent \pycode{READ}, and size 1 and intent \pycode{INC} respectively.
+    The computation performed by \pycode{kernel} is represented by a loopy kernel.
+\end{itemize}
 
 \begin{table}
   \centering
@@ -211,50 +237,62 @@ We now consider a more complex example that is more typical of a continuum mecha
     \pycode{RW} & \ccode{write(temporary, indexed)} & \ccode{write(indexed, temporary)} \\
     \hline
     \pycode{INC} & \ccode{write(temporary, 0)} & \ccode{inc(indexed, temporary)} \\
-    \hline
-    \pycode{MIN_WRITE} & \tableDash & \ccode{min(indexed, temporary)} \\
-    \hline
-    \pycode{MIN_INC} & \ccode{write(temporary, 0)} & \ccode{min(indexed, temporary)} \\
-    \hline
-    \pycode{MAX_WRITE} & \tableDash & \ccode{max(indexed, temporary)} \\
-    \hline
-    \pycode{MAX_INC} & \ccode{write(temporary, 0)} & \ccode{max(indexed, temporary)} \\
+    % \hline
+    % \pycode{MIN_WRITE} & \tableDash & \ccode{min(indexed, temporary)} \\
+    % \hline
+    % \pycode{MIN_INC} & \ccode{write(temporary, 0)} & \ccode{min(indexed, temporary)} \\
+    % \hline
+    % \pycode{MAX_WRITE} & \tableDash & \ccode{max(indexed, temporary)} \\
+    % \hline
+    % \pycode{MAX_INC} & \ccode{write(temporary, 0)} & \ccode{max(indexed, temporary)} \\
     \hline[1pt]
   \end{tblr}
 
   \caption{
     Intent values supported by \pyop3 kernels and their corresponding pack/unpack instructions.
-    In the instructions, the variable ``\ccode{indexed}" is used to represent the indexed view of some piece of global data (e.g. \pycode{dat0[map0(p)]}) and the variable ``\ccode{temporary}" is the temporary buffer for storing the materialised data.
-    Table entries marked with a ``\pycode{-}" indicate that no pack/unpack instruction is emitted for this intent.
+    In the instructions, the variable `\ccode{indexed}' is used to represent the indexed view of some piece of global data (e.g. \pycode{dat0[map0(p)]}) and the variable `\ccode{temporary}' is the temporary buffer for storing the materialised data.
+    Table entries marked with a `\pycode{-}' indicate that no pack/unpack instruction is emitted for this intent.
   }
   \label{tab:intents}
 \end{table}
 
-% need transform expression due to kernel needing contiguous data (temporaries)
-% The expression tree transformation expanding implicit pack and unpack instructions for the example loop expression (\cref{sec:codegen}).
-% The input loop expression is shown on the left and the output, expanded, loop expression is shown on the right.
-% \pycode{kernel} has argument intents of \pycode{READ} and \pycode{INC} for its first and second argument respectively and so the transformed expression contains \pycode{write} and \pycode{inc} instructions where appropriate.
+\subsubsection{Kernel intents}
+
+% why do we provide the intents? genuinely why? gives us some memory optimisations (e.g. needn't load if overwriting anyway)
+% summarised in the table - explain both write and inc
+
+% initial expression tree contains implicit packs and unpacks:
 
 \begin{center}
-  \includegraphics{codegen_example2_expr_transform.pdf}
+  \includegraphics{codegen_example2_expr_before.pdf}
 \end{center}
+
+% we convert to explicit operations by transforming the expression tree - this gives:
+
+\begin{center}
+  \includegraphics{codegen_example2_expr_after.pdf}
+\end{center}
+
+We are now ready to lower the loop expression to loopy.
+
+\subsubsection{Code generation}
 
 % LOWERING/COMPILATION
 % first the loop is visited, loop over 5, gives us $L^p_a$.
 
 \begin{listing}
   \centering
-  \begin{minipage}{.8\textwidth}
+  \begin{minipage}{.9\textwidth}
     \inputminted{c}{./scripts/artefacts/codegen_example2_c_code_tidy.c}
   \end{minipage}
   \caption{
-    TODO
+    % TODO: want to reference the particular listing!
+    C code generated for the loop expression.
   }
   \label{listing:codegen_example2_c_code}
 \end{listing}
 
 % For our demo the generated C code can be seen in \cref{lst:codegen_example_c_code}.
-% Unsurprisingly it looks very similar to the input loopy kernel (\cref{lst:codegen_example_loopy_kernel}).
 
 \end{example}
 

@@ -1,0 +1,25 @@
+\documentclass[tikz]{standalone}
+
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}[yscale=-1]
+
+\input{figures/common/ast.tikz}
+
+\node (root) [element] at (8,0) {\pycode{loop(ia := axis_a.index())}};
+\node (one) [element] at (3,1.5) {\pycode{write(t0, dat0[map0(ia), :])}};
+\node (two) [element] at ($(one.east)+(.2,0)$) {\pycode{write(t1, 0)}};
+\node (three) [element] at ($(two.east)+(.2,0)$) {\pycode{kernel(t0, t1)}};
+\node (four) [element] at ($(three.east)+(.2,0)$) {\pycode{inc(dat1[ia], t1)}};
+
+\draw (root) -- (one);
+\draw (root) -- (two);
+\draw (root) -- (three);
+\draw (root) -- (four);
+
+\end{tikzpicture}
+\end{document}
