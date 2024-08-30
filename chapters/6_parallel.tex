@@ -2,24 +2,32 @@
 
 \begin{document}
 
-\chapter{Parallelism}
+\chapter{Parallel}
 \label{chapter:parallel}
 
-% not really useful any more since we talk about MPI a lot in ch. 2
-Just like Firedrake (e.g.~\cite{betteridgeCodeGenerationProductive2021}) and PETSc (e.g.~???), \pyop3 is designed to be run efficiently on even the world's largest supercomputers.
-Accordingly, \pyop3 is designed to work SPMD with MPI/distributed memory.
+By now we have presented enough information about \pyop3 to be able to deploy it to compute mesh stencil calculations in a serial setting.
+To extend its functionality to support distributed-memory environments, a number of changes to the described infrastructure are required.
+Specifically, \pyop3 now needs to consider both how parallel data are arranged (\cref{sec:parallel_data_layouts}), and how ghost data are exchanged (\cref{sec:parallel_star_forests,sec:communication_optimisations}).
 
-\section{Parallel data layouts}
+Note that most of the following exposition is specific to parallel arrays (i.e. \pycode{Dats} and \pycode{Globals}).
+\pycode{Mats}, by using PETSc matrices as their underlying storage mechanism, are parallel by default and interact little with \pyop3.
+
+\section{Partitioning ghost points}
 \label{sec:parallel_data_layouts}
 
-% "in the following... just dats,  don't need to worry about PETSc matrices"
+As described in \cref{sec:intro_parallelism,sec:dmplex_parallel}, the usual way to distribute a stencil computation between multiple processors is to \emph{partition} the mesh and distribute the DoFs of the different vectors such that DoFs associated with `owned' mesh entities are stored on that process.
+Since mesh stencils typically require DoFs from adjacent entities in order to be computable, a small number of \emph{ghost} DoFs must also be kept in the local array.
 
-\subsection{Partitioning ghost points}
+Whilst essential for the stencil computation, ghost points can be inconvenient for other operations occurring during a simulation.
+To use the finite element method as an example, having assembled the linear system with stencil computations it then needs to be solved to get the solution.
+For this subsequent solve step ghost DoFs need to be discarded so as not to be duplicated in the global vector/matrix.
 
-Whilst it is essential for ghost points to be present for finite element assembly, it is equally essential for the inverse to be true for solving the assembled problem.
-Ghost points are copies of owned points held on other processes so when considering the \textit{global} vector they should be discarded.
-Since FEM simulations often involve alternating assembly with solving and copying, and copying arrays can be expensive, \pyop3 reorders the data such that ghost unknowns are always stored after owned ones.
-This allows one to reuse the array between assembly and solving - solving just uses a truncated view.
+To avoid copying data between ghost-inclusive and ghost-free representations of an array, \pyop3 reorders the DoFs so that ghost entries are always stored after owned ones.
+This allows one to transform between the different representations without needing to copy data - the ghost-free version is simply a truncated slice of the full, ghost-inclusive array.
+
+% HERE!!! maybe best to start with "With axis trees..."
+% not sure how to fit the "constrained points" bit into things - perhaps later when we discuss regions???
+
 % this can also occur when one has constrained DoFs (i.e. non-physical) (e.g. boundary conditions) and these also want to be dropped from the global vector
 % \cite{rothwellImplementingRestrictedFunction2024}
 % compared to pyop2, mixed things are done truly at the end - building global vector used to involve copying (bottleneck on GPU)
@@ -105,7 +113,7 @@ Note that for now we assume that parallel axes are not nested.
   \pyop3, by using regions to partition the ghost data to the end of the array regardless of the field structure, is able to avoid this copy.
 \end{pyopcompare}
 
-\subsection{Star forests}
+\section{Star forests}
 \label{sec:parallel_star_forests}
 
 \begin{algorithm}
