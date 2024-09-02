@@ -1,0 +1,192 @@
+\documentclass[thesis]{subfiles}
+
+\begin{document}
+
+\chapter{Demonstrator applications}
+\label{chapter:demonstrator_applications}
+
+In order to demonstrate \pyop3 as a worthy successor to \pyop2 inside the Firedrake framework, we now present a number of examples in detail that compare the old and new software stacks in terms of both functionality and performance.
+In particular, we consider a prototypical finite element assembly problem, that runs under \pyop3 without modification, and a more complex slope limiter computation, that \pyop3 significantly facilitates the development of.
+
+\subsection{Performance metrics}
+
+\begin{figure}
+  \centering
+  \input{roofline.pgf}
+  \caption{
+    An example roofline plot.
+    Being strongly memory-bound, the demonstrator applications of this chapter will be to the left of this figure where peak performance is limited by the memory bandwidth.
+  }
+  \label{fig:roofline}
+\end{figure}
+
+Analysing the performance of OP2-like mesh stencil codes is challenging because, since the specification of the local kernel is left to the user, the framework itself does no computation.
+For such a package to have `good' performance, therefore, it must simply be able to \emph{efficiently transfer data in and out of the local kernel}.
+Since the majority of mesh stencil computations are memory-bound, doing this efficiently can be critical to achieving good performance.
+
+A suitable technique for quantifying memory performance is to produce a \emph{roofline plot}.
+Shown in \cref{fig:roofline}, a roofline plot compares \emph{arithmetic intensity}, defined as
+\begin{equation*}
+  \textnormal{arithmetic intensity (FLOP/byte)} = \frac{\textnormal{operation count (FLOPs)}}{\textnormal{memory volume (bytes)}},
+\end{equation*}
+against computational throughput.
+Roofline plots are useful because they provide theoretical bounds for the maximum attainable performance.
+Given a computation with a high arithmetic intensity, performing many floating-point operations per byte of data loaded, the performance will be limited by the rate at which these FLOPs may be executed - we say that it is \emph{compute-bound}.
+By contrast, computations with low arithmetic intensities are limited by the rate at which data may be streamed from main memory - these we call \emph{memory-bound}.
+Since the demonstrator applications are strongly memory-bound, we want our floating-point throughput to be as close to the roofline as possible, where the limit is imposed by the peak memory bandwidth.
+
+% NOTE: I can explain away the poor performance by stressing that pyop3 is an incomplete
+% implementation of the presented abstractions.
+
+\subsubsection{Hardware}
+
+% Run on Pyramus
+% give details
+
+% show a streams plot.
+
+\section{One form assembly}
+
+% NOTE: code is unchanged from PyOP2
+
+\begin{listing}
+  \centering
+  \caption{
+    Firedrake code to assemble the one form of \cref{eq:app1_form} in 2D with $P_3$ elements and 2 coefficients.
+  }
+  \begin{minipage}{.9\textwidth}
+    \begin{pyalg2}
+      from firedrake import *
+
+      mesh = UnitSquareMesh(10, 10)
+      V = FunctionSpace(mesh, "P", 3)
+
+      coeff1 = Function(V)
+      coeff2 = Function(V)
+      v = TestFunction(V)
+      form = (coeff1 + coeff2) * v * dx
+
+      cofunction = assemble(form)
+    \end{pyalg2}
+  \end{minipage}
+  \label{listing:app1_code}
+\end{listing}
+
+% As a first example of \pyop3 in practice we consider ...
+
+% the job of pyop3 is to deliver data efficiently to the local kernel
+
+When assembling a finite element form there are effectively three possible performance bottlenecks:
+(a) the computational cost of the local kernel,
+(b) the cost of sparse matrix insertion, or
+(c) the cost of streaming data to and from the local kernel.
+Of these, \pyop3 only influences the performance of (c); the local kernel is provided externally and matrix insertion is managed by PETSc.
+As a result, to measure \pyop3's performance for finite element assembly we want to choose a `simple' form with low arithmetic intensity, and to assemble vectors instead of matrices.
+
+With these constraints in mind we therefore assemble the one form
+\begin{equation}
+  \label{eq:app1_form}
+  \int \sum_i^N f_i v \textnormal{d}\Omega.
+\end{equation}
+where $f_i$ a set of $N$ coefficients and $v$ a test function.
+
+By restricting the degree of the finite elements in use the arithmetic intensity of the local kernel will be low and the overall stencil operation will be strongly memory bound.
+As such, performance is limited by the rate at which data can be transferred between main memory and the local kernel, exactly what \pyop3 is supposed to facilitate.
+Ideally, we want \pyop3 to deliver a significant fraction of the available memory bandwidth.
+
+% details about the experiment
+Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
+
+% (what we varied)
+% * can compare with and without additional map payload
+% * we can assume optimal caching by computing the streamed memory by adding the
+%   number of DoFs together, could also have a pessimal case where we just multiply the local
+%   kernel by the number of cells.
+% * we can play with number of functions and degree to shift the AI
+
+% The results are shown in ...
+% * show a plot of FLOP/s vs AI and demonstrate near roofline
+
+\section{Vertex-based slope limiter}
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=2]{slope_limiter.pdf}
+  \caption{
+    Stencil pattern for a slope limiter.
+    The vertex value is set to the maximum value of the surrounding cells.
+    Diamond-shaped and circular DoFs represent the $P_0^\textnormal{disc}$ (input) and $P_1$ (output) functions respectively.
+  }
+  \label{fig:slope_limiter_stencil}
+\end{figure}
+
+\begin{algorithm}
+  \caption{
+    Slope limiter algorithm.
+  }
+  %
+  \begin{algorithmic}[1]
+    \Require \textit{cg}, \textit{dg} \Comment{Input and output functions}
+
+    \For{\textit{vertex} \textbf{in} \textit{mesh.vertices}}
+      \For{\textit{cell} \textbf{in} $\textnormal{\it vertex2cells}(\textnormal{\it vertex})$} \Comment{Loop over incident cells}
+        \State \textit{cg}[\textit{vertex}] $\gets$ \Call{Max}{\textit{cg}[\textit{vertex}],\textit{dg}[\textit{cell}]}
+      \EndFor
+    \EndFor
+  \end{algorithmic}
+  \label{alg:slope_limiter}
+\end{algorithm}
+
+For our other demonstrator application we implement part of a vertex-based slope limiter.
+Slope limiters are postprocessing filters that bound solutions to prevent spurious oscillations near discontinuities~\cite{biswasParallelAdaptiveFinite1994}.
+They are useful for solving problems with discontinuous finite element methods where it is important to ensure conservation of particular physical quantities.
+Following the explanation in \cite{kuzminVertexbasedHierarchicalSlope2010}, slope-limiting a solution ($u_h$) means redefining it using the cell-averaged solution ($u_c$) to
+\begin{equation}
+  u_h(\mathbf{x}) = u_c + \alpha_e(\nabla u)_c \cdot (\mathbf{x} - \mathbf{x}_c), \quad 0 \leq \alpha_e \leq 1 .
+\end{equation}
+Crucially for our purposes, the correction factor $\alpha_e$ depends on both the minimum ($u_i^{\textnormal{min}}$) and maximum ($u_i^{\textnormal{max}}$) values of $u_h$ around each vertex.
+
+If we restrict our attention to only the lowest-order discontinuous space, $P_0$, the algorithm for determining $u_i^{\textnormal{min}}$ and $u_i^{\textnormal{max}}$ is simple.
+Shown in \cref{alg:slope_limiter,fig:slope_limiter_stencil}, one needs to, at each vertex, loop over adjacent cells and set the vertex value, kept in a $P_1$ function space, to the minimum/maximum value.
+
+Despite this conceptual simplicity, implementing such an algorithm using existing Firedrake/\pyop2 functionality is difficult because the map between vertices and incident cells has non-constant arity - the number of cells touching a vertex is variable.
+\pyop2 does not support non-constant arity maps and so one must resort to tricks involving multiple loops over cells followed by pointwise divisions.
+This is effective, but the code is harder to follow as it no longer resembles the pseudocode of \cref{alg:slope_limiter}.
+
+\begin{listing}
+  \centering
+  \caption{
+    Firedrake and \pyop3 code for a simple slope limiter (\cref{alg:slope_limiter}).
+  }
+  \begin{minipage}{.9\textwidth}
+    \begin{pyalg2}
+      from firedrake import *
+      import pyop3 as op3
+
+      mesh = UnitSquareMesh(...)
+      V_cg = FunctionSpace(mesh, "CG", 1)
+      V_dg = FunctionSpace(mesh, "DG", 0)
+      cg = Function(V_cg)
+      dg = Function(V_dg)
+
+      # this kernel sets the second argument to the maximum of
+      # both it and the first argument
+      max_kernel = op3.Function(..., [op3.READ, op3.RW])
+
+      op3.loop(v := mesh.vertices.index(),?\label{code:slope_limiter_expr}?
+               op3.loop(c := mesh.star(v, k=2).index(),
+                        max_kernel(dg.dat[c], cg.dat[v])))
+    \end{pyalg2}
+  \end{minipage}
+  \label{listing:app2_code}
+\end{listing}
+
+By contrast, implementing the algorithm using \pyop3 is straightforward, and achievable in only a handful of lines of code.
+The loop expression is shown in \cref{listing:app2_code} (line~\ref{code:slope_limiter_expr}) and is near-identical to the pseudocode.
+The star of the vertex ($\plexstar(v)$, \cref{sec:dmplex_queries}) is used to identify adjacent cells with the extra keyword argument `\pycode{k=2}' used to ensure that the returned map only includes cells in the star, skipping the vertex and edges.
+
+% now discuss performance
+
+% * ideally have good roofline behaviour as before, not much else to see
+
+\end{document}

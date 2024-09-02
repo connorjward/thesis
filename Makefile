@@ -23,7 +23,7 @@ chapters: ALWAYS $(CHAPTERS)
 
 # Make figures
 .PHONY: figures
-figures: $(FIGURES)
+figures: $(FIGURES) roofline.pgf
 
 # Remove temporary files
 # .PHONY: tidy
@@ -48,6 +48,9 @@ $(CHAPTERS): %.pdf: $(FIGURES) $(CHAPTERS_DIR)/%.tex
 
 $(FIGURES): %.pdf: $(FIGURES_DIR)/%.tex
 	$(TEX) $(FIGURES_DIR)/$*
+
+roofline.pgf:
+	python scripts/plot_roofline.py -o roofline.pgf
 
 # Use to always run a command even if the files are unchanged
 .PHONY: ALWAYS

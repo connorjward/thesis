@@ -1,0 +1,39 @@
+\documentclass[thesis]{subfiles}
+
+\begin{document}
+
+% PERFORMANCE OPTIMISATIONS?
+
+% e.g. can do things like \cite{dasSlicingAnalysisIndirect1994} and "flatten" repeated indexing
+
+\chapter{Summary}
+\label{chapter:summary}
+
+%pyop3 is like Ebb and Simit, but the data model is chosen to truly unify PETSc and N-dim arrays. We get maths-y optimisations that the others don't have, like mesh numbering and storing edge and vertex data together and mixed-type things. (plus obvs distributed parallel)
+%
+%It solves the same problem but from a different direction.
+%
+%Primary objectives: integration with PETSc, distributed parallel - data model that is compatible with DMPlex etc.
+% we don't need our own mesh implementation - so distribution, I/O etc we get "for free"
+%
+%Simit is also very similar, but not distributed parallel and pyop3 unifies the hypergraph and linear algebra data views.
+%
+% and Liszt? Just quite old, reimplements a lot
+
+\section{Future work}
+\label{sec:future_work}
+
+% highest priority is a complete pyop3 obvs.!
+
+% compression transformation
+% sparse data structures - already done a proof of concept, provide index array, we are already CSR so this is straightforward to do
+% GPUs, vectorisation (\cref{sec:codegen_loopy_kernel})
+% Hanging nodes: AMR? hp-adaptivity
+% orientations?
+% WENO slope limiters?
+% finite volume?
+% patchPC
+
+\section{Conclusions}
+
+\end{document}

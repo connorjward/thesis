@@ -1,0 +1,66 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/fem.tikz}
+
+% overwrite existing command to make diamonds
+\newcommand{\drawcelldofNew}[3]{
+  \defcellmidpoint{#1}{#2}{#3}{#1#2#3}
+  \tkzDrawPoint[celldof,diamond](#1#2#3)
+}
+
+\drawMesh
+
+% DoFs
+\drawcelldofNew{v0}{v1}{v4}
+\drawcelldofNew{v1}{v4}{v5}
+\drawcelldofNew{v1}{v5}{v6}
+\drawcelldofNew{v1}{v2}{v6}
+\drawcelldofNew{v2}{v3}{v6}
+\drawcelldofNew{v3}{v6}{v7}
+\drawcelldofNew{v4}{v8}{v9}
+\drawcelldofNew{v4}{v5}{v9}
+\drawcelldofNew{v5}{v9}{v10}
+\drawcelldofNew{v5}{v6}{v10}
+\drawcelldofNew{v6}{v7}{v10}
+\drawcelldofNew{v7}{v10}{v11}
+\drawcelldofNew{v8}{v9}{v12}
+\drawcelldofNew{v9}{v12}{v13}
+\drawcelldofNew{v9}{v13}{v14}
+\drawcelldofNew{v9}{v10}{v14}
+\drawcelldofNew{v10}{v14}{v15}
+\drawcelldofNew{v10}{v11}{v15}
+
+\drawvertexdof{v0}
+\drawvertexdof{v1}
+\drawvertexdof{v2}
+\drawvertexdof{v3}
+\drawvertexdof{v4}
+\drawvertexdof{v5}
+\drawvertexdof{v6}
+\drawvertexdof{v7}
+\drawvertexdof{v8}
+\drawvertexdof{v9}
+\drawvertexdof{v10}
+\drawvertexdof{v11}
+\drawvertexdof{v12}
+\drawvertexdof{v13}
+\drawvertexdof{v14}
+\drawvertexdof{v15}
+
+% draw a sample patch
+\tkzDefShiftPoint[v5]( 45:.1){v5patch}
+\tkzDefShiftPoint[v6](  0:.1){v6patch}
+\tkzDefShiftPoint[v7](  -35:.1){v7patch}
+\tkzDefShiftPoint[v11](  -90:.1){v11patch}
+\tkzDefShiftPoint[v15](  -135:.1){v15patch}
+\tkzDefShiftPoint[v14](  180:.1){v14patch}
+\tkzDefShiftPoint[v9](  90:.1){v9patch}
+\filldraw[patch]
+  (v5patch) -- (v6patch) -- (v7patch) -- (v11patch) -- (v15patch) -- (v14patch) -- (v9patch) -- cycle;
+
+\end{tikzpicture}
+\end{document}

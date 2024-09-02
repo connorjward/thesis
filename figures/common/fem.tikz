@@ -25,7 +25,7 @@
   \tkzDrawPoint[vertdof](#1)
 }
 
-\newcommand{\drawMeshStencil}{
+\newcommand{\drawMesh}{
   % styles specific to the mesh
   \tkzSetUpStyle[draw=black,line width=.5]{edge}
   \tkzSetUpStyle[line width=1]{dof}
@@ -71,6 +71,10 @@
   \tkzDrawSegments[edge](v1,v4 v1,v6 v3,v6)
   \tkzDrawSegments[edge](v4,v9 v5,v10 v7,v10)
   \tkzDrawSegments[edge](v9,v12 v9,v14 v10,v15)
+}
+
+\newcommand{\drawMeshStencil}{
+  \drawMesh
 
   % cell DoFs
   \drawcelldof{v0}{v1}{v4}
