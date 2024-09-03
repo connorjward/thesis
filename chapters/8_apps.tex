@@ -16,6 +16,7 @@ In particular, we consider a prototypical finite element assembly problem, that 
   \caption{
     An example roofline plot.
     Being strongly memory-bound, the demonstrator applications of this chapter will be to the left of this figure where peak performance is limited by the memory bandwidth.
+    Note that additional lines for the bandwidths of the different cache levels, as well as one for vectorised instructions, have been omitted for simplicity.
   }
   \label{fig:roofline}
 \end{figure}
@@ -23,6 +24,10 @@ In particular, we consider a prototypical finite element assembly problem, that 
 Analysing the performance of OP2-like mesh stencil codes is challenging because, since the specification of the local kernel is left to the user, the framework itself does no computation.
 For such a package to have `good' performance, therefore, it must simply be able to \emph{efficiently transfer data in and out of the local kernel}.
 Since the majority of mesh stencil computations are memory-bound, doing this efficiently can be critical to achieving good performance.
+
+\begin{tcolorbox}[title=Caveat]
+  Since \pyop3 is not a production-ready tool, we expect its performance to lag \pyop2's for the moment.
+\end{tcolorbox}
 
 A suitable technique for quantifying memory performance is to produce a \emph{roofline plot}.
 Shown in \cref{fig:roofline}, a roofline plot compares \emph{arithmetic intensity}, defined as
@@ -35,10 +40,9 @@ Given a computation with a high arithmetic intensity, performing many floating-p
 By contrast, computations with low arithmetic intensities are limited by the rate at which data may be streamed from main memory - these we call \emph{memory-bound}.
 Since the demonstrator applications are strongly memory-bound, we want our floating-point throughput to be as close to the roofline as possible, where the limit is imposed by the peak memory bandwidth.
 
-% NOTE: I can explain away the poor performance by stressing that pyop3 is an incomplete
-% implementation of the presented abstractions.
-
 \subsubsection{Hardware}
+
+Experiments were be performed on a workstation ...
 
 % Run on Pyramus
 % give details
@@ -49,6 +53,8 @@ Since the demonstrator applications are strongly memory-bound, we want our float
 
 % NOTE: code is unchanged from PyOP2
 
+% NOTE: FLOP count measured with likwid
+
 \begin{listing}
   \centering
   \caption{
@@ -58,7 +64,7 @@ Since the demonstrator applications are strongly memory-bound, we want our float
     \begin{pyalg2}
       from firedrake import *
 
-      mesh = UnitSquareMesh(10, 10)
+      mesh = UnitSquareMesh(200, 200)
       V = FunctionSpace(mesh, "P", 3)
 
       coeff1 = Function(V)
@@ -96,6 +102,8 @@ Ideally, we want \pyop3 to deliver a significant fraction of the available memor
 
 % details about the experiment
 Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
+
+% NOTE: mesh size of 200*200 (triangles) was chosen as fewer elements led to significant cache effects and 200 was sufficient for this effect to diminish
 
 % (what we varied)
 % * can compare with and without additional map payload
@@ -181,12 +189,16 @@ This is effective, but the code is harder to follow as it no longer resembles th
   \label{listing:app2_code}
 \end{listing}
 
+\todo[inline]{Show the code generated from this expression.}
+
 By contrast, implementing the algorithm using \pyop3 is straightforward, and achievable in only a handful of lines of code.
 The loop expression is shown in \cref{listing:app2_code} (line~\ref{code:slope_limiter_expr}) and is near-identical to the pseudocode.
 The star of the vertex ($\plexstar(v)$, \cref{sec:dmplex_queries}) is used to identify adjacent cells with the extra keyword argument `\pycode{k=2}' used to ensure that the returned map only includes cells in the star, skipping the vertex and edges.
+The code that is generated from the expression is shown in \cref{listing:app2_codegen}.
+
+\subsection{Performance analysis}
 
 % now discuss performance
-
 % * ideally have good roofline behaviour as before, not much else to see
 
 \end{document}
