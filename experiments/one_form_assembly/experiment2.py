@@ -6,10 +6,9 @@ parser.add_argument("--machine-name", required=True)
 parser.add_argument("--mode", required=True)
 args = parser.parse_args()
 
-nfuncs = 1
-degree = "1,2,3,4,5,6,7"
-# ncells = 200
-ncells = 100  # for now, use 200 in the real thing
+nfuncs = "0,1,2,3,4,5,6,7"
+degree = 1
+ncells = 300
 cmd = (
     f"python -m {__package__}.time_batch "
     f"--machine-name {args.machine_name} "

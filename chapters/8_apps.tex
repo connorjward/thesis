@@ -47,8 +47,6 @@ Experiments were be performed on a workstation ...
 % Run on Pyramus
 % give details
 
-% show a streams plot.
-
 \section{One form assembly}
 
 % NOTE: code is unchanged from PyOP2
@@ -105,6 +103,8 @@ Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
 
 % NOTE: mesh size of 200*200 (triangles) was chosen as fewer elements led to significant cache effects and 200 was sufficient for this effect to diminish
 
+% number of FLOPs measured with LIKWID (cite)
+
 % (what we varied)
 % * can compare with and without additional map payload
 % * we can assume optimal caching by computing the streamed memory by adding the
@@ -114,6 +114,14 @@ Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
 
 % The results are shown in ...
 % * show a plot of FLOP/s vs AI and demonstrate near roofline
+
+% include a plot of %peak vs degree
+
+
+% show thing as percentage of peak.
+
+% NOTE: show varying the degree first, then can vary the number of functions (with fixed degree)
+% the example shown is a reasonable "worst case" as little data movement is happening and little computation
 
 \section{Vertex-based slope limiter}
 
