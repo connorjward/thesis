@@ -1,0 +1,11 @@
+# Streaming memory bandwidth (byte/s), determined from
+#     likwid-bench -t stream -w S0:1GB:1
+peak_bandwidth = 31200e6
+
+# Peak throughput (FLOP/s), determined from
+#     likwid-bench -t peakflops -w S0:1GB:1
+peak_flops_scalar = 11900e6
+
+# Peak vector throughput (FLOP/s), determined from
+#     likwid-bench -t peakflops_avx -w S0:1GB:1
+peak_flops_avx = 51450e6

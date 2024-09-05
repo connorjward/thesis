@@ -105,6 +105,20 @@ Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
 
 % number of FLOPs measured with LIKWID (cite)
 
+\begin{figure}
+  \centering
+  \includegraphics{experiments/one_form_assembly/roofline1.pdf}
+  \caption{TODO}
+  \label{fig:app1_roofline1}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics{experiments/one_form_assembly/roofline2.pdf}
+  \caption{TODO}
+  \label{fig:app1_roofline2}
+\end{figure}
+
 % (what we varied)
 % * can compare with and without additional map payload
 % * we can assume optimal caching by computing the streamed memory by adding the
@@ -122,6 +136,11 @@ Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
 
 % NOTE: show varying the degree first, then can vary the number of functions (with fixed degree)
 % the example shown is a reasonable "worst case" as little data movement is happening and little computation
+
+% commentary:
+% * performance is 3x slower for pyop3 than pyop2 in the many-funcs case. Looking at the generated code the only
+%   differences are that we have this double indirection and we are also passing in more arguments than needed (a bug)
+% * ultimately the code should be near-identical for them both, so performance should approach pyop2.
 
 \section{Vertex-based slope limiter}
 
