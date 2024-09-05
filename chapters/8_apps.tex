@@ -142,6 +142,9 @@ Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
 %   differences are that we have this double indirection and we are also passing in more arguments than needed (a bug)
 % * ultimately the code should be near-identical for them both, so performance should approach pyop2.
 
+% *** the roofline shows that we are compute-bound, but only because single core. If bandwidth is shared, the slope will be the same but the top lines will shift up by x64. thus memory bound.
+% the main observation to make here is that we are near the roofline, and near PyOP2 (cite roofline paper that shows that we are OK).
+
 \section{Vertex-based slope limiter}
 
 \begin{figure}

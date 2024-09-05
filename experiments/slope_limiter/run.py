@@ -39,7 +39,6 @@ def make_max_kernel():
 
 
 def make_inc_kernel():
-    # add 3 because we load both CG and DG store CG
     lpy_kernel = lp.make_kernel(
         [],
         "out[0] = out[0] + 1",
@@ -100,7 +99,7 @@ if __name__ == "__main__":
     if args.validate:
         mesh = UnitSquareMesh(1, 1)
     else:
-        mesh = UnitSquareMesh(100, 100)
+        mesh = UnitSquareMesh(200, 200)
 
     V_cg = FunctionSpace(mesh, "CG", 1)
     V_dg = FunctionSpace(mesh, "DG", 0)
