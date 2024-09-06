@@ -9,7 +9,7 @@ from experiments.common.roofline import compute_roofline_data
 
 machine_name = "pyramus"
 dir = pathlib.Path(__file__).parent
-batchfile = f"{dir}/batch-elitebook-20240905-135923.csv"
+batchfile = f"{dir}/batch-pyramus-20240905-141120.csv"
 
 with open(f"{dir.parent}/machines/{machine_name}.toml", "rb") as f:
     machine_info = tomli.load(f)

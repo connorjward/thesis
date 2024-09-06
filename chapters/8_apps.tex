@@ -25,10 +25,6 @@ Analysing the performance of OP2-like mesh stencil codes is challenging because,
 For such a package to have `good' performance, therefore, it must simply be able to \emph{efficiently transfer data in and out of the local kernel}.
 Since the majority of mesh stencil computations are memory-bound, doing this efficiently can be critical to achieving good performance.
 
-\begin{tcolorbox}[title=Caveat]
-  Since \pyop3 is not a production-ready tool, we expect its performance to lag \pyop2's for the moment.
-\end{tcolorbox}
-
 A suitable technique for quantifying memory performance is to produce a \emph{roofline plot}.
 Shown in \cref{fig:roofline}, a roofline plot compares \emph{arithmetic intensity}, defined as
 \begin{equation*}
@@ -42,10 +38,40 @@ Since the demonstrator applications are strongly memory-bound, we want our float
 
 \subsubsection{Hardware}
 
-Experiments were be performed on a workstation ...
+\begin{table}
+  \centering
+  \begin{tblr}{|[1pt]l|[1pt]l|[1pt]}
+    \hline[1pt]
+    \textbf{Physical cores} & 32 \\
+    \hline[1pt]
+    \textbf{Base frequency} & 3.6 GHz \\
+    \hline[1pt]
+    \textbf{L1 cache} & $32 \times 32$ kB \\
+    \hline[1pt]
+    \textbf{L2 cache} & $32 \times 512$ kB \\
+    \hline[1pt]
+    \textbf{L3 cache} & $4 \times 32$ MB \\
+    \hline[1pt]
+    \textbf{System memory} & $4 \times 16$ GB DDR4 3200 MT/s\footnote{Only half of the DIMMs are populated so only half of the memory channels are available.} \\
+    \hline[1pt]
+  \end{tblr}
+  \caption{Details of the hardware used to run the experiments.}
+  \label{tab:pyramus_specs}
+\end{table}
 
-% Run on Pyramus
-% give details
+\begin{figure}
+  \includegraphics{experiments/bandwidth/bandwidth.pdf}
+  \caption{TODO}
+  \label{fig:pyramus_bandwidth_flops}
+\end{figure}
+
+Experiments were be performed on a workstation with a single AMD Ryzen Threadripper PRO 5975WX processor.
+%  (specs in table)
+
+% discuss memory, flop figure
+% * made from likwid
+% * increasing cores quickly saturates memory channels, more cores != more memory bandwidth
+% * but FLOP throughput increases much more rapidly
 
 \section{One form assembly}
 
@@ -129,11 +155,6 @@ Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
 % The results are shown in ...
 % * show a plot of FLOP/s vs AI and demonstrate near roofline
 
-% include a plot of %peak vs degree
-
-
-% show thing as percentage of peak.
-
 % NOTE: show varying the degree first, then can vary the number of functions (with fixed degree)
 % the example shown is a reasonable "worst case" as little data movement is happening and little computation
 
@@ -145,7 +166,11 @@ Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
 % *** the roofline shows that we are compute-bound, but only because single core. If bandwidth is shared, the slope will be the same but the top lines will shift up by x64. thus memory bound.
 % the main observation to make here is that we are near the roofline, and near PyOP2 (cite roofline paper that shows that we are OK).
 
+% \cref{fig:pyramus_bandwidth_flops} shows that the roofline for multi-core is much much higher but the memory bandwidth is much the same. We are therefore memory-bound in the parallel case.
+
 \section{Vertex-based slope limiter}
+
+\todo[inline]{This is perfectly possible to do with a loop over cells, but our approach is more general.}
 
 \begin{figure}
   \centering
@@ -219,7 +244,21 @@ This is effective, but the code is harder to follow as it no longer resembles th
   \label{listing:app2_code}
 \end{listing}
 
-\todo[inline]{Show the code generated from this expression.}
+\todo[inline]{This needs more cleaning up}
+
+\begin{listing}
+  \centering
+  \begin{minipage}{.9\textwidth}
+    \inputminted[linenos]{c}{./experiments/slope_limiter/c_code_tidy.c}
+  \end{minipage}
+  \caption{TODO}
+  \label{listing:app2_codegen}
+\end{listing}
+
+% to explain the 4x nested indirection:
+% array_4 is the cellnodemap and array_1 is the star map f(v, i).
+% since the star map is a ragged array it has layout function offset(i, j) = g[i] +j
+% so f(v, i) = f[g[i], j]
 
 By contrast, implementing the algorithm using \pyop3 is straightforward, and achievable in only a handful of lines of code.
 The loop expression is shown in \cref{listing:app2_code} (line~\ref{code:slope_limiter_expr}) and is near-identical to the pseudocode.
@@ -227,6 +266,23 @@ The star of the vertex ($\plexstar(v)$, \cref{sec:dmplex_queries}) is used to id
 The code that is generated from the expression is shown in \cref{listing:app2_codegen}.
 
 \subsection{Performance analysis}
+
+\begin{table}
+  \centering
+  \begin{tblr}{|[1pt]l|[1pt]l|[1pt]}
+    \hline[1pt]
+    \textbf{Arithmetic throughput (FLOP/s)} & $6.3 \times 10^8$ \\
+    \hline[1pt]
+    \textbf{Optimal arithmetic intensity (FLOP/byte)} & 0.25 \\
+    \hline[1pt]
+    \textbf{Pessimal arithmetic intensity (FLOP/byte)} & 0.094 \\
+    \hline[1pt]
+    \textbf{Percentage of peak throughput (optimal)} & 8.1 \\
+    \hline[1pt]
+    \textbf{Percentage of peak throughput (pessimal)} & 22 \\
+    \hline[1pt]
+  \end{tblr}
+\end{table}
 
 % now discuss performance
 % * ideally have good roofline behaviour as before, not much else to see

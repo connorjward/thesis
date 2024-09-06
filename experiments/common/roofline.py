@@ -11,6 +11,11 @@ MPL_PARAMS = {
     "text.usetex": True,
 }
 
+FIGURE_PARAMS = {
+    "figsize": (6, 3.5),
+    "layout": "tight",
+}
+
 ROOFLINE_LINE_STYLE = {"color": "black", "solid_capstyle": "round"}
 
 SCATTER_STYLE = {"s": 15}
@@ -59,7 +64,7 @@ def plot_roofline(machine_name, pyop2_batchfile, pyop3_batchfile, experiment):
     compute_roofline_data(pyop3_data, peak_bandwidth)
 
     plt.style.use(MPL_PARAMS)
-    plt.figure(figsize=(6, 3.5), layout="tight")
+    plt.figure(**FIGURE_PARAMS)
 
     plt.xlim(XMIN, XMAX)
     plt.ylim(YMIN, YMAX)
