@@ -36,6 +36,11 @@
   \node [at={($#1+(.5,.5)$)},fill=#3] {#2};
 }
 
+\newcommand{\drawHaloDofEmpty}[2]{%
+  \filldraw[draw=black,fill=#2,line width=.7pt] #1 rectangle ++ (1,1);
+  \draw[draw=black,line width=.7pt,pattern=north west lines] #1 rectangle ++ (1,1);
+}
+
 \newcommand{\drawHaloBox}[2]{
   \draw[draw=black,line width=.7pt,pattern=north west lines] (#1,\yshift) rectangle ++ (#2,1);
 }
@@ -70,6 +75,10 @@
 
 \newcommand{\drawWhiteDof}[2]{%
   \drawDof{#1}{#2}{white};
+}
+
+\newcommand{\drawWhiteDofHaloEmpty}[1]{%
+  \drawHaloDofEmpty{#1}{white};
 }
 
 \newcommand{\drawWhiteDofSmall}[2]{%

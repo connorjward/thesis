@@ -16,14 +16,14 @@ Firedrake is a framework for automating the solutions to the finite element meth
 
 \begin{figure}
   \includegraphics{firedrake_structure_old.pdf}
-  \caption{TODO}
+  \caption{
+    The existing structure of the Firedrake finite element framework.
+  }
   \label{fig:firedrake_structure_old}
 \end{figure}
 
 Firedrake is composed of a number of interacting software components (\cref{fig:firedrake_structure_old}):
-
-\paragraph{At the top level, users write Python scripts using both the Unified Form Language (UFL) and the Firedrake API.}
-UFL is a domain-specific language for expressing variational problems with support for symbolic operations such as taking derivatives~\cite{alnaesUnifiedFormLanguage2014a}.
+At the top level, users write Python scripts expressing variational forms in Unified Form Language (UFL)~\cite{alnaesUnifiedFormLanguage2014a} and solving them via the Firedrake API.
 
 \paragraph{Given a variational form expressed in UFL, Firedrake can then assemble the required matrices and vectors.}
 
@@ -314,7 +314,6 @@ To explain how this is done we consider the edge flip shown in \cref{fig:element
 For simplicity consider a one-cell mesh and we omit cell and vertex DoFs.
 
 As well as the axis tree for the function space we now have two extra pieces of information:
-
 \begin{itemize}
   \item
     The orientation of the edges, stored as an array of integers per cell closure.
@@ -327,28 +326,21 @@ As well as the axis tree for the function space we now have two extra pieces of 
 \end{itemize}
 
 Now, in order to correctly pack the DoFs for the kernel the following permutation of the DoFs axis is required:
-
 \begin{pyinline}
   cell = 0
   packed = dat[closure(cell)][:, [[0, 1], [1, 0], [0, 1]]]
 \end{pyinline}
-
-\noindent
 which is equivalent to following transformation:
-
 \begin{center}
   \includegraphics{element_orientation_permute_data.pdf}
 \end{center}
 
 The array \pycode{[[0, 1], [1, 0], [0, 1]]} clearly comes from the permutation array above, so we may transform the code to:
-
 \begin{pyinline}
   cell = 0
   packed = dat[closure(cell)][:, perms[[0, 1, 0]]]
 \end{pyinline}
-
 The final array \pycode{[0, 1, 0]} is simply the orientations array, giving the final transformation as:
-
 \begin{pyinline}
   cell = 0
   packed = dat[closure(cell)][:, perms[orientations[cell]]]

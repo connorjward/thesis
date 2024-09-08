@@ -376,38 +376,21 @@ An example of a \pyop2 data layout for a multi-field problem is shown in \cref{f
 Observe that, since the DoFs are associated with multiple mesh entities, data is stored on a \emph{node set}, losing topological information.
 
 \subsection{Parallel loops}
-
-\begin{listing}
-  \centering
-  \begin{minipage}{.9\textwidth}
-    \begin{pyalg2}
-      par_loop(kernel,                          # local kernel
-               src_set,                         # iteration set
-               dat0(READ, src_to_target_map),   # arguments
-               dat1(WRITE, src_to_target_map))
-    \end{pyalg2}
-  \end{minipage}
-  \caption{
-    Code to construct and execute a \pyop2 parallel loop.
-  }
-  \label{listing:pyop2_parloop_demo}
-\end{listing}
+\label{sec:pyop2_parallel}
 
 In order to apply kernels to these data structures, a \textit{parallel loop} is constructed and executed.
 The loop takes as arguments a \textit{local kernel}, \textit{iteration set} and zero or more \textit{arguments} that provide the data structures needed by the local kernel.
-For an example parloop see \cref{listing:pyop2_parloop_demo}.
-
-\begin{itemize}
-  \item
-    \pycode{kernel} is the local kernel representing the stencil operation to be performed per iteration.
-    It may be either a string of C code or a \textit{loopy kernel} (see \cref{sec:pyop2_codegen}).
-  \item
-    \pycode{src_set} is the set that is iterated over.
-  \item
-    \pycode{dat0} and \pycode{dat1} are \pycode{Dat} objects (vectors) that are passed through to the local kernel.
-    Both associate data with some \pycode{target_set} and hence are addressed with the map \pycode{src_to_target_map}.
-    \pycode{dat0} is accessed using the \pycode{READ} access descriptor, meaning that it only needs to be packed and passed into the local kernel, whereas \pycode{dat1} is accessed with \pycode{WRITE}, so it only requires unpacking.
-\end{itemize}
+Constructing a parallel loop requires an invocation like:
+\begin{pyinline}
+  par_loop(kernel,                          # local kernel
+           src_set,                         # iteration set
+           dat0(READ, src_to_target_map),   # arguments
+           dat1(WRITE, src_to_target_map))
+\end{pyinline}
+Where \pycode{kernel} is the local kernel representing the stencil operation to be performed per iteration, \pycode{src_set} is the set that is iterated over (termed the \emph{iteration set}), and \pycode{dat0} and \pycode{dat1} are \pycode{Dat} objects (vectors) that are passed through to the local kernel.
+\pycode{kernel} may be either a string of C code or a \emph{loopy kernel} (see \cref{sec:pyop2_codegen}).
+Both \pycode{Dats} associate data with some \pycode{target_set} and hence are addressed with the map \pycode{src_to_target_map}.
+\pycode{dat0} is accessed using the \pycode{READ} access descriptor, meaning that it only needs to be packed and passed into the local kernel, whereas \pycode{dat1} is accessed with \pycode{WRITE}, so it only requires unpacking.
 
 \subsubsection{Interleaving computation and communication}
 
@@ -432,7 +415,6 @@ For an example parloop see \cref{listing:pyop2_parloop_demo}.
 
 By keeping careful track of the parallel decomposition of sets, \pyop2 is capable of interleaving computation and communication when executing parallel loops.
 To do so each set is split into 3 parts:
-
 \begin{description}
   \item[\coreiter]
     Set elements that do not require any data from other processes during a parallel loop.
@@ -448,14 +430,25 @@ From this partitioning it is possible to interleave computation and communicatio
 Computations over \coreiter points do not read any ghost data, and hence can be executed without waiting for any communication to complete, whereas \ownediter points need valid ghost data and so must wait for all communication to be completed before beginning.
 This is shown in \cref{alg:pyop2_comp_comm_overlap}.
 
-To facilitate this algorithm, \pyop2 stores data in a partitioned manner, with \coreiter points preceding all \ownediter points and all \ownediter preceding all \ghostiter points:
-
+To facilitate this algorithm, \pyop2 arranges sets, and thus stores data, in a partitioned manner, where \coreiter points precede all \ownediter points and all \ownediter precede all \ghostiter points:
 \begin{center}
   \includegraphics{pyop2_partition.pdf}
 \end{center}
 
-This is convenient as it provides a no-copy method for dropping \ghostiter points - just return a truncated view of the same buffer - but, in our view, conflates several concepts that should be kept separate.
-This is discussed in detail in \cref{sec:communication_optimisations}.
+\subsubsection{Limitations}
+
+Arranging the data like this is problematic for one key reason: \emph{it conflates the partitioning of the data layout (\ghostitertight/non-\ghostitertight) with that of the iteration set (\coreitertight/\owneditertight)}.
+
+The partitioning of \ghostitertight/non-\ghostitertight points comes from the star forest description of the parallel overlap, and hence is known \emph{when the array is initialised}.
+It therefore makes sense to embed this information in the data layout.
+By contrast, \ownediter points are defined as being points that need ghost data in order to be executable.
+\emph{This is dependent upon the stencil}.
+Larger stencils touch more adjacent points and hence the partitioning of \coreitertight/\owneditertight should be modified.
+\pyop2 will therefore not work correctly in parallel for programs that use several different stencil sizes acting on the same data.
+
+Further, during parallel loop execution, the partitioning of \coreitertight/\owneditertight points is associated with the \emph{iteration set}, instead of the data structures.
+This means that \pyop2 cannot do the right thing for cases where data structures do not have the right parallel decomposition (e.g. when transferring data between meshes).
+  Stencils may touch only owned points on one mesh, leading to the iterate being classified as \coreiter, but they may be \ghostiter on the other mesh, and hence \ownediter would be appropriate.
 
 \subsection{Code generation}
 \label{sec:pyop2_codegen}
