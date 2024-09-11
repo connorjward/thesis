@@ -1,0 +1,52 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+\usepackage{minted}
+\usepackage{mymacros}
+
+\begin{document}
+\begin{tikzpicture}[remember picture]
+
+\input{figures/common/tree.tikz}
+
+% Scott-Vogelius element
+\drawTreeNode{(field)}{(3,6)}{
+  \pycode{"space"}: \{ \component{field0}{\pycode{"V"}: \pycode{1}}, \component{field1}{\pycode{"Q"}: \pycode{1}} \}
+};
+
+\drawTreeNode{(mesh0)}{(0,4)}{
+  \pycode{"mesh"}: \{ \component{mesh00}{\pycode{"point"}: \pycode{npoints}} \}
+};
+
+\tikzmath { \xstart = .8; \xshift = 2.8; }
+
+\drawTreeNode{(celldof0)}{(\xstart+\xshift*0,2)}{\pycode{"node"}: \{ \component{cdof0}{\pycode{nnodes_V}} \}};
+
+\drawTreeNode{(mesh1)}{(6,4)}{
+  \pycode{"mesh"}: \{ \component{mesh10}{\pycode{"point"}: \pycode{npoints}} \}
+};
+
+\tikzmath { \xstart = 6.5; }
+
+\drawTreeNode{(celldof1)}{(\xstart+\xshift*0,2)}{\pycode{"node"}: \{ \pycode{nnodes_Q} \}};
+
+\tikzmath { \xstart = 1; \xshift = 3.9; }
+
+\drawTreeNode{(celldim0)}{(\xstart+\xshift*0,0)}{\pycode{"component"}: \{ \pycode{2} \}};
+
+\underlineComponent{field}{field0};
+\underlineComponent{field}{field1};
+\drawTreeConnector{field}{field0}{(mesh0)};
+\drawTreeConnector{field}{field1}{(mesh1)};
+
+\underlineComponent{mesh0}{mesh00};
+\drawTreeConnector{mesh0}{mesh00}{(celldof0)};
+
+\underlineComponentNarrow{celldof0}{cdof0};
+\drawTreeConnector{celldof0}{cdof0}{(celldim0)};
+
+\underlineComponent{mesh1}{mesh10};
+\drawTreeConnector{mesh1}{mesh10}{(celldof1)};
+
+\end{tikzpicture}
+
+\end{document}
