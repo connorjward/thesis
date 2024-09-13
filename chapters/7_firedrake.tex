@@ -24,12 +24,18 @@ In this chapter we will demonstrate this by integrating \pyop3 into the finite e
 \section{Firedrake}
 
 Firedrake is a Python framework for automating the solving of PDEs using the finite element method.
-% productive, high level, near mathematical
-% parallel by default
-% uses PyOP2
+It uses code generation to convert near-mathematical expressions provided by the user into fast C code, resulting in a product that is both productive to use and fast to execute.
+Firedrake is parallel by default; a script that works on someone's laptop can run without modification on a cluster\footnotemark.
+It makes heavy use of \pyop2.
+
+\footnotetext{
+  For performance reasons the user may wish to modify their choice of solver and/or discretisation.
+  See, for example,~\cite{betteridgeCodeGenerationProductive2021}.
+}
 
 The framework consists of a number of interacting software components.
 Shown in \cref{fig:firedrake_structure_old} the core components, in addition to Firedrake and \pyop2, include: UFL (Unified Form Language)~\cite{alnaesUnifiedFormLanguage2014a}, TSFC (Two-Stage Form Compiler)~\cite{homolyaTSFCStructurePreservingForm2018}, loopy, and PETSc.
+The contributions of these packages to the overall framework will be made clear below.
 A number of packages not relevant to \pyop2/\pyop3 have been omitted for simplicity.
 
 \begin{listing}
@@ -102,7 +108,7 @@ For instance \pycode{Functions} and \pycode{Cofunctions} wrap \pyop2 \pycode{Dat
 The \pycode{DataSets} that act as data layout descriptors for the \pyop2 objects are drawn from the \emph{nodes} of the function spaces.
 
 Further, \emph{\pyop2 is responsible for finite element assembly}.
-The UFL forms are converted by TSFC into local kernels, equivalently stencil payloads, expressed as a loopy \pycode{LoopKernel} object.
+The UFL forms are converted by TSFC into local kernels (i.e. stencil payloads) expressed as a loopy \pycode{LoopKernel} object.
 \pyop2 then handles the outer loop over mesh entities (here the cells), evaluating the local kernel for each.
 A parallel loop would be constructed with the following structure:
 \begin{pyinline}
@@ -125,6 +131,8 @@ In order to integrate \pyop3 with Firedrake, replacing \pyop2, we must clearly r
 \end{figure}
 
 \section{Representing global data with axis trees}
+
+\todo[inline]{I think that a better way to tell this story would be to present the `naive' approach first and then say `oh we missed a step'. It is more intuitive.}
 
 \begin{figure}
   \centering
@@ -326,16 +334,6 @@ This works because the support of an interior facet ($\support(f)$) consists of 
 
 \subsection{Handling orientations}
 
-One of the big advantages of \pyop3 over \pyop2 is in its ability to express transformations that cannot be memoized.
-An example of this is the way in which element orientations are handled.
-
-% the problem
-% -----------
-% adjacent cells may disagree on the orientation of a shared facet or edge
-% the local kernel is then packed incorrectly, so the computation is incorrect
-% this is only a problem for some element types, the error may be avoided for simplices of any dimension and a non-mobius strip solution exists for quads by choosing a global numbering that dictates a particular entity orientation
-% in particular this trick cannot be used for hexahedral elements
-
 \begin{figure}
   \centering
   \begin{subfigure}{0.45\textwidth}
@@ -347,7 +345,7 @@ An example of this is the way in which element orientations are handled.
     \centering
     \includegraphics{lagrange_element_3_flip.pdf}
   \end{subfigure}
-  \caption{Reference $P_3$ (Lagrange, degree 3) element (left), and with an edge flipped (right).}
+  \caption{Reference $P_3$ element (left), and with an edge flipped (right).}
   \label{fig:element_orientation_permute}
 \end{figure}
 
@@ -366,62 +364,80 @@ An example of this is the way in which element orientations are handled.
   \label{fig:element_orientation_flip}
 \end{figure}
 
-The general solution to this problem is to make the packing code aware of the orientation of the different entities.
-This is relatively straightforward for function spaces with point evaluation DoFs (\cref{fig:element_orientation_permute}) because the necessary transformation is simply a permutation and so can embedded in the cell-node maps.
-This is what Firedrake does currently.
+For finite element assembly, it is important that the data being packed into the local temporary is provided in `canonical' form.
+In order to do this, adjacent cells must agree on the orientation of shared entities (i.e. facets, edges, and vertices).
+If these orientations do not agree then the local assembly kernel is passed mangled data, leading to an erroneous calculation.
 
-However, this approach fails to work for function spaces with vector-valued DoFs, such as \hdiv and \hcurl, since the transformation can include a scaling.
-See, for example, the case shown in \cref{fig:element_orientation_flip}.
-In order for the edge DoF to be packed correctly for both cells, one of them needs to scale its value by $-1$.
-In general this transformation can be a matrix.
-The software package Basix~\cite{scroggsBasixRuntimeFinite2022,scroggsConstructionArbitraryOrder2021} is capable of generating these transformation matrices.
+Two simple examples of where orientations have an impact are shown in \cref{fig:element_orientation_permute,fig:element_orientation_flip}.
+Both show the impact of packing data for a finite element calculation for a triangle where one of the edges has been flipped.
+In both cases the packed data would be mangled.
+In \cref{fig:element_orientation_permute} the DoFs \textbf{3} and \textbf{4} are packed in the wrong order and the vector DoF in \cref{fig:element_orientation_flip} is pointing the wrong direction.
 
-% how things are done in pyop3
-% ----------------------------
-With \pyop3 we can express the permutation transformation as a symbolic indexing operation.
-% this means we can generate code for it (do at runtime), step towards more complex runtime transformations
-% compared to pyop2 where it is memoized in advance
+A number of approaches exist to rectify this issue.
+For meshes with simplex cells one can globally number the vertices of the mesh such that adjacent cells always agree on the orientation of the shared entities~\cite{rognesEfficientAssemblyDiv2010}.
+This numbering approach is also possible, with some limitations, for meshes with quadrilateral~\cite{homolyaParallelEdgeOrientation2016} and hexahedral~\cite{agelekOrientingEdgesUnstructured2017} cells.
+However, the approach does not work in general across the full gamut of cell types - including mixed cell meshes - that can occur in finite element simulations.
+Instead, one needs to encode the orientation of the shared entities relative to the cell and \emph{transform the DoFs} appropriately.
 
-% consider simplest possible, P3 and disregard non-edge DoFs
-To explain how this is done we consider the edge flip shown in \cref{fig:element_orientation_permute}.
-For simplicity consider a one-cell mesh and we omit cell and vertex DoFs.
+For DoF transformations that are expressible as permutations (e.g. \cref{fig:element_orientation_permute}) this transformation may be handled in advance of packing by modifying the cell-node map used to pack the temporary.
+This is the approach taken by Firedrake that allows it to support Lagrange elements on hexahedral meshes.
+However, some transformations require more general linear transformations that cannot be computed in advance~\cite{scroggsBasixRuntimeFinite2022,scroggsConstructionArbitraryOrder2021}.
+For example, to un-mangle the DoFs for \cref{fig:element_orientation_flip} the offending DoF must be flipped by multiplying by $-1$.
+This operation cannot be done in advance and must be done as part of the packing transformation.
+\pyop2 has no support for this type of transformation and so \hdiv and \hcurl elements are not supported on hexahedral meshes.
 
-As well as the axis tree for the function space we now have two extra pieces of information:
-\begin{itemize}
-  \item
-    The orientation of the edges, stored as an array of integers per cell closure.
-    For this single-cell-mesh case the orientation array of the flipped triangle is $\{ c_0 \to \pycode{[0, 1, 0]} \}$, or, equivalently, \pycode{orientations = [[0, 1, 0]]}.
-    An orientation of 0 is considered `default', and 1 means that it is flipped.
+\subsubsection{Expressing transformations with \pyop3}
 
-  \item
-    The DoF permutation for a given orientation.
-    Since there are only two ways that an edge can be oriented this is therefore stored as $\{ 0 \to \pycode{[0, 1]},\ 1 \to \pycode{[1, 0]} \}$, or in code as \pycode{perms = [[0, 1], [1, 0]]}.
-\end{itemize}
+% "part of the generated code" and substituted layout... (at runtime)
 
-Now, in order to correctly pack the DoFs for the kernel the following permutation of the DoFs axis is required:
+Unlike \pyop2, expressing DoF transformations of this sort is relatively straightforward to do with \pyop3.
+Since DoF packing is expressed simply as an indexing operation taking, say, a \pycode{Dat} and returning another \pycode{Dat}, further transformations can be applied to the packed object.
+For instance, one could do:
 \begin{pyinline}
-  cell = 0
-  packed = dat[closure(cell)][:, [[0, 1], [1, 0], [0, 1]]]
+  packed0 = dat[closure(cell)]
+  packed1 = packed0[transform1]
+  packed2 = packed1[transform2]
 \end{pyinline}
-which is equivalent to following transformation:
+This sort of operation is not expressible in \pyop2 because packed temporaries are represented by a different type.
+
+To give an example of this working in practice we consider packing the edge DoFs for the case shown in \cref{fig:element_orientation_permute}, omitting cell and vertex DoFs for simplicity.
+We want to permute the DoFs for a single edge, so the transformation that we want to express can be visualised as:
 \begin{center}
   \includegraphics{element_orientation_permute_data.pdf}
 \end{center}
+Which corresponds the following \pyop3 code:
+\begin{pyinline}
+  cell = 0  # there is only one cell
+  packed = dat[closure(cell)][:, [[0,1],[1,0],[0,1]]]
+\end{pyinline}
+The slice (\pycode{:}) included in the transformation indicates that the edge axis should be unchanged.
 
-The array \pycode{[[0, 1], [1, 0], [0, 1]]} clearly comes from the permutation array above, so we may transform the code to:
+In order to extend this transformation to the more general case with multiple cells two additional pieces of information are required:
+\begin{enumerate}
+  \item
+    \emph{The orientation of the edges, stored as an array of integers per cell closure.}
+    For this simple case the orientation array of the flipped triangle is $\{ c_0 \to \pycode{[0,1,0]} \}$, or, equivalently, \pycode{orientations = [[0,1,0]]}.
+    An orientation of 0 is considered `default', and 1 means that it is flipped.
+
+  \item
+    \emph{The DoF permutation for a given orientation.}
+    Since there are only two ways that an edge can be oriented this is therefore stored as $\{ \pycode{0} \to \pycode{[0,1]},\ \pycode{1} \to \pycode{[1,0]} \}$, or in code as \pycode{perms = [[0,1],[1,0]]}.
+\end{enumerate}
+
+With these we can begin to transform the packing expression to something more general.
+If we first substitute the permutations `\pycode{[[0,1],[1,0],[0,1]]}' with the appropriate entries from \pycode{perms} then we get:
 \begin{pyinline}
   cell = 0
-  packed = dat[closure(cell)][:, perms[[0, 1, 0]]]
+  packed = dat[closure(cell)][:, perms[[0,1,0]]]
 \end{pyinline}
-The final array \pycode{[0, 1, 0]} is simply the orientations array, giving the final transformation as:
+Then, we can observe that the entries `\pycode{[0,1,0]}' are precisely the orientations of the edges, allowing us to make the following substitution:
 \begin{pyinline}
   cell = 0
   packed = dat[closure(cell)][:, perms[orientations[cell]]]
 \end{pyinline}
+Giving us a general expression that applies to meshes with any number of cells.
+Having applied this additional transformation, the resulting indexed \pycode{Dat} can now be safely passed through to the local kernel because its DoFs have been transformed into `canonical' form.
 
-With this we now have a fully symbolic, indexing approach to permuting the DoFs for any function space.
-Having a symbolic representation of this transformation means that one can generate code for the transformation, instead of memoizing the modified maps in advance.
-Whilst not strictly necessary for the permutation case described here it is essential for more complex transformations that this be expressible.
-Extending Firedrake and \pyop3 to support general transformations is future work.
+At present only permutation transformations have been implemented, to allow the \pyop3 version of Firedrake to assemble Lagrange elements on hexahedra, but extending the approach to support more general transformations should be straightforward.
 
 \end{document}
