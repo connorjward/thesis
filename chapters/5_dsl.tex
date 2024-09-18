@@ -445,6 +445,8 @@ As a result, prior to generating code for matrix insertion, \pyop3 has to pre-ta
 \end{pyinline}
 From which point code generation may proceed.
 
+Note that \pyop2 does not need to do this as the `compressed' maps are always passed in as input.
+
 \section{Future performance optimisations}
 \label{sec:codegen_optimisation}
 
@@ -456,6 +458,7 @@ Notably, by having access to both the symbolics of the computation \emph{and} th
 Due to the work-in-progress nature of \pyop3 none of the listed optimisations have yet been implemented, but they are included in this thesis as examples of the potential that the abstraction has.
 
 \subsection{Expression compression}
+\label{sec:pyop3_expression_compression}
 
 In \cref{sec:impl_matrices_codegen} we saw that we needed to `compress' the layout functions for matrices into a flat map between the iteration set and the row/column DoFs.
 Generalising this operation to other settings constitutes a performance optimisation.
@@ -492,6 +495,9 @@ Compared with the uncompressed version, using this new layout is advantageous fo
     Comparing this with the uncompressed expression we can immediately see that more memory is required.
     \pycode{map_f} has the same size as \pycode{map_fg} and so the memory needed for the calculation is $n\cdot a$ \emph{plus} however much memory is read from \pycode{map_g}.
 \end{description}
+
+Note that this optimisation does not need to be implemented in \pyop2 because the `compressed' maps are provided at parallel loop construction.
+This optimisation therefore provides a way to reproduce existing \pyop2 performance.
 
 \subsection{Runtime data layout transformations}
 

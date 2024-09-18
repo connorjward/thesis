@@ -33,10 +33,13 @@ for nfuncs, degree, ncells in itertools.product(nfuncss, degrees, ncellss):
     events = utils.petsclog.profile_script(cmd, "Experiment")
     loop_event, = (ev for ev in events if ev.name == "pyop3_loop")
 
+
     fs = make_function_space(ncells, degree)
-    optimal_memory = fs.dim() * (nfuncs + 1) * 8
-    # if we miss cache every time (ignoring the maps)
-    pessimal_memory = (nfuncs + 1) * fs.ufl_domain().num_cells() * fs.finat_element.space_dimension() * 8
+    mapdata = fs.ufl_domain().num_cells() * fs.finat_element.space_dimension() * 4
+
+    optimal_memory = fs.dim() * (nfuncs + 1) * 8 + mapdata
+    # if we miss cache every time
+    pessimal_memory = (nfuncs + 1) * fs.ufl_domain().num_cells() * fs.finat_element.space_dimension() * 8 + mapdata
 
     flop_data_single = flop_data[(flop_data["nfuncs"] == nfuncs) & (flop_data["degree"] == degree)]
     nflops = int(flop_data_single["flops_per_cell"].iloc[0])

@@ -59,7 +59,8 @@ def make_loop_expr(mesh, cg, dg):
             c := mesh.star(v, k=2).index(),
             max_(dg.dat[c], cg.dat[v]),
         ),
-        compiler_parameters={"add_petsc_event": True},
+        # compiler_parameters={"add_petsc_event": True, "add_likwid_markers": True},
+        compiler_parameters={"add_likwid_markers": True},
     )
 
 
@@ -99,7 +100,8 @@ if __name__ == "__main__":
     if args.validate:
         mesh = UnitSquareMesh(1, 1)
     else:
-        mesh = UnitSquareMesh(200, 200)
+        # mesh = UnitSquareMesh(200, 200)
+        mesh = UnitSquareMesh(50, 50)
 
     V_cg = FunctionSpace(mesh, "CG", 1)
     V_dg = FunctionSpace(mesh, "DG", 0)

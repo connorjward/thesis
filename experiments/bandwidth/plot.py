@@ -16,10 +16,11 @@ plt.style.use(MPL_PARAMS)
 fig = plt.figure(**FIGURE_PARAMS)
 
 ax1 = fig.add_subplot()
-ax1.set_xlabel("Thread count")
+ax1.set_xlabel("Core count")
 ax1.set_xticks(range(2, 33, 2))
 
 streamdata = pd.read_csv(f"{dir}/streamdata.csv")
+ax1.set_ylim(0, 5e10)
 ax1.set_ylabel("Memory bandwidth (byte/s)", color=BANDWIDTH_COLOR)
 ax1.tick_params(axis="y", labelcolor=BANDWIDTH_COLOR)
 ax1.plot(streamdata["nthreads"], streamdata["bandwidth"], marker="o", color=BANDWIDTH_COLOR, linestyle="dashed",markersize=4, linewidth=1)

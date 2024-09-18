@@ -58,9 +58,9 @@ def plot_roofline(machine_name, pyop2_batchfile, pyop3_batchfile, experiment):
     peak_flops_avx = machine_info["peak_flops_avx"]
 
     pyop2_data = pd.read_csv(pyop2_batchfile)
-    compute_roofline_data(pyop2_data, peak_bandwidth)
-
     pyop3_data = pd.read_csv(pyop3_batchfile)
+
+    compute_roofline_data(pyop2_data, peak_bandwidth)
     compute_roofline_data(pyop3_data, peak_bandwidth)
 
     plt.style.use(MPL_PARAMS)

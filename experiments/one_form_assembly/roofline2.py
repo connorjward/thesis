@@ -12,4 +12,4 @@ plot_roofline(
     f"{dir}/batch-pyramus-pyop3-20240904-160249.csv",
     experiment=2,
 )
-plt.savefig(f"{dir}/roofline2.pdf", dpi=200)
+plt.savefig(f"{dir}/roofline2.pdf", dpi=200, backend="pgf")
