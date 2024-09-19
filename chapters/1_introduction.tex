@@ -441,6 +441,7 @@ From \cref{fig:scott_vogelius_element_dof_layout_packed} it is clear that both t
 Representing this hierarchical structure in code is challenging and forms one of the main contributions of this thesis (\cref{chapter:axis_trees,chapter:indexing}).
 
 \section{Software for continuum mechanics}
+\label{sec:introduction_software}
 
 \todo[inline]{This section is a bit off. The key points are there but the phrasing is not great.}
 
@@ -487,7 +488,7 @@ Having multiple representations of the problem has a number of benefits:
     An example of this is sum factorisation, a FLOP-reduction technique applicable to finite element simulations with tensor-product structure~\cite{homolyaExposingExploitingStructure2017}.
     The compiler can even sometimes do auto-tuning, where a space of possible solutions is explored to find the fastest one.
     Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler}, and the Sparse Polyhedral Framework (sparse linear algebra)~\cite{stroutSparsePolyhedralFramework2018}.
-    If done at runtime, auto-tuning is also sometimes referred to as an \textit{inspector-executor strategy}.
+    If done at runtime, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy}.
 \end{itemize}
 
 Examples of continuum mechanics simulation packages using domain-specific compilers include the finite element libraries Dune-Fem~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, all using the same DSL for expressing weak forms UFL~\cite{alnaesUnifiedFormLanguage2014a}, and the finite difference library Devito~\cite{devito-api,luporiniArchitecturePerformanceDevito2020}, that uses Sympy~\cite{10.7717/peerj-cs.103} as its top-level DSL.

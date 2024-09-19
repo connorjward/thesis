@@ -2,38 +2,73 @@
 
 \begin{document}
 
-% PERFORMANCE OPTIMISATIONS?
+\chapter{Conclusions}
+\label{chapter:conclusions}
 
-% e.g. can do things like \cite{dasSlicingAnalysisIndirect1994} and "flatten" repeated indexing
+Over the course of this thesis we have introduced a novel suite of abstractions that together may be used to represent general-purpose mesh stencil calculations.
+Compared with existing frameworks, the new abstractions are better able to represent the semantics of the problem domain, enabling a greater range of algorithms, transformations, and optimisations to be expressed and applied.
+In addition to this theoretical work, the abstractions have been implemented as part of the new Python library \pyop3.
+\pyop3 takes the abstractions and uses code generation, DSL + compiler, to achieve high performance without sacrificing expressiveness and flexibility  % FIXME:
+Running in parallel in distributed computing environments is also supported (\cref{chapter:parallel).
 
-\chapter{Summary}
-\label{chapter:summary}
+The core abstractions introduced by this work are the axis tree (\cref{chapter:axis_trees}) and index tree (\cref{chapter:indexing}).
+Axis trees... %that can flexibly describe data layouts and be indexed.
+Index trees transform axis trees...
+Together these...
+% (compared to existing frameworks, wheremesh numbering or topology information are lost, bad composability, limited applicability
+% and we wanted to support the multi-representation style of dmplex, where data can be viewed in multiple equivalent ways.
 
-%pyop3 is like Ebb and Simit, but the data model is chosen to truly unify PETSc and N-dim arrays. We get maths-y optimisations that the others don't have, like mesh numbering and storing edge and vertex data together and mixed-type things. (plus obvs distributed parallel)
-%
-%It solves the same problem but from a different direction.
-%
-%Primary objectives: integration with PETSc, distributed parallel - data model that is compatible with DMPlex etc.
-% we don't need our own mesh implementation - so distribution, I/O etc we get "for free"
-%
-%Simit is also very similar, but not distributed parallel and pyop3 unifies the hypergraph and linear algebra data views.
-%
-% and Liszt? Just quite old, reimplements a lot
-
-\section{Future work}
+\section{Future research directions}
 \label{sec:future_work}
 
-% highest priority is a complete pyop3 obvs.!
+% with only a small number of exceptions what we have shown so far is basically a bad pyop2
+% the abstractions of pyop3 were created expressly to enable novel methods/future work by capturing more semantic information than existing frameworks
 
-% compression transformation
-% sparse data structures - already done a proof of concept, provide index array, we are already CSR so this is straightforward to do
-% GPUs, vectorisation (\cref{sec:codegen_loopy_kernel})
-% Hanging nodes: AMR? hp-adaptivity
-% orientations?
+\subsubsection{Complete Firedrake integration}
+
+% highest priority is a complete pyop3 obvs.!
+% improve performance of python loops via generating code or cython
+% key inspector-exec optimisations (expression compression)
+% completely merge into Firedrake
+
+% data layout transformations exposed in UFL
+
+\subsubsection{GPU support}
+
+% like vectorisation, loopy transforms
+% PETSc support GPUs
+% the groundwork is laid.
+
+\subsubsection{Novel data structures}
+
+% new matrix types, custom sparse array type, libXSMM (check spelling)
+% good for small problems
+
+% redevelop extruded mesh functionality - explain why dropped, maybe important for GPU performance with big packing things. - fewer scalar instructions
+% structured meshes, partially structured (e.g. that multigrid framework), cubed-sphere
+
+% dynamic data structures - maybe good for AMR or particle methods
+
+\subsubsection{Expanded stencil algorithms}
+
+% patchPC
 % WENO slope limiters?
 % finite volume?
-% patchPC
 
-\section{Conclusions}
+% reimplement SLATE and pcpatch using pyop3.
+
+\subsubsection{Runtime transformations}
+
+% Hanging nodes: AMR? hp-adaptivity
+% orientations
+
+\subsubsection{Compiler bits}
+
+% sparse tiling
+% loop fusion and subexpression elimination over cells and facets
+
+\subsubsection{Better parallel}
+
+% Minimal DG? cell loops for DG do not need to exchange halo data even though its there
 
 \end{document}

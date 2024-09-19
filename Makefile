@@ -40,7 +40,7 @@ clean:
 # %.clean: ALWAYS
 # 	-rm ./$*.pdf 2>/dev/null || true
 
-$(THESIS): %.pdf: $(CHAPTERS) %.tex
+$(THESIS): %.pdf: $(CHAPTERS) %.tex titlepage.tex abstract.tex declaration.tex acknowledgements.tex dedication.tex
 	$(TEX) $*
 
 $(CHAPTERS): %.pdf: $(FIGURES) $(CHAPTERS_DIR)/%.tex
