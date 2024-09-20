@@ -1,0 +1,20 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/two_cell_mesh_lagrange.tikz}
+
+\defTwoCellMesh
+\drawTwoCellMesh
+
+\tkzDefBarycentricPoint(e2=1)\tkzGetPoint{v4}
+
+\tkzDrawSegments[edge](v3,v4)
+
+\tkzDrawPoints[vertdof](v0,v1,v2,v3)
+\tkzDrawPoints[vertdof,diamond,minimum size=9pt](v4)
+
+\end{tikzpicture}
+\end{document}

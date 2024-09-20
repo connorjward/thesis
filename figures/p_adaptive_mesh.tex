@@ -1,0 +1,17 @@
+\documentclass[tikz]{standalone}
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}
+
+\input{figures/common/two_cell_mesh_lagrange.tikz}
+
+\defTwoCellMesh
+\drawTwoCellMesh
+
+\tkzDrawPoints[vertdof](v0,v1,v2,v3)
+\tkzDrawPoints[edgedof](e3,e4)
+\tkzDrawPoints[edgedof,diamond,minimum size=9pt](e2)
+
+\end{tikzpicture}
+\end{document}

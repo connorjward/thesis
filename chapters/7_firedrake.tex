@@ -194,6 +194,7 @@ Having this hierarchical structure is convenient.
 Views of particular function spaces or vector components are straightforward to obtain via indexing and the axes may be freely permuted to give data layouts with the same semantics but different data locality properties.
 
 \subsection{Renumbering the mesh}
+\label{sec:firedrake_renumbering_mesh}
 
 Given this decomposition it would appear simple to construct an appropriate axis tree to describe the layout.
 However, there is a complication: axis components are stored contiguously.
@@ -311,6 +312,7 @@ This is shown in \cref{fig:firedrake_index_tree}.
 With such a loop expression, \pyop3 is able to generate and execute code in parallel using the processes established in \cref{chapter:pyop3}.
 
 \subsection{More integral types}
+\label{sec:firedrake_facet_integration}
 
 \begin{figure}
   \centering
@@ -333,6 +335,7 @@ With \pyop3 it is straightforward to express assembly loops for facet integrals 
 This works because the support of an interior facet ($\support(f)$) consists of the two cells it touches, and the closure of those gives the correct macro cell.
 
 \subsection{Handling orientations}
+\label{sec:firedrake_orientations}
 
 \begin{figure}
   \centering
