@@ -16,12 +16,18 @@
   % \setstretch{.9}
 
 % FIGURES
+\usepackage{hyperref}
+
 \usepackage{cleveref}
 \usepackage{graphicx}
   \graphicspath{{./figures}}
 % for subfigures
 \usepackage{caption}
 \usepackage{subcaption}
+
+% for subfigure finangling
+% https://tex.stackexchange.com/questions/333249/controlling-subfigure-captions-and-subfigure-placement
+\newsavebox{\imagebox}
 
 
 % code overlay: https://tex.stackexchange.com/questions/287549/is-it-possible-to-use-tikzmark-inside-minted

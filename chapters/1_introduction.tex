@@ -23,7 +23,7 @@ Depending on the method and implementation choices, this mesh may be either \tex
 To these topological entities are associated unknowns, termed degrees of freedom (DoFs), representing physical quantities in the PDE such as the pressure.
 
 For all of these methods, an integral part of their usage is the application of a computational kernel, or \emph{stencil}.
-To apply one, one loops over a particular collection of mesh entities and, for each entity, computes a global contribution using the DoFs that lie in the neighbourhood of the current iterate.
+To apply one, one loops over a particular collection of mesh entities and, for each entity, computes a contribution to some global data structure using the DoFs that lie in the neighbourhood of the current iterate.
 An example of a mesh stencil operation is shown in \cref{fig:mesh_stencil}.
 
 Mesh stencil computations crop up repeatedly in continuum mechanics simulations and developing methods for their application is the central focus of this thesis.
@@ -79,7 +79,6 @@ For $u$, we already know that the space must be vector-valued and constrained to
 We can therefore say that $u \in V$ where, for dimension $d$,
 \begin{equation}
   V = \{ \ v \in [H^1(\Omega)]^d : v |_{\Gamma} = g \ \}.
-  \label{eq:stokes_velocity_space}
 \end{equation}
 
 The function space of the test function $v$ is similar, but, since the values of $u$ at the boundary are already prescribed, it is defined to be zero at those nodes
@@ -137,43 +136,41 @@ This allows us to move it to the right hand side of \cref{eq:weak_stokes_no_surf
 
 \subsection{Discretising the system of equations}
 
-In order to solve this weak formulation using the finite element method we discretise the function spaces in use by replacing them with finite dimensional equivalents:
-
+In order to solve this weak formulation using the finite element method we discretise the function spaces in use by replacing them with finite-dimensional equivalents:
 \begin{equation*}
   V_0 \to V_{0,h} \subset V_0,
   \quad
   \quad
   Q \to Q_h \subset Q.
 \end{equation*}
-
-Each of these discrete spaces is spanned by a set of basis functions, so any function can be expressed as a linear combination of the basis functions and their coefficients.
+Each of these discrete spaces is spanned by a set of basis functions, allowing functions to be expressed as a linear combination of basis functions and coefficients.
 For example, we can write the function $u_{0,h} \in V_{0,h}$ as
-
 \begin{equation*}
-  u_{0,h} = \sum^N_{i=1} \hat u_i \psi^{V_{0,h}}_i
+  u_{0,h} = \sum^N_{i=1} \hat u_i \psi^{V_{0,h}}_i,
 \end{equation*}
+where $\psi^{V_{0,h}}_i$ are the basis functions that span $V_{0,h}$ and $\hat u_i$ the coefficients.
 
-for basis functions $\psi^{V_{0,h}}_i$ and coefficients $\hat u_i$.
-
-Substituting these discrete spaces back into \cref{eq:weak_stokes}, and discarding the basis coefficients for the arbitrary functions $v_h$ and $q_h$, we obtain the discrete problem: find the vector $(\hat u, \hat p)$ such that
-
+If we substitute these discrete spaces into \cref{eq:weak_stokes}, and discard the basis coefficients for the arbitrary functions $v_h$ and $q_h$, we obtain the discrete problem: find the vector $(\hat u, \hat p)$ such that
+\small
 \begin{equation}
   \begin{aligned}
     \int \nu \hat u \nabla \psi^{V_{0,h}} : \nabla \psi^{V_{0,h}} \, \textrm{d}\Omega
     - \int \hat p \psi^{Q_h} \nabla \cdot \psi^{V_{0,h}} \, \textrm{d}\Omega
     &=
     - \int \nu \nabla u_\Gamma : \nabla \psi^{V_{0,h}} \, \textrm{d}\Omega
-    \quad \forall \psi^{V_{0,h}} \\
+    \quad
+    &\forall \psi^{V_{0,h}}, \\
     %
     \int \psi^{Q_h} \, \hat u \nabla \cdot \psi^{V_{0,h}} \, \textrm{d}\Omega
     &= 0
-    \quad \forall \psi^{Q_h},
+    \quad
+    &\forall \psi^{Q_h}.
   \end{aligned}
 \end{equation}
-
-which can be written as the (saddle point) linear system
-
-\begin{equation}
+\normalsize
+This can be written as the (saddle point) linear system
+\small
+\begin{equation} \label{eq:stokes_linear_system}
   \left (
   \begin{array}{c|c}
     \int \nu \nabla \psi^{V_{0,h}} : \nabla \psi^{V_{0,h}} \, \textrm{d}\Omega
@@ -199,89 +196,70 @@ which can be written as the (saddle point) linear system
     \hline
     0
   \end{array}
-  \right )
-  %
-  \label{eq:stokes_linear_system}
+  \right ).
 \end{equation}
+\normalsize
 
-Solving the Stokes equations using the finite element method therefore boils down to constructing, or \textit{assembling}, the left-hand-side matrix and right-hand-side vector, before solving for the coefficients $\hat u$ and $\hat p$.
+Solving the Stokes equations using the finite element method therefore boils down to constructing, or \emph{assembling}, the left hand side matrix and right hand side vector, before solving for the coefficients $\hat u$ and $\hat p$.
 
 \subsection{Choosing a basis}
 
-\todo[inline]{Needs a full caption}
-
 \begin{figure}
   \centering
-  \begin{subfigure}{.4\textwidth}
+  \begin{subfigure}[b]{.4\textwidth}
     \centering
     \includegraphics{lagrange_element_2.pdf}
-    \vspace{1em}
     \caption{
-      The $P_2$ (Lagrange, degree 2) finite element for a triangle.
-      Point evaluation DoFs are associated with edges (red) and vertices (green).
+      The dual basis for a $P_2$ element consists of point evaluation at the vertices (green) and edges (red).
     }
-    \label{fig:lagrange_element_2}
+    \label{fig:lagrange_element_2_dofs}
   \end{subfigure}
-  %
-  \begin{subfigure}{.58\textwidth}
+  \begin{subfigure}[b]{.58\textwidth}
     \centering
-    \begin{tabular}{c c c}
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof0.pdf}
-      &
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof1.pdf}
-      &
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof2.pdf}
-      \\
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof3.pdf}
-      &
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof4.pdf}
-      &
-      \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof5.pdf}
-    \end{tabular}
-    %
+    \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof0.pdf}\,%
+    \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof1.pdf}\,%
+    \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof2.pdf}
+
+    \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof3.pdf}\,%
+    \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof4.pdf}\,%
+    \includegraphics[width=.3\textwidth]{element_Lagrange_2_dof5.pdf}
     \caption{
-      The basis functions of a $P_2$ finite element.
-      The images were reused (with permission) from DefElement~\cite{defelement}.
+      The basis functions.
+      The images were sourced from \href{https://defelement.com}{defelement.com}~\cite{defelement}.
     }
     \label{fig:lagrange_element_2_basis}
   \end{subfigure}
+
+  \caption{The $P_2$ (Lagrange, polynomial degree 2) finite element.}
+  \label{fig:lagrange_element_2}
 \end{figure}
 
-In order to numerically evaluate the integrals in \cref{eq:stokes_linear_system} the basis functions $\psi^{V_{0,h}}$ and $\psi^{Q_h}$ must be known.
-In the finite element method these are generated from the choice of \textit{finite element}.
+In order to numerically evaluate the integrals of \cref{eq:stokes_linear_system}, the basis functions $\psi^{V_{0,h}}$ and $\psi^{Q_h}$ must be known.
+In the finite element method these are generated from the choice of \emph{finite element}.
 
 First formalised by Ciarlet~\parencite{ciarletElement2002}, a finite element is the triple $(K, P, N)$, where:
-
 \begin{itemize}
-  \item $K$ is a bounded closed set, or \textit{cell}, with non-empty interior and piecewise smooth boundary,
+  \item $K$ is a bounded closed set, or \emph{cell}, with non-empty interior and piecewise smooth boundary,
   \item $P$ is a finite-dimensional space of functions on $K$, and
   \item $N$ is a set of linear functionals that form a basis for the dual space of $P$.
 \end{itemize}
 
-A simple example of a finite element, the Lagrange degree 2 element, is shown in \cref{fig:lagrange_element_2}.
-For this element $K$ (the cell) is a triangle, $P$ (the function space) is the space of order 2 polynomials, and $N$ (the dual basis) is defined to be point evaluation at each of the nodes.
-That is to say, linear functional $l_i$, taking as input some function $v$, is defined to be
-
+A simple example of a finite element - the Lagrange element with polynomial degree 2, written $P_2$ - is shown in \cref{fig:lagrange_element_2}.
+For this element $K$ is a triangle, $P$ is the space of order 2 polynomials, and the linear functionals of $N$ are defined as the point evaluations
 \begin{equation*}
-  l_i(v) = v(x_i),
+  l_i(v) = v(x_i)
+  \quad
+  i = 0,1,\dots,5
 \end{equation*}
-
-\noindent
-where $x_i$ is the coordinates of the $i$-th node.
+for each of the 6 nodes shown in \cref{fig:lagrange_element_2_dofs}, with $x_i$ being the coordinates of the $i$-th node.
 
 Given this definition, one can determine a basis, $\psi_j$, for $P$ by imposing that
-
-\todo[inline]{Not sure how to write forall i, j bit. And $n_k$ currently undefined.}
-
 \begin{equation*}
-  l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, n_k,
+  l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, 5
 \end{equation*}
-
-\noindent
-which for the $P_2$ element yields the basis functions (\cref{fig:lagrange_element_2_basis}):
-
-% see https://defelement.com/elements/examples/triangle-lagrange-equispaced-2.html
-\begin{align}
+which for the $P_2$ element yields the basis functions:
+\begin{align*}
+  % see https://defelement.com/elements/examples/triangle-lagrange-equispaced-2.html
   &\psi_0 = 2x^2 + 4xy - 3x + 2y^2-3y+1,
   &
   &\psi_3 = 4xy, \\
@@ -292,23 +270,12 @@ which for the $P_2$ element yields the basis functions (\cref{fig:lagrange_eleme
   %
   &\psi_2 = y(2y-1),
   &
-  &\psi_5 = 4x(-x-y+1).
-  \label{eq:basis_functions}
-\end{align}
+  &\psi_5 = 4x(-x-y+1),
+\end{align*}
+that are shown in \cref{fig:lagrange_element_2_basis}.
 
-\subsubsection{Mapping to reference space}
-
-\todo[inline]{bit ick, reword}
-
-The basis functions enumerated above are given in \textit{reference space}, that is, relative to the reference finite element.
-By contrast, the basis functions of the variational problem exist in \textit{physical space}: cells in the mesh are rarely exactly regular in shape.
-% not a lot of detail, revisit
-In order to be able to use the reference basis functions one needs to introduce Jacobian-like terms into the integrals termed \textit{pullbacks}.
-
-From \cref{fig:lagrange_element_2} one can see that the linear functionals, and hence the basis functions and DoFs, are associated with different topological entities, and this is emphasised by showing them in different colours.
-When the finite element definition above is transformed from \textit{reference space} to \textit{physical space}, DoFs associated with topological entities of the reference cell are associated with equivalent entities on the mesh.
-\Cref{fig:mesh_stencil} for example shows a mesh storing DoFs for a $P_3$ finite element.
-Just as cell sub-entities (e.g. edges and vertices) are shared between adjacent cells, so are the DoFs associated with those entities.
+Note that the basis functions determined from the finite element have \emph{local support}.
+That is, they are only defined to be non-zero in a small region around their associated entities.
 
 \subsubsection{Choosing a basis for the Stokes equations}
 
@@ -326,35 +293,61 @@ Just as cell sub-entities (e.g. edges and vertices) are shared between adjacent 
   \end{subfigure}
   %
   \caption{
-    The Scott-Vogelius element, degree 3 ($[P_3]^2 \oplus P_2^\mathrm{disc}$).
+    The degree 3 Scott-Vogelius element ($[P_3]^2 \oplus P_2^\mathrm{disc}$).
     The lower-order space (right) is discontinuous and hence all of the DoFs are marked as belonging to the cell (blue).
   }
   \label{fig:scott_vogelius_element}
 \end{figure}
 
 The choice of basis functions used by the function spaces has significant implications for the convergence and stability of the method.
-For the two-dimensional Stokes equations, a common choice of element pair, or \textit{mixed} element, with properties matching the constraints given in \cref{eq:stokes_velocity_space} and \cref{eq:stokes_pressure_space} is the Scott-Vogelius element~\cite{scottNormEstimatesMaximal1985}.
-The element consists of a continuous vector-valued degree $k$ Lagrange element for the velocity space, and a discontinuous Lagrange element of degree $k-1$.
-This is shown in \cref{fig:scott_vogelius_element} for $k = 3$\footnote{The two-dimensional Scott-Vogelius element is technically known to be stable only for $k \geq 4$~\cite{guzmanScottVogeliusFiniteElements2018}, but we show $k = 3$ for simplicity.}.
+For the two-dimensional Stokes equations, a common choice of element pair, or \emph{mixed element}, with properties matching the constraints given in \cref{eq:vspace} and \cref{eq:stokes_pressure_space} is the Scott-Vogelius element~\cite{scottNormEstimatesMaximal1985}.
+The element consists of a continuous vector-valued degree $k$ Lagrange element for the velocity space, written $[P_k]^d$, and a discontinuous Lagrange element of degree $k-1$ for the pressure space, written $P_{k-1}^{\textnormal{disc}}$.
+These\footnotemark are shown in \cref{fig:scott_vogelius_element} for $k = 3$.
+
+\footnotetext{In two dimensions the Scott-Vogelius element is technically known to be stable only for $k \geq 4$~\cite{guzmanScottVogeliusFiniteElements2018}, but we show $k = 3$ for simplicity.}
+
+%
+% % connectivity
+%
+% From \cref{fig:lagrange_element_2_dofs} it can be seen that the nodes of the function space are associated with different topological entities: 3 with the vertices and 3 with the edges.
+% DoFs on these entities are thus shared between adjacent cells.
+% This connectivity can be seen in \cref{fig:mesh_stencil}.
 
 \subsection{Finite element assembly}
 
-Having established the basis functions and pullbacks of the discrete function spaces we are now able to numerically evaluate, via a quadrature scheme, the integrals of \cref{eq:stokes_linear_system}.
-This step is referred to as \textit{local assembly}, and code for its evaluation is termed the \textit{local kernel}.
-The final piece required for finite element assembly is an outer loop, where local kernel is evaluated for each basis function in the discrete space.
-This process is termed \textit{global assembly}.
+The finite element basis functions from the Ciarlet definition above are given in \emph{reference space}.
+For them to be usable for assembling the Stokes system of \cref{eq:stokes_linear_system} we must first draw a connection between the domain of the problem, $\Omega$, with the domain of the finite element, $K$.
+To do this, we partition $\Omega$ into a set of disjoint cells, $\mathcal{K}$, called a \emph{mesh}, where
+\begin{equation*}
+  \bigcup \mathcal{K} = \Omega.
+\end{equation*}
 
-If we again consider the Stokes problem above, to assemble the top left block of the matrix in \cref{eq:stokes_linear_system} we see that we need to evaluate
-
+Owing to the local support property of finite element basis functions, one can now rewrite the integrals in \cref{eq:stokes_linear_system} as a sum of cell-wise contributions.
+Using the top left block of the matrix as an example, the integral can be rewritten as
 \begin{equation}
-  \int \nu \nabla \psi^{V_{0,h}}_i : \nabla \psi^{V_{0,h}}_j \, \textrm{d}\Omega
-  \label{eq:stokes_top_left}
+  \sum_{\mathcal{K}} \int \nu \nabla \psi_i^{\mathcal{K}} : \nabla \psi_j^{\mathcal{K}} \, \textnormal{d}\Omega_{\mathcal{K}},
 \end{equation}
+with $\phi^{\mathcal{K}}$ the basis functions over the cell and $i$ and $j$ indicating the different element nodes.
+Since the basis functions have only local support the resulting matrix is \emph{sparse}.
 
-\noindent
-for each possible pair of basis functions $\psi^{V_{0,h}}_i$ and $\psi^{V_{0,h}}_j$, suggesting an assembly algorithm with quadratic complexity.
-However, this may be improved by observing that finite element basis functions are only non-zero in a small region around their owning mesh entity (e.g. \cref{fig:lagrange_element_2_basis}) - we say that they have \textit{local support}.
-This means that most of the integrals are \textit{zero by definition}, and the assembled matrix is \textit{sparse}.
+Subject to the addition of some Jacobian-like terms, called \emph{pullbacks}, to map between the geometry of the physical and reference cells, these cell-wise integrals can now be evaluated numerically using a quadrature scheme.
+This evaluation is termed \emph{local assembly}, and code that performs it is called the \emph{local kernel}.
+
+\subsubsection{Global assembly}
+
+Given such a local kernel, the final piece required for finite element assembly is an outer loop over the cells, $\mathcal{K}$, that adds cell-wise contributions into the global matrix or vector.
+This process is called \emph{global assembly} and is an example of a mesh stencil algorithm.
+
+\begin{figure}
+  \centering
+  \includegraphics[scale=1.4]{fem_assembly.pdf}
+  \caption{
+    Diagram of the finite element global assembly process.
+    For each cell in the mesh a coefficient is packed into a temporary array before the local kernel is evaluated.
+    The result, a dense matrix, is then scattered to the global sparse matrix.
+  }
+  \label{fig:fem_assembly}
+\end{figure}
 
 \begin{algorithm}
   \caption{
@@ -366,81 +359,51 @@ This means that most of the integrals are \textit{zero by definition}, and the a
     \Require \textit{temp0}, \textit{temp1} \Comment{Work arrays}
 
     \For{\textit{cell} \textbf{in} \textit{mesh.cells}}
-      \State \Call{Read}{\textit{coefficient}, \textit{cell}, \textit{temp0}}\label{code:pack_demo}
-      \State \Call{Zero}{\textit{temp1}}
+      \State \Call{Read}{\textit{temp0}, \textit{coefficient}, \textit{cell}} \Comment{Pack the coefficient}\label{code:pack_demo}
+      \State \Call{Zero}{\textit{temp1}} \Comment{Reset \textit{temp1}}
       \State \Call{LocalKernel}{\textit{temp0}, \textit{temp1}} \Comment{Evaluate the integral for each cell}
-      \State \Call{Increment}{\textit{output}, \textit{temp1}} \Comment{Scatter the result}\label{code:unpack_demo}
+      \State \Call{Increment}{\textit{output}, \textit{temp1}, \textit{cell}} \Comment{Scatter (unpack) the result}\label{code:unpack_demo}
     \EndFor
   \end{algorithmic}
   \label{alg:fem_assembly}
 \end{algorithm}
 
-\begin{figure}
-  \centering
-  \includegraphics[scale=1.4]{fem_assembly.pdf}
-  \caption{
-    Diagram of the assembly process for \cref{eq:stokes_top_left}.
-    For each cell in the mesh the viscosity coefficient is packed into a temporary array before the local kernel is evaluated.
-    The result, a dense matrix, is then scattered to the global sparse matrix.
-  }
-  \label{fig:fem_assembly}
-\end{figure}
+Since the local kernel operates at the level of a single cell, it expects data to be provided to it as a small dense array, containing only those DoFs necessary for the calculation.
+However, due to the complex nature of unstructured mesh data layouts, the global data structures will have arranged the DoFs differently, and so preparing the data for the local kernel requires an explicit transformation between these representations.
+Transforming from global to local representations is called \emph{packing}, and from local to global \emph{unpacking}.
 
-In order to avoid this quadratic complexity, finite element assembly typically proceeds by iterating over cells and evaluating the local kernel on each cell.
-Only basis functions with non-zero support over the cell - DoFs on the cell or its sub-entities - need be considered for the assembly.
-The global assembly may therefore be expressed as the sum of cell-wise integrals
-
-\todo[inline]{define $\mathcal{T}$ somewhere above}
-
-\begin{equation}
-  \sum_{K \in \mathcal{T}} \int_K \nu \nabla \psi_i^K : \nabla \psi_j^K \, \textrm{d}\Omega,
-\end{equation}
-
-\noindent
-with $\phi^K$ are the basis functions over the cell.
-
-This process is shown in \cref{fig:fem_assembly}, and an algorithm for its execution is summarised in \cref{alg:fem_assembly}.
-From these, it is clear why finite element assembly is referred to as a mesh stencil process.
+A diagram showing the global assembly loop process, including explicit pack/unpack steps, is shown in \cref{fig:fem_assembly} and an algorithm for its execution in \cref{alg:fem_assembly}.
+For the latter there is a single pack instruction, \textsc{Read}, on line~\ref{code:pack_demo}, and a single unpack instruction, \textsc{Increment}, on line~\ref{code:unpack_demo}.
+Both instructions take the current iterate, \textit{cell}, as an argument because the data that is packed/unpacked is dependent upon it.
 
 \subsection{Finite element data structures}
 
 \begin{figure}
   \centering
-  \includegraphics{scott_vogelius_element_dof_layout_packed.pdf}
+  \includegraphics[width=\textwidth]{scott_vogelius_element_dof_layout_packed.pdf}
   \caption{
-    The packing transformation taking the global data (top) to the packed local data (bottom) for a two-dimensional Scott-Vogelius function space.
+    The packing transformation taking global data (top) to packed local data (bottom) for a two-dimensional Scott-Vogelius function space.
     The global data stores all DoFs for the entire function space whilst the packed data only contains the DoFs present in the current stencil iterate.
-    \\
-    The data layout has been split into multiple levels to emphasise the hierarchical nature of function spaces.
-    For instance, every edge in the mesh (red) for the velocity space $[P_3]^2$ ($V_h$) has 2 nodes: $n_0$ and $n_1$, with each node having 2 components: \labelComponent{0} and \labelComponent{1}.
-    \\
-    As the packed local data only exists as a temporary, its contents are parametrised by the current cell iterate, $c_i$.
-    Sub-entities are identified via a relation from this, for instance the first vertex incident on $c_i$ is represented by $f_0^v(c_i)$.
+    DoFs associated with vertices, edges, and cells are coloured green, red, and blue respectively.
   }
   \label{fig:scott_vogelius_element_dof_layout_packed}
 \end{figure}
 
-Before we can write any assembly code we need to formalise what it means to pack and unpack the local data (lines~\ref{code:pack_demo} and~\ref{code:unpack_demo} in \cref{alg:fem_assembly}).
-This requires that the \textit{data layouts} of both the global and local data structures be defined.
+Determining the right pack/unpack operations for a finite element global assembly loop is challenging because:
+(a) unstructured mesh data has a non-trivial structure that is difficult to reason about, and
+(b) DoFs corresponding to different types of mesh entity (e.g. edges and vertices) must be packed together contiguously.
+These issues are jointly demonstrated in \cref{fig:scott_vogelius_element_dof_layout_packed}, which shows a packing operation for a Scott-Vogelius function space suitable for solving the Stokes equations.
+Both the local and global representations of the data have some hierarchical structure.
+For instance:
+\begin{itemize}
+  \item All of the DoFs in space $V_h$ precede those of $Q_h$.
+  \item The \labelComponent{0} and \labelComponent {1} vector components of $V_h$ are stored adjacently in memory.
+  \item For $V_h$, vertices and cells have one node, whilst edges have two.
+\end{itemize}
+Since the packed local data (bottom) only exists as a temporary its contents are parametrised by the current cell iterate, $c_i$.
+For example, the first vertex that is packed for a particular cell is represented by the function $f^v_0(c_i)$ where $f^v_i$ is the map relating cells to incident vertices.
 
-Despite the fact that the mesh is unstructured, and hence `adjacent' topological entities may be far from it when stored in memory, function spaces have an amount of inherent structure that must be taken into account when determining the right pack/unpack transformations.
-A potential structure for a two-dimensional Scott-Vogelius function space is demonstrated in \cref{fig:scott_vogelius_element_dof_layout_packed}.
-The top part of the figure represents the data layout for the global data structure and the bottom for the local packed one passed to the local kernel.
-The size of the global data layout is given by
-
-\begin{equation*}
-  \underbrace{2 ( 1 \times n_\textnormal{cells} + 2 \times n_\textnormal{edges} + 1 \times n_\textnormal{vertices} )}_{V_h} + \underbrace{6 \times n_\textnormal{cells}}_{Q_h},
-\end{equation*}
-
-\noindent
-and the size of the local layout is
-
-\begin{equation*}
-  \underbrace{2 ( 1 \times 1 + 2 \times 3 + 1 \times 3 )}_{V_h} + \underbrace{6 \times 1}_{Q_h} = 26.
-\end{equation*}
-
-From \cref{fig:scott_vogelius_element_dof_layout_packed} it is clear that both the global and local data layouts have some inherent structure: DoFs for the different spaces $V_h$ and $Q_h$ are kept apart and nodes and components are stored contiguously.
-Representing this hierarchical structure in code is challenging and forms one of the main contributions of this thesis (\cref{chapter:axis_trees,chapter:indexing}).
+Developing abstractions to representing this hierarchical structure is challenging, and forms one of the main contributions of this thesis.
 
 \section{Software for continuum mechanics}
 \label{sec:introduction_software}
