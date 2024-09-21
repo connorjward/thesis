@@ -5,12 +5,8 @@
 \chapter{Introduction}
 \label{chapter:introduction}
 
-% TODO: don't love this sentence
-The numerical solution of \glspl{pde} is ubiquitous across a wide range of applications, from climate modelling to structural mechanics and manufacturing.
-In order to solve them numerically, depending on the numerical method chosen, different elements of the geometry and/or function spaces of the physical problem must be \textit{discretised} such that they may be represented on a computer.
-
-% Solving such problems requires enormous amounts of computational power
-% Software for solving them is important
+The numerical solution of partial differential equations (PDEs) is ubiquitous across a wide range of applications, from climate modelling to structural mechanics and manufacturing.
+In order to solve them numerically, depending on the numerical method chosen, different elements of the geometry and/or function spaces of the physical problem must be \emph{discretised} such that they may be represented on a computer.
 
 \begin{figure}
   \centering
@@ -22,23 +18,23 @@ In order to solve them numerically, depending on the numerical method chosen, di
   \label{fig:mesh_stencil}
 \end{figure}
 
-For a number of numerical methods such as the finite volume, finite difference, and finite element methods, a \textit{mesh stencil} approach is taken.
-With such methods the geometry of the problem is discretised to form a \textit{mesh} composed of topological entities termed \textit{cells}, with each having sub-entities such as faces, edges and vertices.
+For a number of numerical methods such as the finite volume, finite difference, and finite element methods, the geometry of the problem is discretised to form a \emph{mesh} composed of topological entities termed cells, with each having sub-entities such as faces, edges and vertices.
 Depending on the method and implementation choices, this mesh may be either \textit{structured}, where adjacent entities may be addressed by applying offsets, or \textit{unstructured}, where an indirection map of the form \ccode{A[B[i]]} is needed.
-To these topological entities are associated unknowns, termed degrees of freedom (DoFs), representing physical quantities in the PDE like, say, the pressure.
+To these topological entities are associated unknowns, termed degrees of freedom (DoFs), representing physical quantities in the PDE such as the pressure.
 
-For all of these methods, an integral part of their usage is the application of a stencil over mesh entities.
-One loops over topological entities, typically cells or faces, and computes some value using data that is `close' the current iterate (e.g. \cref{fig:mesh_stencil}).
+For all of these methods, an integral part of their usage is the application of a computational kernel, or \emph{stencil}.
+To apply one, one loops over a particular collection of mesh entities and, for each entity, computes a global contribution using the DoFs that lie in the neighbourhood of the current iterate.
+An example of a mesh stencil operation is shown in \cref{fig:mesh_stencil}.
 
-Mesh stencil computations crop up repeatedly in continuum mechanics simulations and developing methods for their application is the foundational concept behind this thesis.
+Mesh stencil computations crop up repeatedly in continuum mechanics simulations and developing methods for their application is the central focus of this thesis.
 
 \section{Mesh stencils in practice: the finite element method}
 \label{sec:stokes_equations}
 
-As an introductory example to a mesh stencil calculation, we consider solving the Stokes equations, a linearisation of the Navier-Stokes equations in common use in the fluid dynamics community, using the \gls{fem}.
-Our exposition will focus on the aspects of the computation that are relevant for mesh stencils, for a more complete review of \gls{fem} we refer the reader to~\cite{brennerMathematicalTheoryFinite2008} and~\cite{larsonFiniteElementMethod2013}.
-The Stokes equations are given as follows: for domain $\Omega$ with boundary $\Gamma$, find the fluid velocity ($u$) and pressure ($p$) such that
+As a motivating example for a mesh stencil calculation, we consider solving the Stokes equations, a linearisation of the Navier-Stokes equations in common use in the fluid dynamics community, using the finite element method (FEM).
+Our exposition will focus on the aspects of the computation that are relevant for mesh stencils, for a more complete review of FEM we refer the reader to~\cite{brennerMathematicalTheoryFinite2008} and~\cite{larsonFiniteElementMethod2013}.
 
+The Stokes equations are given as follows: for domain $\Omega$ with boundary $\Gamma$, find the fluid velocity $u$ and pressure $p$ such that
 \begin{equation} \label{eq:strong_stokes}
   \begin{aligned}
     - \nu \Delta u + \nabla p &= 0 \quad \textrm{in} \ \Omega, \\
@@ -48,17 +44,15 @@ The Stokes equations are given as follows: for domain $\Omega$ with boundary $\G
     u &= g \quad \textrm{on} \ \Gamma,
   \end{aligned}
 \end{equation}
-
 where $\nu$ is the viscosity and $g$ is some prescribed Dirichlet boundary condition fixing the velocity across the entire boundary.
 Forcing terms are omitted for simplicity.
-As we have a coupled system of two variables ($u$ and $p$), we refer to it as being \textit{mixed}.
+Since this is a coupled system of two variables ($u$ and $p$), we refer to it as being \emph{mixed}.
 
 \subsection{Deriving a weak formulation}
 
-For the finite element method we seek the solution to the \textit{variational}, or \textit{weak}, formulation of these equations.
-These are obtained by multiplying each equation by a suitable \textit{test function} and integrating over the domain.
-For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions taken from spaces $V_0$ and $Q$ and integrating by parts this gives
-
+For the finite element method we seek the solution to the \emph{variational}, or \emph{weak}, formulation of these equations.
+These are obtained by multiplying each equation by a suitable \emph{test function} and integrating over the domain.
+For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions for the velocity and pressure spaces respectively, and integrating by parts this gives
 % taken from 
 % https://nbviewer.org/github/firedrakeproject/firedrake/blob/master/docs/notebooks/06-pde-constrained-optimisation.ipynb
 % and Larson and Bengzon (pg. 293)
@@ -69,40 +63,39 @@ For \cref{eq:strong_stokes}, using $v$ and $q$ as the test functions taken from 
     - \int \nu (\nabla u \cdot n) \cdot v \, \textrm{d}\Gamma
     - \int p n \cdot v \, \textrm{d}\Gamma
     &= 0
-    &\forall v \in V_0
+    &\forall v
     \\
     \int q \, \nabla \cdot u \, \textrm{d}\Omega
     &= 0
-    &\forall q \in Q.
+    &\forall q
   \end{aligned}
 \end{equation}
 
-From these weak forms it is now possible to classify the function spaces for $u$ and $p$.
-For $u$, we already know that the space must be vector-valued and constrained to $g$ on the boundary.
-\Cref{eq:weak_stokes_extra_V} further shows us that $u$ must have at least one weak derivative.
-We can therefore say that $u \in V$ where, for dimension $d$,
+\subsubsection{Choosing function spaces}
 
+From this weak form it is now possible to classify the various function spaces for $u$, $p$, $v$ and $q$.
+For $u$, we already know that the space must be vector-valued and constrained to $g$ on the boundary.
+\Cref{eq:weak_stokes_full} further shows us that $u$ must have at least one weak derivative.
+We can therefore say that $u \in V$ where, for dimension $d$,
 \begin{equation}
   V = \{ \ v \in [H^1(\Omega)]^d : v |_{\Gamma} = g \ \}.
   \label{eq:stokes_velocity_space}
 \end{equation}
 
-Unlike $u$, $p$ is scalar-valued, needs no derivatives of $p$, and does not have any boundary conditions applied to it, so we can write that $p \in Q$ where
-
-\begin{equation}
-  Q = \{ \ q \in L^2(\Omega) \ \}
-  \label{eq:stokes_pressure_space}
-\end{equation}
-
-Since the values of $u$ at the boundary are already prescribed, the function space of the test function $v$ is defined to be zero at those nodes
-
-\begin{equation}
+The function space of the test function $v$ is similar, but, since the values of $u$ at the boundary are already prescribed, it is defined to be zero at those nodes
+\begin{equation} \label{eq:vspace}
   V_0 = \{\ v \in [H^1(\Omega)]^d : v|_{\Gamma} = 0 \ \}.
 \end{equation}
 
-By defining $v$ to vanish on the boundary we are able to drop the surface terms from \cref{eq:weak_stokes_full}, allowing us to restate the problem as follows: find $(u, p) \in V \times Q$ such that
+Unlike $u$ and $v$, $p$ and $q$ are scalar-valued and need no derivatives.
+Further, since no boundary conditions are applied to the space of $p$, we can draw $p$ and $q$ from the same space
+\begin{equation}
+  Q = \{ \ q \in L^2(\Omega) \ \}.
+  \label{eq:stokes_pressure_space}
+\end{equation}
 
-\begin{equation*}
+Given the definition of these spaces and in particular the fact that $v$ is defined to vanish on the boundary, which allows us to drop the surface integrals, we may restate the problem posed in \cref{eq:weak_stokes_full} as follows: find $(u, p) \in V \times Q$ such that
+\begin{equation} \label{eq:weak_stokes_no_surface_terms}
   \begin{aligned}
     \int \nu \nabla u : \nabla v \, \textrm{d}\Omega
     - \int p \nabla \cdot v \, \textrm{d}\Omega
@@ -113,12 +106,21 @@ By defining $v$ to vanish on the boundary we are able to drop the surface terms 
     &= 0
     &\forall q \in Q.
   \end{aligned}
+\end{equation}
+
+\subsubsection{Resolving boundary conditions}
+
+To better represent the boundary conditions on space $V$, we can split it in two:
+\begin{equation*}
+  V = V_0 \oplus V_\Gamma,
 \end{equation*}
-
-\todo[inline]{Long sentence. Also may talk about splitting the function space $V$ into $V_0 \oplus V_\Gamma$.}
-
-Lastly, we may split the solution $u$ into interior and boundary components $u_0 + u_\Gamma$ and, since $u_\Gamma$ is prescribed by the boundary condition and hence known, its terms may be moved to the right hand side, giving: find $(u_0, p) \in V_0 \times Q$ such that
-
+where $V_0$ has the usual definition from \cref{eq:vspace}, and $V_\Gamma$ is defined as the space spanned by the functions of $V$ that are non-zero on the boundary.
+With this split we may then rewrite the function $u$ as the sum of the functions $u_0 \in V_0$ and $u_\Gamma \in V_\Gamma$ to give
+\begin{equation*}
+  u = u_0 + u_\Gamma.
+\end{equation*}
+$u_\Gamma$ is prescribed by the boundary condition and hence known.
+This allows us to move it to the right hand side of \cref{eq:weak_stokes_no_surface_terms} giving: find $(u_0, p) \in V_0 \times Q$ such that
 \begin{equation} \label{eq:weak_stokes}
   \begin{aligned}
     \int \nu \nabla u_0 : \nabla v \, \textrm{d}\Omega
