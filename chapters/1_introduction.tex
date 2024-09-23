@@ -567,7 +567,7 @@ Liszt has support for shared-memory, distributed-parallel, and GPU backends wher
     \hline[1pt]
     Mesh renumbering & \mycross & \mytick & \mycross & \mycross & \mytick & \mytick & \mytick \\
     \hline[1pt]
-    Data layout flexibility & \mycross & \mycross & \mycross & $\sim$ & $\sim$ & \mycross & \mytick \\
+    Data layout flexibility & \mycross & \mycross & \mycross & $\sim$ & \mytick & \mycross & \mytick \\
     \hline[1pt]
     Actively maintained & \mycross & \mycross & \mycross & \mytick & \mytick & \mytick & \mytick \\
     \hline[1pt]
@@ -597,22 +597,27 @@ Simit also has support for abstract set types and so is also capable of expressi
 Regarding data layout flexibility, Liszt, Simit, Ebb, and \pyop2 all eagerly commit to a particular data layout which cannot be changed.
 MeshTaichi inherits some of the data layout flexibility from Taichi but this only applies to fields per topological entity. Higher levels of partitioning, such as the \pycode{"space"} partitioning in \cref{fig:scott_vogelius_element_dof_layout_packed}, are not possible.
 OP2 alternates between AoS and SoA layouts depending on the target backend and whether or not the data is addressed directly or indirectly.
-More complex layouts are not possible.
 
 \subsection{The missing abstraction}
 \label{sec:intro_missing_abstraction}
 
-% I am here!!!
-
 \begin{figure}
   \centering
-  \includegraphics{scott_vogelius_element_dof_layout_topological.pdf}
+  \includegraphics[width=\textwidth]{scott_vogelius_element_dof_layout_topological.pdf}
   \caption{
     The closest possible data layout for \cref{fig:scott_vogelius_element_dof_layout_packed} for a library that associates unknowns with topological entities.
     Data for each topological entity are stored in separate arrays.
   }
   \label{fig:scott_vogelius_element_dof_layout_topological}
 \end{figure}
+
+Of the packages listed above, none of them are able to meet all of the requirements in \cref{tab:existing_stencil_code_capabilities} because of fundamental limitations in their abstractions for representing mesh data.
+
+Liszt, Ebb, and MeshTaichi all store mesh data by associating fields with mesh entities.
+This facilitates the development of an expressive DSL because mesh entities are first-class citizens of both the DSL and the data layout specification, making mapping between them straightforward.
+However, this approach to storing data means that high-order function spaces, that store DoFs on multiple entity types (e.g. \cref{fig:scott_vogelius_element}), are difficult to express and have to be stored with the DoFs on each entity type stored separately.
+An example of this for the Scott-Vogelius element pair is shown in \cref{fig:scott_vogelius_element_dof_layout_topological}.
+Since the entity arrays are stored separately, this means that mesh renumbering data locality optimisations are impossible to express.
 
 \begin{figure}
   \centering
@@ -624,75 +629,29 @@ More complex layouts are not possible.
   \label{fig:scott_vogelius_element_dof_layout_pyop2}
 \end{figure}
 
-All of the packages listed above follow one of two possible approaches to storing mesh data.
-Liszt, Ebb, and MeshTaichi all store mesh data by associating fields with mesh entities (e.g. vertices).
-This means that high-order function spaces that store DoFs on multiple entities (e.g. \cref{fig:scott_vogelius_element}) are difficult to express and would have to be stored in a manner similar to that shown in \cref{fig:scott_vogelius_element_dof_layout_topological}.
-Consequently, mesh renumbering data locality optimisations are impossible to express.
-
-As an alternative approach, Simit, OP2, and \pyop2 are able to represent function space DoFs more generically as \textit{sets of nodes}.
-Being able to treat all mesh entities equivalently means that mesh renumbering is possible but comes at the expense of topological information.
+As an alternative approach, Simit, OP2, and \pyop2 are able to represent function space DoFs more generically as \emph{sets of nodes}.
+Being able to treat all the nodes of a function space equivalently means that mesh renumbering is possible, but it comes at the expense of topological information.
 This is demonstrated in \cref{fig:scott_vogelius_element_dof_layout_pyop2}, which shows the data layout for a Scott-Vogelius function space as it would be stored in \pyop2.
-Observe that the topological information - the \pycode{"mesh"} layer - is no longer present, emphasising that the relation between nodes and their owning mesh entities is lost.
-This is the principle reason why developing expressive DSLs for mesh stencil calculations is difficult: \textbf{topological information is essential for a composable abstraction}.
+Observe that the topological information - the \pycode{"mesh"} layer - is no longer present, illustrating that the relation between nodes and their owning mesh entities is lost.
+Since topological information is lost, it is difficult to build a composable DSL, explaining why OP2 and \pyop2 both only have restricted interfaces.
+Simit can define data structures using either mesh entities or node sets and so it can either be a composable DSL or support high-order function spaces, but not both at the same time.
 
-\todo[inline]{Fundamentally, node sets do not \textit{look like} function spaces. Hence the abstraction is weak. We can point to things (e.g. pcpatch) where things break down, but fundamentally getting the abstraction right is a good thing in and of itself and is worth doing.}
-
-\todo[inline]{
-  Need section stating "the contribution of this thesis is...".
-}
-% *abstraction* for mesh stencil computations with the following characteristics
-% an (incomplete) implementation of said abstractions, pyop3
-% "pyop3 is an execution model and data model"
-% "gives you things that can't even write in PyOP2..."
+To meet the requirements of \cref{tab:existing_stencil_code_capabilities} it is therefore necessary that a new abstraction for mesh data be developed that is capable of representing complex, interleaved data layouts whilst retaining sufficient topological information to enable an expressive DSL.
+Developing such an abstraction forms the central contribution of this thesis.
 
 \section{Thesis outline}
 
-In this thesis we develop abstractions and associated infrastructure to bridge this gap.
-The core of this novel work is a new abstraction for describing hierarchical data layouts, termed \textit{axis trees}.
-Axis trees allow the user to describe complex data layouts of the sort shown in \cref{fig:scott_vogelius_element_dof_layout_packed} fully, without needing to discard any of the topological information.
-As a convenient side benefit, expressing data layout transformations (\cref{sec:data_layout_transformations}) becomes natural to do.
-
-This is implemented in the new mesh stencil package \pyop3, a near-total rewrite of \pyop2 that aims to substantially improve its expressivity power and composability.
-
-The remainder of this thesis is structured as follows:
-
-\todo[inline]{This isn't very nice as a bulleted list, probably put into a paragraph.}
-
+The remainder of this thesis proceeds as follows:
 \begin{itemize}
   \item
-    \cref{chapter:foundations} introduces the pieces of scientific software that contributed to \pyop3's design, including its precursor \pyop2 and the unstructured mesh framework PETSc DMPlex.
+    \Cref{chapter:foundations} introduces in more detail the abstractions and software packages that contributed to the design of the new abstractions.
   \item
-    \cref{chapter:axis_trees} and \cref{chapter:indexing} present axis trees for the first time, as well as techniques for their symbolic manipulation (termed \textit{indexing}).
+    \Cref{chapter:axis_trees,chapter:indexing} introduce the new abstractions developed for describing mesh data layouts: the \emph{axis tree} and \emph{index tree}.
   \item
-    \cref{chapter:pyop3} 
-  \item
-    \cref{chapter:parallel} discusses extensions to the base design to enable distributed-memory parallelism.
-  \item
-    \cref{chapter:firedrake} integrates \pyop3 into the finite element package Firedrake, replacing \pyop2, and details of this are discussed.
-  \item
-    \cref{chapter:demonstrator_applications} does some simple performance tests and \cref{chapter:summary} is for closing remarks.
+    \Cref{chapter:pyop3} presents \pyop3, a new mesh stencil package built upon these abstractions that meets the full set of requirements of \cref{tab:existing_stencil_code_capabilities}
+    Additional considerations to enable distributed memory parallelism in \pyop3 are then discussed in \cref{chapter:parallel}.
+  \item \Cref{chapter:firedrake} describes how \pyop3 has been integrated into the finite element framework Firedrake, replacing \pyop2, and \cref{chapter:demonstrator_applications} demonstrates this integration with a number of examples.
+  \item Lastly we conclude our findings in \cref{chapter:conclusions} and consider a number of potential directions for future research.
 \end{itemize}
-
-\todo[inline]{
-  Not all of the algorithms that I present in the rest of the thesis have been merged into \pyop3 main because I ran out of time.
-  In particular the layout tabulation and parallel indexing bits haven't been added.
-  Do I need some sort of disclaimer on this?
-  This could potentially be a good place for that.
-}
-
-% NOTE: I don't like including this but I think I have to be honest about this.
-% put in a box
-% Disclaimer:
-% Whilst all of the functionality of \pyop3 in the following thesis has been tested and shown to work, the time constraints of the PhD mean that \pyop3 is unfinished.
-% Thus not all of the provided functionality has been merged into the \texttt{main} branch yet.
-% This is considered very high priority future work for the project.
-
-% ^^^
-% I can get around this by making it clear that the principle contribution is the abstraction.
-% pyop3 is an incomplete implementation!
-
-% "Though now quite capable, \pyop3 is only an \emph{incomplete} implementation of the abstractions presented in this thesis.
-% Further development work is required before it is suitable for production use."
-
 
 \end{document}
