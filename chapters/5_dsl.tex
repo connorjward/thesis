@@ -410,7 +410,7 @@ If we begin to generate code for the loop expression, after expanding implicit p
   \includegraphics{mat_loop_expr.pdf}
 \end{center}
 Generating code from these nodes follows an identical process to that described in \cref{sec:pyop3_codegen} with one exception: the matrix packing operation `\ccode{write(t0, mat[(f(ix),:), (f(ix),:)])}'.
-Since the data is stored in a PETSc \ccode{Mat} instead of a \numpy array, its values must be accessed using the PETSc C API, instead of directly addressing offsets in a memory buffer.
+Since the data are stored in a PETSc \ccode{Mat} instead of a \numpy array, its values must be accessed using the PETSc C API, instead of directly addressing offsets in a memory buffer.
 
 In order to read from and write to a PETSc \ccode{Mat}, the functions \ccode{MatGetValues()} and \ccode{MatSetValues()} must be used respectively.
 They have near-identical function signatures, with that for \ccode{MatGetValues()} being:

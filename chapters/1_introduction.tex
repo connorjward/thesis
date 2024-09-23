@@ -513,6 +513,7 @@ PETSc, for example, provides a parallel matrix type that has routines for access
 \end{figure}
 
 \subsubsection{Mesh renumbering}
+\label{sec:intro_mesh_numbering}
 
 During the execution of a mesh stencil, the input and output global data structures are accessed with indirection maps.
 Accessing data indirectly incurs a performance penalty because it defeats hardware-implemented memory optimisations such as prefetching, where adjacent blocks of memory are loaded into a cache line together.
@@ -534,7 +535,7 @@ Whilst not necessary for low-order methods, where DoFs are only stored on a sing
 \subsubsection{Data layout flexibility}
 \label{sec:intro_data_layout_flex}
 
-In order to get optimal performance on different platforms, especially when transitioning from CPU to GPU architectures, the way in which data is laid out must be altered (e.g.~\cite{markallFiniteElementAssembly2013,sulyokImprovingLocalityUnstructured2018}).
+In order to get optimal performance on different platforms, especially when transitioning from CPU to GPU architectures, the way in which data are laid out must be altered (e.g.~\cite{markallFiniteElementAssembly2013,sulyokImprovingLocalityUnstructured2018}).
 This poses a challenge to many simulation packages as they often commit to a particular representation of the data, typically one optimised for CPU execution, making performance portability difficult to achieve without a substantial rewrite of much of the software.
 One possible way in which this manifests is whether to use a `struct-of-array' (SoA) or `array-of-structs' (AoS) data layout.
 Applied to a finite element function space these data layouts can manifest as, say, having vector components DoFs stored adjacent to one another (AoS, \cref{fig:scott_vogelius_element_dof_layout_packed}) or as separate contiguous blocks (SoA, \cref{fig:scott_vogelius_element_dof_layout_swap}).
@@ -596,7 +597,7 @@ Simit also has support for abstract set types and so is also capable of expressi
 
 Regarding data layout flexibility, Liszt, Simit, Ebb, and \pyop2 all eagerly commit to a particular data layout which cannot be changed.
 MeshTaichi inherits some of the data layout flexibility from Taichi but this only applies to fields per topological entity. Higher levels of partitioning, such as the \pycode{"space"} partitioning in \cref{fig:scott_vogelius_element_dof_layout_packed}, are not possible.
-OP2 alternates between AoS and SoA layouts depending on the target backend and whether or not the data is addressed directly or indirectly.
+OP2 alternates between AoS and SoA layouts depending on the target backend and whether or not the data are addressed directly or indirectly.
 
 \subsection{The missing abstraction}
 \label{sec:intro_missing_abstraction}
