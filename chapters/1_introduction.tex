@@ -306,13 +306,6 @@ These\footnotemark are shown in \cref{fig:scott_vogelius_element} for $k = 3$.
 
 \footnotetext{In two dimensions the Scott-Vogelius element is technically known to be stable only for $k \geq 4$~\cite{guzmanScottVogeliusFiniteElements2018}, but we show $k = 3$ for simplicity.}
 
-%
-% % connectivity
-%
-% From \cref{fig:lagrange_element_2_dofs} it can be seen that the nodes of the function space are associated with different topological entities: 3 with the vertices and 3 with the edges.
-% DoFs on these entities are thus shared between adjacent cells.
-% This connectivity can be seen in \cref{fig:mesh_stencil}.
-
 \subsection{Finite element assembly}
 
 The finite element basis functions from the Ciarlet definition above are given in \emph{reference space}.
@@ -403,94 +396,76 @@ For instance:
 Since the packed local data (bottom) only exists as a temporary its contents are parametrised by the current cell iterate, $c_i$.
 For example, the first vertex that is packed for a particular cell is represented by the function $f^v_0(c_i)$ where $f^v_i$ is the map relating cells to incident vertices.
 
-Developing abstractions to representing this hierarchical structure is challenging, and forms one of the main contributions of this thesis.
+Developing systems to represent this hierarchical structure is challenging, and forms one of the main contributions of this thesis.
 
-\section{Software for continuum mechanics}
+\section{Abstractions for mesh stencils}
 \label{sec:introduction_software}
 
-\todo[inline]{This section is a bit off. The key points are there but the phrasing is not great.}
+When writing continuum mechanics simulations there are myriad considerations that must be taken into account.
+These include both high-level mathematical choices such as the PDE to be solved, the discretisation, and the choice of solver; as well as low-level software design choices including the target backend (CPU or GPU), the sparse matrix format, and the layout of vector data.
 
-Developing simulation software from scratch is very difficult, requiring multiple person-years of developer time and expertise from a range of disciplines.
-Instead, it is usual to use an existing `toolbox' package from which the simulation may be built.
-Using pre-existing packages substantially lower the barrier-to-entry for scientists and provide excellent performance and scalability whilst also being productive.
-% NOTE: Bit unclearly worded
-These packages may be broadly split into two categories: `hand-written' and those that rely on domain-specific compilers and high-level abstractions.
+Even assuming a specific PDE, the unfortunate fact that unites the remaining implementation choices is that they are all \emph{hardware specific}.
+Variations in characteristics between different high-performance computing (HPC) systems mean that, to get optimal performance, any of these choices may need to be changed.
+This limitation is obvious in some cases, for example CPU-only applications cannot be run on a GPU, but less obvious in others where, for instance, one may need to modify the numerics of the simulation (e.g.~\cite{betteridgeCodeGenerationProductive2021}).
 
-\subsubsection{Hand-written packages}
+Many continuum mechanics software packages commit eagerly to particular implementation choices and `bake them in' to the software stack, making backing out such changes at a later date very difficult.
+Nowhere is this more obvious than with the recent transition from CPUs to GPUs as the dominant architecture on HPC systems.
+Many popular simulation packages still do not support GPUs and those that do are only able to because of an immense community effort involving large numbers of developers (e.g.~\cite{millsPETScTAODevelopments2024,millsPerformancePortablePETScGPUbased2020,brownLibCEEDFastAlgebra2021,abdelfattahGPUAlgorithmsEfficient2021}).
 
-By far the simpler to produce, hand-written packages are composed of a set of functions and types, usually written in a compiled language like C or \cplusplus, that are called by the user via the package's API.
-Hand-written packages have seen tremendous success in the scientific community with packages such as BLAS~\cite{lawsonBasicLinearAlgebra1979}, a suite of linear algebra routines used in most scientific software.
-However, the successes of such packages has in part relied on the simplicity of the features that they implement.
-As the software gets more and more complex, more and more variants of the same program must be written in order to get optimal performance - an infeasible proposition.
-Further, hand-written codes necessarily combine the mathematical details of the problem with low-level optimisations in the code.
-This makes collaboration difficult, as code developers require expertise in both the mathematics and software optimisation, and also means that numerous assumptions about architecture, data layout, and many more are `baked-in' and exceedingly difficult to change at a later date (e.g. if porting the code to a GPU).
+In order to avoid this sort of huge re-engineering effort, packages exist that automate the transition between the different implementation choices.
+Examples include the SYCL~\cite{SYCL2020Specification2020} and OpenCL~\cite{stoneOpenCLParallelProgramming2010} programming models, which provide unified interfaces for programming heterogeneous hardware, and, at a much higher level, PETSc~\cite{petsc-user-ref,petsc-web-page,petsc-efficient}, a library for massively parallel linear algebra that allows the user to very easily try different solvers and preconditioners (e.g.~\cite{brownComposableLinearSolvers2012,smithPETScSoftwareStrategy}).
+With packages such as these, users can easily experiment with different implementations to find the optimum configuration for their platform.
 
-For continuum mechanics problems, providing a general purpose toolbox package with a hand-written library is especially challenging.
-Most of the performance-critical code - the `hot loops' - is specialised to the choice of discretisation and PDE.
-In order to support a wide range of simulation types, PDE-solving packages like \texttt{deal.II}~\cite{dealII95,dealii2019design} and libCEED~\cite{brownLibCEEDFastAlgebra2021} require the user to provide custom kernels.
+This sort of automation is achieved with the use of appropriate, high-level \emph{abstractions}.
+Instead of reasoning about a program in terms of primitives of a low-level programming language (i.e. loops, scalar instructions, pointers), the user is presented with an interface that better represents the semantics of the problem domain.
+An example of this is the Basic Linear Algebra Subprograms (BLAS) linear algebra interface~\cite{lawsonBasicLinearAlgebra1979}.
+With it, users can reason about their programs using vectors and matrices as primitives and apply operations to them, without needing to consider the internal details of their implementation.
+The use of high-level abstractions leads to a separation of concerns between users of a library, who reason at the level of the abstraction, and the library developers, who implement it. 
+The result is a programming environment where users are able to produce high performance code in a productive way.
 
-\todo[inline]{This doesn't read very well, but I want to make a point that abstractions are "zero-cost" later on.}
+\subsubsection{Code generation}
 
-To detangle different pieces of code, libraries may use higher-level abstractions such as object-oriented programming.
-Adding abstractions at this point leads to an increased overhead though as the compiled code needs to follow more pointers to access methods and adding functions and methods creates `black boxes' that the compiler struggles to optimise through.
+It is especially challenging to develop high-level abstractions for mesh stencil calculations because of the level at which problem-specific information is exposed.
+Compared with BLAS-like linear algebra routines, where operations are expressed over entire matrices and vectors, the specifics of the PDE and discretisation manifest in the performance-critical local kernel and pack/unpack operations.
+Developing abstract interfaces for these operations is therefore not possible without harming performance.
 
-\subsubsection{Domain-specific compiler packages}
+Code generation can be used to solve this problem.
+Instead of hiding implementation details behind abstract operations at run-time, a \emph{compiler} can be used to take a symbolic representation of the problem and convert it into fast code.
+Since the details of the abstraction are only present at compile-time, code generation can be thought of as a `zero-cost' abstraction.
 
-As an alternative approach, a number of packages instead use code generation to automate the process.
-Code generation operates on alternative, domain-specific high-level representations of the problem that may then be lowered, possibly via a series of intermediate representations, to an executable.
-Unlike hand-written codes, these high-level abstractions have `zero-cost' as they only exist at compile-time.
-Having multiple representations of the problem has a number of benefits:
+Examples of continuum mechanics simulation packages where code generation is used for the mesh stencil step include the finite element libraries DUNE-FEM~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, as well as the finite difference library Devito~\cite{devito-api,luporiniArchitecturePerformanceDevito2020}.
 
-% TODO: I think performance should be its own paragraph, the others can be lumped together
+In addition to providing a zero-cost abstraction, by representing the problem at a high level, it is sometimes possible for the compiler to apply specialised optimisations that would be difficult to apply by hand.
+Whilst always the case that any automatically generated code could also have been written by hand, compilers frequently generate code with comparable or even superior performance to hand-written implementations~\cite{ragan-kelleyHalideLanguageCompiler}.
+One example of this is sum factorisation, a FLOP-reduction technique applicable to finite element simulations with tensor-product structure~\cite{homolyaExposingExploitingStructure2017}.
+The compiler can even sometimes do auto-tuning, where a space of possible solutions is explored to find the fastest one.
+Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler}, and the Sparse Polyhedral Framework (sparse linear algebra)~\cite{stroutSparsePolyhedralFramework2018}.
+If done at runtime, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy}.
+
+\subsubsection{Abstraction design}
+
+In order for any abstraction to be effective it must adequately capture the semantics of the problem domain so that the desired program can be automated.
+The choice of appropriate types and interfaces is therefore critical to its utility.
+For the design of a mesh stencil abstraction there are a number of clear requirements:
 \begin{itemize}
-  \item
-    It allows for a separation of concerns between users and developers, facilitating contributions from users without a background in performance optimisation.
-  \item
-    High level representation is more productive to develop in.
-  \item
-    By representing the problem at a high level, it is sometimes possible for the compiler to apply specialised optimisations that would be difficult to apply by hand.
-    Whilst always the case that any automatically generated code could also have been written by hand, compilers frequently generate code with comparable or even superior~\cite{ragan-kelleyHalideLanguageCompiler} performance to hand-written implementations.
-    An example of this is sum factorisation, a FLOP-reduction technique applicable to finite element simulations with tensor-product structure~\cite{homolyaExposingExploitingStructure2017}.
-    The compiler can even sometimes do auto-tuning, where a space of possible solutions is explored to find the fastest one.
-    Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler}, and the Sparse Polyhedral Framework (sparse linear algebra)~\cite{stroutSparsePolyhedralFramework2018}.
-    If done at runtime, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy}.
+  \item There must be a mechanism for declaring loops over mesh entities.
+  \item It should either accept, or be able to express, arbitrary local kernels that accept any number of inputs and outputs.
+  \item There must be a mechanism for specifying the pack/unpack operations that relate global data to the current iterate.
+  \item Scalar, vector and (preferably sparse) matrix types should all be supported.
 \end{itemize}
 
-Examples of continuum mechanics simulation packages using domain-specific compilers include the finite element libraries Dune-Fem~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, all using the same DSL for expressing weak forms UFL~\cite{alnaesUnifiedFormLanguage2014a}, and the finite difference library Devito~\cite{devito-api,luporiniArchitecturePerformanceDevito2020}, that uses Sympy~\cite{10.7717/peerj-cs.103} as its top-level DSL.
+Further, it is not always the case that stencil algorithms consist of a single loop and single local kernel.
+Whilst this model holds for finite element assembly, other algorithms important for solving continuum mechanics problems are not expressible.
+Examples include hybridisation~\cite{arnoldMixedNonconformingFinite1985,boffi2013mixed} and additive-Schwartz methods~\cite{arnoldPRECONDITIONINGDivAPPLICATIONS1997}.
+Hybridisation requires that multiple local kernels be evaluated at each stencil iterate~\cite{gibsonSlateExtendingFiredrake2020}, and additive-Schwartz methods need to execute extra nested loops~\cite{farrellPCPATCHSoftwareTopological2021}.
+If we want our abstraction to be able to express these algorithms then it is important that it has a flexible and composable interface.
+This sort of interface is often called a \emph{domain-specific language} (DSL).
 
-Despite these benefits, DSLs have not been adopted wholesale into the continuum mechanics simulation community for a number of reasons:
+\subsection{Desirable characteristics for a mesh stencil package}
+\label{sec:intro_desirable_traits}
 
-\begin{itemize}
-  \item
-    Vast resources have been expended to produce hand-coded implementations with exceptional performance.
-    Current performance of generated code is not competitive and harder to improve given that it is hidden behind a compiler.
-  \item
-    Compilation at run-time can be slow.
-  \item
-    Abstractions are fundamentally limiting, numerical methods currently being researched may not be expressible in the abstraction and hence may be impossible to implement without redesigning the abstraction.
-\end{itemize}
-
-Clearly, further research to address these concerns is required.
-
-\todo[inline]{The takeaway from this section \textit{should} be that DSLs are great for continuum mechanics but that designing the right abstractions is both important and difficult.}
-% "good codegen relies on capturing behaviour via powerful abstractions"
-% else need sui-generis solutions that do not generalise/extend
-% "getting the abstraction right (and at the right level) lets us do things like sum factorisation (FInAT) and automatic adjoint (pyadjoint)"
-
-\subsection{Requirements for a mesh stencil compiler}
-
-\todo[inline]{As David stressed, we need to talk about what a stencil language should look like/what it needs!}
-% i.e. the *essential* parts of the abstraction.
-% e.g. "ability to represent a wide range of kernels and stencil definitions" - execution model
-% also needs an appropriate "data model" (i.e. function spaces etc)
-% "stencil flexibility" and "data flexibility"
-% e.g. PyOP2 pre-commits to particular stencil patterns - leads to sui-generis...
-% TODO: Include these in the checklist!!!
-
-In addition to having the right high-level abstractions and backing code generation infrastructure, there a number of essential requirements that a mesh stencil package must meet in order for it to be effective.
-These requirements are:
-
-\todo[inline]{No, these are \emph{not} requirements, but desirable characteristics}
+In addition to the requirements of a mesh stencil abstraction listed above, there a number of characteristics that it is desirable for a mesh stencil package to have support for.
+These are:
 
 \subsubsection{Distributed memory parallelism}
 \label{sec:intro_parallelism}
@@ -502,30 +477,22 @@ These requirements are:
     Diagram showing the DoFs for a function distributed between 2 processes.
     DoFs existing on multiple processes are represented by diamonds, with filled diamonds being those belonging to that process and hollow ones being ghost DoFs.
     DoFs that are not duplicated across processes are shown as circles.
-    Sample (cell-wise) stencils are shown in grey to demonstrate that the ghost DoFs are required for the stencils to be computable.
+    Sample stencils (cell-wise) are shown in grey to demonstrate that the ghost DoFs are required for the stencils to be computable.
   }
   \label{fig:pyop2_split_mesh}
 \end{figure}
 
 In massively parallel simulations the data structures are often too large to be stored in the memory of any individual node.
-Instead, they are \textit{distributed} between all of the processes, with each process owning, and seeing, only a small piece of the entire structure.
-For vectors it is usual to store the DoFs according to some partitioning of the mesh (\cref{fig:pyop2_split_mesh}).
-Depending on the stencil calculation, processes often need to store DoFs at their boundaries belonging to different processes; these entities are frequently referred to as \textit{ghost points}.
-For matrices the DoF partitioning process is less straightforward.
-Linear algebra libraries such as PETSc~\cite{petsc-user-ref,petsc-web-page,petsc-efficient} provide routines for accessing parallel matrices in a manner such that off-process DoF accesses are hidden.
-\textbf{Mesh stencil packages need to have support for distributed data structures as well as have the right routines for ensuring the correctness of the ghost points.}
+Instead, they are \emph{distributed} between all of the processes, with each process owning, and seeing, only a small piece of the entire structure.
 
-\subsubsection{Performance portability}
+For vectors, where DoFs are associated with topological entities, it is usual to store the DoFs according to some partitioning of the mesh.
+Depending on the stencil calculation, this requires that processes store additional DoFs, called \emph{ghost} DoFs, at their boundaries that belong to different processes.
+An example of a vector partitioned according to a mesh partition is shown in \cref{fig:pyop2_split_mesh}.
+Ghost DoFs are shown as existing on both processes which ensures that all of the values accessed by the stencil are present locally.
 
-\todo[inline]{Need to make it clear in the structure of this section that we want performance portability to be \emph{possible}, not necessarily delivered!}
-% motivates codegen, perhaps needn't be mentioned here but only above in the "abstraction/codegen" bit
-
-Due to the search for ever-increasing computational power and energy efficiency, it is no longer possible to write a piece of low-level code and deploy it on all supercomputers.
-GPU machines now beginning to dominate the HPC landscape.
-Also ARM (RISC) CPUs are popular (e.g. Fugaku).
-Programming for these disparate architectures requires both new programming languages/models, in the case of GPUs, as well as high-level algorithmic changes~\cite{betteridgeCodeGenerationProductive2021} to get acceptable performance.
-The situation is further complicated by the programming models being vendor-specific with languages such as CUDA, HIP and Sycl all being specially designed to get performance from a particular vendor's accelerators.
-\textbf{A successful mesh stencil code should be able to switch between backends with only minimal changes to both user and internal code, and be reasonably performant for them all.}
+For matrices, the DoF partitioning process is less straightforward.
+Rather than implementing a parallel matrix type by-hand it is common to use existing library implementations instead.
+PETSc, for example, provides a parallel matrix type that has routines for accessing values that hide the complexities of reading off-process DoFs.
 
 \begin{figure}
   \centering
@@ -536,7 +503,7 @@ The situation is further complicated by the programming models being vendor-spec
   \end{subfigure}
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics{two_cell_mesh_lagrange_data_layout_flat.pdf}
+    \includegraphics[width=\textwidth]{two_cell_mesh_lagrange_data_layout_flat.pdf}
   \end{subfigure}
   \caption{
     Data layout for a $P_3$ function space on a two cell mesh.
@@ -547,12 +514,12 @@ The situation is further complicated by the programming models being vendor-spec
 
 \subsubsection{Mesh renumbering}
 
-During the execution of a mesh stencil the input and output global data structures are accessed with indirection maps.
-Accessing the data indirectly incurs a performance penalty because it defeats hardware-implemented memory optimisations such as prefetching, where adjacent blocks of memory are loaded into a cache line together.
-To improve data locality, a common optimisation is to \textit{renumber the mesh entities} such that, say, edge DoFs are `close' to the DoFs of their incident cell (e.g. Algorithm 3 of~\cite{langeEfficientMeshManagement2016}).
+During the execution of a mesh stencil, the input and output global data structures are accessed with indirection maps.
+Accessing data indirectly incurs a performance penalty because it defeats hardware-implemented memory optimisations such as prefetching, where adjacent blocks of memory are loaded into a cache line together.
+To improve data locality, a common optimisation is to \emph{renumber} the mesh entities such that, say, edge DoFs are `close' to the DoFs of their incident cell, as well as ensuring that adjacent cells are also close in memory (e.g.~\cite{langeEfficientMeshManagement2016}, Algorithm 3).
 This increases both the chance that adjacent required DoFs will be loaded onto the same cache line (spatial locality), and also the chance that DoFs shared between successive iterates will already be in cache (temporal locality).
 An example of such a renumbering is shown in \cref{fig:mesh_renumbering_demo}; the data for the vector is arranged such that incident edge and vertex DoFs are adjacent in memory to their cell.
-Whilst not necessary for low-order methods, where DoFs are only stored on a single entity type, \textbf{a truly generic mesh stencil code needs to have support for `interleaving' DoFs of different entity types.}
+Whilst not necessary for low-order methods, where DoFs are only stored on a single entity type, a truly generic mesh stencil code should have support for `interleaving' DoFs of different entity types.
 
 \begin{figure}
   \centering
@@ -564,79 +531,78 @@ Whilst not necessary for low-order methods, where DoFs are only stored on a sing
   \label{fig:scott_vogelius_element_dof_layout_swap}
 \end{figure}
 
-\todo[inline]{does referencing this label work?}
 \subsubsection{Data layout flexibility}
 \label{sec:intro_data_layout_flex}
 
 In order to get optimal performance on different platforms, especially when transitioning from CPU to GPU architectures, the way in which data is laid out must be altered (e.g.~\cite{markallFiniteElementAssembly2013,sulyokImprovingLocalityUnstructured2018}).
-This poses a challenge to many simulation packages as they often commit to a particular representation of the data, typically one optimised for CPU execution, posing difficulties for achieving performance portability without a substantial rewrite of much of the software.
-One possible way in which this manifests is whether or not to use a `struct-of-array' (SoA) or `array-of-structs' (AoS) data layout.
-Applied to a finite element function space these data layouts can manifest as, say, having vector components stored adjacent to one another (AoS, \cref{fig:scott_vogelius_element_dof_layout_packed}) or separately (SoA, \cref{fig:scott_vogelius_element_dof_layout_swap}).
+This poses a challenge to many simulation packages as they often commit to a particular representation of the data, typically one optimised for CPU execution, making performance portability difficult to achieve without a substantial rewrite of much of the software.
+One possible way in which this manifests is whether to use a `struct-of-array' (SoA) or `array-of-structs' (AoS) data layout.
+Applied to a finite element function space these data layouts can manifest as, say, having vector components DoFs stored adjacent to one another (AoS, \cref{fig:scott_vogelius_element_dof_layout_packed}) or as separate contiguous blocks (SoA, \cref{fig:scott_vogelius_element_dof_layout_swap}).
 
-\textbf{As a consequence, we naturally want mesh stencil codes to be able to support a variety of data layout representations, ideally without any major changes to the code.}
-Taking a high-level abstraction approach is useful for this as a separation of concerns may be drawn between the semantics of the data and its materialisation.
-Examples of such abstractions providing high-level interfaces for constructing differing data layouts include Taichi~\cite{huTaichiLanguageHighperformance2019}, a DSL for graphics simulations, and TACO~\cite{kjolstadTacoToolGenerate2017}, a compiler for tensor algebra.
-Both packages separate the specification of the data layouts from the implementation of the algorithms and have been shown to have excellent performance.
+For mesh stencil codes is is therefore desirable that a variety of different data layouts are supported.
+One way in which this can be achieved is to decouple the semantics of the data from its implementation.
+Taichi~\cite{huTaichiLanguageHighperformance2019}, a DSL for graphics simulations, and TACO~\cite{kjolstadTacoToolGenerate2017}, a compiler for tensor algebra, both provide high-level interfaces for constructing data layouts.
+These specifications exist independently of any algorithm, and code generation is used to bridge the gap.
+This lets one write a generic algorithm once and experiment with a range of different storage formats to find the one that performs best.
 
 \subsection{Existing mesh stencil packages}
 \label{sec:intro_existing_software}
-
-\todo[inline]{Maybe have macros to make sure the headings agree with above (they currently don't!).}
-\begin{table}
-  \centering
-
-  \begin{tblr}{|[1pt]l|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]}
-    \hline[1pt]
-    & \textbf{Liszt} & \textbf{Simit} & \textbf{Ebb} & \textbf{MeshTaichi} & \textbf{OP2} & \textbf{PyOP2} \\
-    \hline[1pt]
-    Distributed memory parallelism & \mytick & \mycross & \mycross & \mycross & \mytick & \mytick \\
-    \hline
-    Performance portability & \mytick & \mytick & \mytick & \mytick & \mytick & \mycross\footnotemark \\
-    \hline
-    Mesh renumbering\footnotemark & \mycross & \mytick & \mycross & \mycross & \mytick & \mytick \\
-    \hline
-    Dynamic data layouts & \mycross & \mytick & \mytick & \mytick & \mycross & \mycross \\
-    \hline
-    Actively maintained & \mycross & \mycross & \mycross & \mytick & \mytick & \mytick \\
-    \hline[1pt]
-  \end{tblr}
-  \caption{Comparison of the features of some pre-existing mesh stencil packages.}
-  \label{tab:existing_stencil_code_capabilities}
-\end{table}
-
-% FIXME: These don't label correctly
-\footnotetext{Proof-of-concept GPU support has been demonstrated for PyOP2~\cite{fenics2021-kulkarni}.}
-\footnotetext{Simit, OP2, and PyOP2 all support storing data on generic set-like structures so any DoF ordering may be achieved.}
 
 A number of mesh stencil packages already exist, each meeting a subset of the requirements laid out above (see \cref{tab:existing_stencil_code_capabilities}).
 \textbf{Liszt}~\cite{devitoLisztDomainSpecific2011}, \textbf{Simit}~\cite{kjolstadSimitLanguagePhysical2016}, \textbf{Ebb}~\cite{bernsteinEbbDSLPhysical2016}, and \textbf{MeshTaichi}~\cite{yuMeshTaichiCompilerEfficient2022} are DSLs for mesh stencil computations embedded in Scala, \cplusplus, Lua, and Python respectively.
 Each provides a rich API for expressing a variety of loop constructs and stencil operations that may be compiled and executed on a selection of different backends.
 Liszt has support for shared-memory, distributed-parallel, and GPU backends whereas Simit, Ebb, and MeshTaichi only support shared-memory and GPUs.
 
-In contrast with these expressive DSLs, \textbf{OP2}~\cite{mudaligeOP2ActiveLibrary2012} and \textbf{PyOP2}~\cite{rathgeberPyOP2HighLevelFramework2012} are mesh stencil packages with much more restrictive interfaces.
-Rather than providing a full problem-solving environment, OP2 and PyOP2 programs have a single entrypoint, termed a \textit{parallel loop}, that takes an externally provided local kernel along with an \textit{iteration set} and directly or indirectly addressed \textit{arguments}.
-This approach maps cleanly to FEM-style assembly loops such as that shown in \cref{alg:fem_assembly}, which in PyOP2 would be expressed as
+\begin{table}
+  \centering
 
-\begin{pyinline}
-  par_loop(kernel,                                       # local kernel
-           cells,                                        # iteration set
-           coefficient(READ, cell_node_map),             # arguments
-           output(INC, (cell_node_map, cell_node_map)))
-\end{pyinline}
+  \small
+  \begin{tblr}{|[1pt]l|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]}
+    \hline[1pt]
+    & \textbf{Liszt} & \textbf{Simit} & \textbf{Ebb} & \textbf{MeshTaichi} & \textbf{OP2} & \textbf{\pyop2} & \textbf{\pyop3} \\
+    \hline[1pt]
+    Flexible DSL & \mytick & \mytick & \mytick & \mytick & \mycross & \mycross & \mytick \\
+    \hline[1pt]
+    Distributed parallelism & \mytick & \mycross & \mycross & \mycross & \mytick & \mytick & \mytick \\
+    \hline[1pt]
+    Mesh renumbering & \mycross & \mytick & \mycross & \mycross & \mytick & \mytick & \mytick \\
+    \hline[1pt]
+    Data layout flexibility & \mycross & \mycross & \mycross & $\sim$ & $\sim$ & \mycross & \mytick \\
+    \hline[1pt]
+    Actively maintained & \mycross & \mycross & \mycross & \mytick & \mytick & \mytick & \mytick \\
+    \hline[1pt]
+  \end{tblr}
+  \normalsize
+  \caption{
+    Comparison of the features of \pyop3 with pre-existing mesh stencil packages.
+    `$\sim$' indicate partial implementation of a feature.
+  }
+  \label{tab:existing_stencil_code_capabilities}
+\end{table}
 
-OP2 is an \textit{active library} that provides source-to-source translation from C, \cplusplus or Fortran to a range of different backends.
-By contrast, PyOP2 is a reimplementation of the OP2 API in Python, using run-time code generation to compile the parallel loops.
-By using code generation, PyOP2 is easier to integrate with other code generation packages; in particular it is a core component of the Firedrake finite element framework~\cite{FiredrakeUserManual}, which is written in Python.
+In contrast with these expressive DSLs, \textbf{OP2}~\cite{mudaligeOP2ActiveLibrary2012} and \textbf{\pyop2}~\cite{rathgeberPyOP2HighLevelFramework2012} are mesh stencil packages with much more restrictive interfaces.
+Rather than providing a full problem-solving environment, OP2 and \pyop2 programs have a single entrypoint, termed a \emph{parallel loop}, that takes an externally provided local kernel along with an \emph{iteration set} and a list of \emph{arguments}, representing the pack instructions for the kernel inputs and outputs.
+This approach maps well to FEM-style assembly loops such as that shown in \cref{alg:fem_assembly}, but more complex loop or kernel structures cannot be represented without sui-generis, non-composable changes.
 
-Whilst straightforward to implement, having a single entrypoint to these libraries can be restrictive.
-Occasionally one needs to be able to have nested loops, or execute multiple kernels in sequence.
-Convincing PyOP2 to perform these sorts of operations has been done (e.g.~\cite{gibsonSlateExtendingFiredrake2020,farrellPCPATCHSoftwareTopological2021}), but only in a sui-generis manner, resulting in code that is harder to maintain and not composable with other features.
+OP2 is an \emph{active library} that provides source-to-source translation from C, \cplusplus or Fortran to a range of different backends.
+By contrast, \pyop2 is a reimplementation of the OP2 API in Python, using run-time code generation to compile the parallel loops instead of source-to-source translation.
+By using code generation, \pyop2 is easier to integrate with other code generation packages and in particular it is a core component of the Firedrake finite element framework~\cite{FiredrakeUserManual}.
 
-Of the packages that support distributed-memory parallelism, OP2 and PyOP2 differ from Liszt in that their abstractions have no native mesh type; instead dealing in more abstract \textit{sets} and \textit{mappings} between sets.
+Of the packages that support distributed memory parallelism, OP2 and \pyop2 differ from Liszt in that their abstractions have no native mesh type, they instead deal in more abstract \emph{sets} and \emph{mappings} between sets.
 Being able to do this is convenient as building a mature unstructured mesh package is difficult, making the development and maintenance of the stencil package harder.
+Further, by dealing with sets instead of topological entities, OP2 and \pyop2 have the freedom to store data for function spaces where the DoFs are tied to multiple types of topological entity.
+This makes mesh renumbering optimisations possible.
+Simit also has support for abstract set types and so is also capable of expressing mesh renumbering.
+
+Regarding data layout flexibility, Liszt, Simit, Ebb, and \pyop2 all eagerly commit to a particular data layout which cannot be changed.
+MeshTaichi inherits some of the data layout flexibility from Taichi but this only applies to fields per topological entity. Higher levels of partitioning, such as the \pycode{"space"} partitioning in \cref{fig:scott_vogelius_element_dof_layout_packed}, are not possible.
+OP2 alternates between AoS and SoA layouts depending on the target backend and whether or not the data is addressed directly or indirectly.
+More complex layouts are not possible.
 
 \subsection{The missing abstraction}
 \label{sec:intro_missing_abstraction}
+
+% I am here!!!
 
 \begin{figure}
   \centering
@@ -663,7 +629,7 @@ Liszt, Ebb, and MeshTaichi all store mesh data by associating fields with mesh e
 This means that high-order function spaces that store DoFs on multiple entities (e.g. \cref{fig:scott_vogelius_element}) are difficult to express and would have to be stored in a manner similar to that shown in \cref{fig:scott_vogelius_element_dof_layout_topological}.
 Consequently, mesh renumbering data locality optimisations are impossible to express.
 
-As an alternative approach, Simit, OP2, and PyOP2 are able to represent function space DoFs more generically as \textit{sets of nodes}.
+As an alternative approach, Simit, OP2, and \pyop2 are able to represent function space DoFs more generically as \textit{sets of nodes}.
 Being able to treat all mesh entities equivalently means that mesh renumbering is possible but comes at the expense of topological information.
 This is demonstrated in \cref{fig:scott_vogelius_element_dof_layout_pyop2}, which shows the data layout for a Scott-Vogelius function space as it would be stored in \pyop2.
 Observe that the topological information - the \pycode{"mesh"} layer - is no longer present, emphasising that the relation between nodes and their owning mesh entities is lost.
@@ -686,7 +652,7 @@ The core of this novel work is a new abstraction for describing hierarchical dat
 Axis trees allow the user to describe complex data layouts of the sort shown in \cref{fig:scott_vogelius_element_dof_layout_packed} fully, without needing to discard any of the topological information.
 As a convenient side benefit, expressing data layout transformations (\cref{sec:data_layout_transformations}) becomes natural to do.
 
-This is implemented in the new mesh stencil package \pyop3, a near-total rewrite of PyOP2 that aims to substantially improve its expressivity power and composability.
+This is implemented in the new mesh stencil package \pyop3, a near-total rewrite of \pyop2 that aims to substantially improve its expressivity power and composability.
 
 The remainder of this thesis is structured as follows:
 
@@ -694,7 +660,7 @@ The remainder of this thesis is structured as follows:
 
 \begin{itemize}
   \item
-    \cref{chapter:foundations} introduces the pieces of scientific software that contributed to \pyop3's design, including its precursor PyOP2 and the unstructured mesh framework PETSc DMPlex.
+    \cref{chapter:foundations} introduces the pieces of scientific software that contributed to \pyop3's design, including its precursor \pyop2 and the unstructured mesh framework PETSc DMPlex.
   \item
     \cref{chapter:axis_trees} and \cref{chapter:indexing} present axis trees for the first time, as well as techniques for their symbolic manipulation (termed \textit{indexing}).
   \item
@@ -702,7 +668,7 @@ The remainder of this thesis is structured as follows:
   \item
     \cref{chapter:parallel} discusses extensions to the base design to enable distributed-memory parallelism.
   \item
-    \cref{chapter:firedrake} integrates \pyop3 into the finite element package Firedrake, replacing PyOP2, and details of this are discussed.
+    \cref{chapter:firedrake} integrates \pyop3 into the finite element package Firedrake, replacing \pyop2, and details of this are discussed.
   \item
     \cref{chapter:demonstrator_applications} does some simple performance tests and \cref{chapter:summary} is for closing remarks.
 \end{itemize}
