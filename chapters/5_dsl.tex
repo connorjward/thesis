@@ -2,8 +2,6 @@
 
 \begin{document}
 
-% TODO: Discuss how data dependencies are (not) handled.
-
 \chapter{\pyop3}
 \label{chapter:pyop3}
 
@@ -23,18 +21,12 @@ In \pyop3, the execution model refers to the elements of the language used to ex
 It has been designed to resemble the pseudocode for mesh stencil algorithms (e.g. \cref{alg:fem_assembly}) as closely as possible within the constraints of an embedded DSL.
 Its core components therefore are \emph{loops}, \emph{assignments}, and \emph{function calls}.
 
-% NOTE: Doesn't really flow, and repeated as subsubsections below.
-% \subsection{Code generation}
-% \label{sec:pyop3_codegen}
-
-\todo[inline]{explain inames and how domains are specified}
-
 In order to use \pyop3, users create symbolic \emph{loop expressions} from these core components, matching the algorithm they wish to apply.
-Then, behind the scenes, runtime code generation is used to \emph{lower} the symbolic expression down to executable code.
+Then, behind the scenes, runtime code generation is used to lower the symbolic expression down to executable code.
 
 \begin{figure}
   \centering
-  \includegraphics{codegen_flowchart.pdf}
+  \includegraphics[width=\textwidth]{codegen_flowchart.pdf}
   \caption{
     The code generation pipeline for the compilation of a loop expression into a callable function.
     The input (`Loop expression') and output (`Compiled function') are shown in blue whilst the intermediate processes are red.
@@ -46,21 +38,13 @@ Then, behind the scenes, runtime code generation is used to \emph{lower} the sym
 This code generation pipeline is shown in \cref{fig:codegen_flowchart}.
 Loop expressions are lowered first to loopy (\cref{sec:pyop2_codegen}) and then to C, before calling a traditional compiler to build the compiled library.
 To execute the computation, the compiled function is then called using appropriate data from the input loop expression.
-For example, the simple loop expression
-\begin{pyinline}
-  loop(p,
-       kernel(dat0[f(p)], dat1[p]))
-\end{pyinline}
-\noindent
-executing some local kernel (\pycode{kernel}) for each loop index entry (\pycode{p}), expects, at a minimum, two arguments to the generated code: one for \pycode{dat0} and another for \pycode{dat1}.
-Further arguments may be necessary if, say, \pycode{dat0} is ragged and requires a tabulated layout function or if map \pycode{f} is a lookup table.
 
 Both \pyop3 loop expressions and loopy kernels are \emph{transformable representations}, so, as the code is compiled, these layers are able to reason about the program and transform it to alternative but equivalent forms.
 This is typically done for optimisation purposes but \pyop3 also uses the technique more functionally to facilitate compilation.
 The former of these is discussed in \cref{sec:codegen_optimisation} whilst the latter is explained in the forthcoming examples.
 
-\begin{example}{Constant assignment}
-\label{example:assign_codegen}
+\subsection{Example 1: Constant assignment}
+\label{sec:example1_assign}
 
 As a first example of the code generation process in \pyop3, we consider the following assignment operation:
 \begin{pyinline}
@@ -68,48 +52,39 @@ As a first example of the code generation process in \pyop3, we consider the fol
   dat = Dat(axes)
   dat[::2, 1:].assign(666)
 \end{pyinline}
-\noindent
 Here, we assign the scalar value \pycode{666} to entries in the indexed linear array \pycode{dat[::2, 1:]}.
 Since a newly initialised \pycode{Dat} starts with a memory buffer of all zeros, following this operation the entries in \pycode{dat} will be
 \begin{equation*}
   \pycode{[0, 666, 666, 0, 0, 0, 0, 666, 666, 0, 0, 0, 0, 666, 666]}.
 \end{equation*}
 
-When the \pycode{assign()} method is called, the following single-node loop expression is produced:
+If we assume the axes of the indexed array to be labelled $c$ and $d$, mapping from $a$ and $b$ respectively, then the indexed array has the following structure:
+\begin{center}
+  \includegraphics{codegen_example1_axis_tree.pdf}
+\end{center}
+which has
+\begin{equation*}
+  \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1
+\end{equation*}
+as the substituted layout function (\cref{chapter:indexing}).
 
+\subsubsection{Code generation}
+
+When the \pycode{assign()} method is called, the following single-node loop expression is produced:
 \begin{center}
   \includegraphics{codegen_example1_expr.pdf}
 \end{center}
-
-% also the name of the subsection!
-\subsubsection{Code generation}
-
 To generate code for this expression, the expression tree is descended and appropriate loopy constructs - domains, instructions, and arguments - are generated.
-These are then used to construct a complete loopy kernel.
-
+These are then used to construct a complete loopy \pycode{LoopKernel}.
 Given that the example only has a single node the traversal of the loop expression is trivial and only the \ccode{write} node is visited.
-Before processing the \pycode{write} node we make the following observations:
-\begin{itemize}
-  \item
-    If we assume the axes of the indexed array to be labelled $c$ and $d$, mapping from $a$ and $b$ respectively, then the indexed array has the following structure:
-    \begin{center}
-      \includegraphics{codegen_example1_axis_tree.pdf}
-    \end{center}
-
-  \item
-    The substituted layout function (\cref{chapter:indexing}) is therefore given by
-    \begin{equation*}
-      \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1.
-    \end{equation*}
-\end{itemize}
 
 \begin{listing}
   \centering
   \begin{minipage}{.9\textwidth}
-    \inputminted{text}{./scripts/artefacts/codegen_example1_loopy_kernel_tidy.txt}
+    \inputminted[linenos]{text}{./scripts/artefacts/codegen_example1_loopy_kernel_tidy.txt}
   \end{minipage}
   \caption{
-    Abbreviated textual representation of the loopy kernel generated for the example expression in \cref{example:assign_codegen}.
+    Abbreviated textual representation of the loopy kernel generated for the example expression in \cref{sec:example1_assign}.
   }
   \label{listing:codegen_example1_loopy_kernel}
 \end{listing}
@@ -117,13 +92,19 @@ Before processing the \pycode{write} node we make the following observations:
 We are now in a position to generate code:
 \begin{enumerate}
   \item
-    Loops are generated for the axes of the \emph{indexed} array and the mapping from axis label to loop index name is recorded.
-    In this case, two loops with extents 3 and 2 would be created.
-    If the former has a loop index called \pycode{"i_0"} and the latter \pycode{"i_1"} then the mapping $\{ c \to \pycode{"i_0"},\ d \to \pycode{"i_1"}\}$ is also stored.
+    First, loops are generated for the axes of the \emph{indexed} array, and the mapping from axis label to loop index name is recorded.
+    In this case, two loops with extents 3 and 2 and index names \pycode{"i_0"} and \pycode{"i_1"} are created, and the stored mapping is thus $\{ c \to \pycode{"i_0"},\ d \to \pycode{"i_1"}\}$.
+
+    These loops are written in loopy as
+    \begin{pyinline}
+      "{ [i_0]: 0 <= i_0 <= 2 }"
+      "{ [i_1]: 0 <= i_1 <= 1 }"
+    \end{pyinline}
+    The labels \pycode{"i_0"} and \pycode{"i_1"} are referred to by loopy as \emph{inames}.
 
   \item
-    The assignment instruction is generated with the appropriate substituted layout function, replacing axis indices as appropriate.
-    For this example this produces the instruction:
+    Then, the right assignment instruction is generated with the appropriate substituted layout function, replacing axis indices as appropriate.
+    For this example, recalling that the substituted layout is $6 i_c + i_d + 1$, this produces the instruction:
     \begin{pyinline}
       dat[6*i_0 + i_1 + 1] = 666
     \end{pyinline}
@@ -135,22 +116,19 @@ We are now in a position to generate code:
   }
   \centering
   \begin{minipage}{.9\textwidth}
-    \inputminted{c}{./scripts/artefacts/codegen_example1_c_code_tidy.c}
+    \inputminted[linenos]{c}{./scripts/artefacts/codegen_example1_c_code_tidy.c}
   \end{minipage}
   \label{listing:codegen_example1_c_code}
 \end{listing}
 
-The actual loopy kernel generated for this expression is shown in \cref{listing:codegen_example1_loopy_kernel}, and the subsequently generated C code in \cref{listing:codegen_example1_c_code}.
-Note that the input array has been passed through as an argument in the generated code but that it has been given a new name: \pycode{array_0}.
+The loopy kernel generated for this expression is shown in \cref{listing:codegen_example1_loopy_kernel}, and the subsequently generated C code in \cref{listing:codegen_example1_c_code}.
+Note that \pycode{dat} has been passed through as an argument in the generated code but that it has been given a new name: \pycode{array_0}.
 This is because kernel arguments are renamed during code generation to avoid unnecessary cache misses.
 
-\end{example}
+\subsection{Example 2: Outer loops and maps}
+\label{sec:example2_outer_loops}
 
-\begin{example}{Outer loops and maps}
-
-\todo[inline]{Should make this a listing instead. Then we can reference it. Also it doesn't format terribly well. Also then we can reference particular line numbers.}
-
-We now consider a more complex example that better represents the sorts of computations that might occur within a continuum mechanics simulation:
+We now consider a more complex example that more closely approximates a mesh stencil calculation:
 \begin{pyinline}
   axis_a = Axis(5, "a")
   axis_b = Axis(3, "b")
@@ -163,44 +141,25 @@ We now consider a more complex example that better represents the sorts of compu
     kernel(dat0[map0(ia), :], dat1[ia]),
   )
 \end{pyinline}
+Here we loop over the entries in \pycode{axis_a} and apply local kernel \pycode{kernel}, whose implementation is externally provided as a loopy kernel, to indexed arguments \pycode{dat0} and \pycode{dat1}.
 
-We remark upon the following:
-\begin{itemize}
-  \item
-    \pycode{dat0} is a two-dimensional array with shape \pycode{(5, 3)} and axis labels $a$ and $b$, whereas \pycode{dat1} is one-dimensional with shape \pycode{(5,)}, having only axis $a$ in its axis tree.
+\pycode{dat0} is a two-dimensional array with shape \pycode{(5, 3)} and axis labels $a$ and $b$, whereas \pycode{dat1} is one-dimensional with shape \pycode{(5,)}, having only axis $a$ in its axis tree.
+\pycode{dat0} is indexed with an arity 2 tabulated map and a slice, giving it an indexed axis tree like:
+\begin{center}
+  \includegraphics{codegen_example2_axis_tree.pdf}
+\end{center}
+and substituted layout
+\begin{equation}
+  \textnormal{offset}(L^p_a,i_b, i_c) = 3 \pycode{[...][?$L^p_a$?,?$i_c$?]} + i_b.
+  \label{eq:indexed_layout}
+\end{equation}
+where \pycode{[...][?$L^p_a$?,?$i_c$?]} is the lookup expression for the tabulated map.
+\pycode{dat1} is fully indexed by the loop index and so contains just a single entry.
+It simply has the substituted layout
+\begin{equation*}
+  \textnormal{offset}(L^p_a) = L^p_a.
+\end{equation*}
 
-  \item
-    \pycode{map0} maps entries in axis $a$ to other entries in axis $a$.
-    It has arity 2.
-
-  \item
-    The \pycode{loop} expression declares that one should loop over the 5 entries in axis $a$ and evaluate the local kernel (\pycode{kernel}), passing in indexed versions of \pycode{dat0} and \pycode{dat1}.
-
-  \item
-    \pycode{dat0} is indexed with an arity 2 tabulated map and a slice, giving it an indexed axis tree like:
-    \begin{center}
-      \includegraphics{codegen_example2_axis_tree.pdf}
-    \end{center}
-    \noindent
-    and substituted layout
-    \begin{equation}
-      \textnormal{offset}(L^p_a,i_b, i_c) = 3 \pycode{[...][?$L^p_a$?,?$i_c$?]} + i_b.
-      \label{eq:indexed_layout}
-    \end{equation}
-    \noindent
-    where \pycode{[...][?$L^p_a$?,?$i_c$?]} is the lookup expression for the tabulated map.
-
-  \item
-    \pycode{dat1} is fully indexed by the loop index and so contains just a single entry.
-    It simply has the substituted layout
-    \begin{equation*}
-      \textnormal{offset}(L^p_a) = L^p_a.
-    \end{equation*}
-
-  \item
-    \pycode{kernel} is a function taking two arguments with size 6 and intent \pycode{READ}, and size 1 and intent \pycode{INC} respectively.
-    The computation performed by \pycode{kernel} is represented by a loopy kernel.
-\end{itemize}
 
 \begin{table}
   \centering
@@ -210,11 +169,11 @@ We remark upon the following:
     \textbf{Intent} & \textbf{Pack instruction} & \textbf{Unpack instruction} \\
     \hline[1pt]
     \pycode{READ} & \ccode{write(temporary, indexed)} & \tableDash \\
-    \hline
+    \hline[1pt]
     \pycode{WRITE} & \ccode{write(temporary, 0)}  & \ccode{write(indexed, temporary)} \\
-    \hline
+    \hline[1pt]
     \pycode{RW} & \ccode{write(temporary, indexed)} & \ccode{write(indexed, temporary)} \\
-    \hline
+    \hline[1pt]
     \pycode{INC} & \ccode{write(temporary, 0)} & \ccode{inc(indexed, temporary)} \\
     % \hline
     % \pycode{MIN_WRITE} & \tableDash & \ccode{min(indexed, temporary)} \\
@@ -237,26 +196,25 @@ We remark upon the following:
 
 \subsubsection{Kernel intents}
 
-Like Fortran, local kernels in \pyop3 need to declare argument \emph{intents}.
-These are descriptors explaining the manner in which the argument is accessed.
+For this example the local kernel is created with intents \pycode{READ} and \pycode{INC} for its two arguments.
+These intents serve as descriptors explaining the manner in which the argument is accessed.
 Possible values are: \pycode{READ} (read-only), \pycode{WRITE} (write-only), \pycode{RW} (read and write), and \pycode{INC} (increment).
 
 By providing intents, \pyop3 is able to optimise the generated code to reduce the amount of memory that need be accessed.
 For instance, read-only accesses only need to pack global data for the kernel, unpacking the values back again is redundant.
 
-The pack/unpack instructions required for each intent is shown in \cref{tab:intents}.
+The pack/unpack instructions required for each intent are shown in \cref{tab:intents}.
 Only two distinct operations are required: \pycode{write} and \pycode{inc}, where \pycode{write(x, y)} represents the operation $\pycode{x} \gets \pycode{y}$, and \pycode{inc(x, y)} means $\pycode{x} \gets \pycode{x} + \pycode{y}$.
 
-If we inspect the input loop expression from the listing, we see that these pack/unpack operations are implicit, and not shown:
+If we inspect the input loop expression from the listing, we see that these pack/unpack operations are implicit:
 \begin{center}
   \includegraphics{codegen_example2_expr_before.pdf}
 \end{center}
-Since the local kernel expects dense local arrays to be passed to it, rather than (symbolically) indexed arrays, we \emph{transform} the loop expression to make the pack/unpack operations explicit.
+Since the local kernel expects dense local arrays to be passed to it, rather than symbolically indexed arrays, we \emph{transform} the loop expression to make the pack/unpack operations explicit.
 This gives:
 \begin{center}
   \includegraphics{codegen_example2_expr_after.pdf}
 \end{center}
-\noindent
 Note that the temporaries \ccode{t0} and \ccode{t1} are the same shape as their indexed equivalents but are unindexed; they do not carry any indexing information and do not have substituted layouts.
 For \ccode{t0} this means that it has an axis tree identical to the indexed expression \pycode{dat0[map0(ia), :]}:
 \begin{center}
@@ -268,22 +226,20 @@ But with the simpler layout function:
   \label{eq:temporary_layout}
 \end{equation}
 
-% TODO: also the name of the subsection!
 \subsubsection{Code generation}
 
 Having transformed the loop expression we are now able to lower it to a loopy kernel.
-As before, we traverse the loop expression and process each node in turn to collate the necessary loopy constructs.
-
+As before, we traverse the loop expression and process each node in turn to collate the necessary loopy constructs:
 \begin{itemize}
   \item
     When we visit the \ccode{loop} node we generate the single loop over axis $a$:
-    \begin{equation*}
+    \begin{pyinline}
       \pycode{"{ [i_0]: 0 <= i_0 < 5 }"}
-    \end{equation*}
+    \end{pyinline}
     The iname \pycode{i_0} is arbitrary.
     In addition to this loop, we also produce the mapping $\{ L^p_a \to \pycode{"i_0"} \}$, which is propagated through to other nodes in the loop expression tree.
   \item
-    \ccode{write} and \ccode{inc} nodes are handled in the same way as \cref{example:assign_codegen}.
+    The \ccode{write} and \ccode{inc} nodes are handled in the same way as \cref{sec:example1_assign}.
     Inames for the outer loop indices (here $L^p_a$) are substituted into the layout functions in the same way as the inames originating from the axes themselves.
   \item
     The \ccode{kernel} node is trivial, simply emitting a call to the function passing in the arguments \ccode{t0} and \ccode{t1}.
@@ -295,17 +251,15 @@ As before, we traverse the loop expression and process each node in turn to coll
     \inputminted[linenos]{c}{./scripts/artefacts/codegen_example2_c_code_tidy.c}
   \end{minipage}
   \caption{
-    % TODO: want to reference the particular listing!
-    C code generated for the loop expression.
+    C code generated for the loop expression used in \cref{sec:example2_outer_loops}.
+    :.
   }
   \label{listing:codegen_example2_c_code}
 \end{listing}
 
-For our demo, the generated C code can be seen in \cref{listing:codegen_example2_c_code}.
+For this example, the generated C code can be seen in \cref{listing:codegen_example2_c_code}.
 Observe that when reading \pycode{dat0} (line 12) the substituted layout from \cref{eq:indexed_layout} has been used for the right hand side, turning into the expression `\ccode{array_1[2 * i_0 + i_1] * 3 + i_2}', whereas the assignee, \ccode{t0}, uses the unindexed layout (\cref{eq:temporary_layout}) which turns into `\ccode{i_1 * 3 + i_2}'.
 As a tabulated map is required to execute the loop expression, the generated code expects an integer array \ccode{array_1} in addition to the input and output arrays for \pycode{dat0} and \pycode{dat1} (\ccode{array_0} and \ccode{array_2}).
-
-\end{example}
 
 \section{Matrices}
 \label{sec:impl_matrices}
@@ -314,12 +268,13 @@ As a tabulated map is required to execute the loop expression, the generated cod
 Unlike \pycode{Globals}, with no axis trees, and \pycode{Dats}, with one, \pycode{Mats} are constructed with two axis trees, one for the rows of the matrix and one for the columns.
 As an example, to construct a \pycode{Mat} coupling a vector-valued space to a scalar one one might run:
 \begin{pyinline}
-  vector_axes = AxisTree.from_iterable([Axis(5, "a"), Axis(3, "b")])
+  vector_axes = AxisTree.from_iterable([Axis(5, "a"),
+                                        Axis(3, "b")])
   scalar_axes = AxisTree(Axis(5, "a"))
   mat = Mat(vector_axes, scalar_axes)
 \end{pyinline}
 
-Further, \pycode{Mats} do not use \numpy arrays internally to store data; instead they use PETSc matrices (also called \ccode{Mats}).
+Further, \pycode{Mats} do not use \numpy{} arrays internally to store data and instead use PETSc matrices (also called \ccode{Mats}).
 Unlike vectors, which are almost always represented as some variant of a flat array, matrices typically use a wide range of different storage techniques to account for properties like sparsity, symmetry, block structure, distributed in memory, and more.
 PETSc has wide support for a variety of matrix types, and exposes them via a generic interface, making adding support for them to \pyop3 relatively straightforward.
 As an additional benefit, using PETSc matrices means that \pyop3 is compatible with PETSc's wide range of solvers and preconditioners.
@@ -336,9 +291,9 @@ These compose together in the normal way to give two indexed axis trees, that ar
 
 \subsection{Precomputing sparsity patterns}
 
-As we know from \cref{chapter:introduction}, mesh stencil calculations produce \emph{sparse} matrices, where the majority of entries are zeroes.
+As we know from \cref{sec:stokes_equations}, mesh stencil calculations produce \emph{sparse} matrices, where the majority of entries are zeroes.
 To avoid redundant storage and computation, special sparse matrix formats exist that only store the non-zero values.
-For such formats to be performant, it is essential that the locations of the non-zeros - its \emph{sparsity pattern} - be known in advance, because inserting new values would otherwise trigger expensive memory allocation.
+For such formats to be performant, it is sometimes advantageous for the locations of the non-zeros - its \emph{sparsity pattern} - be known in advance, because inserting new values would otherwise trigger expensive memory allocation.
 
 To avoid this cost, \pyop3 can \emph{preallocate} sparse matrices by precomputing the sparsity pattern and using this when building the \pycode{Mat}.
 The process of doing this is as follows:
@@ -356,7 +311,7 @@ The process of doing this is as follows:
       loop(p := iterset.index(), dummy_kernel(sparsity[f(p), f(p)]))
     \end{pyinline}
     Note that the local kernel, here \pycode{dummy_kernel}, should only set placeholder values in \pycode{sparsity}.
-    No computation should be performed as the inserted values are discarded.
+    There is no reason to perform any computation because the inserted values are discarded.
   \item
     Lastly, a `regular' \pycode{Mat} can be constructed from the sparsity:
     \begin{pyinline}
@@ -407,12 +362,12 @@ The indexed matrix therefore has size $9 \times 9$ as both the row and column ax
 
 If we begin to generate code for the loop expression, after expanding implicit pack/unpack instructions we have the loop expression:
 \begin{center}
-  \includegraphics{mat_loop_expr.pdf}
+  \includegraphics[width=\textwidth]{mat_loop_expr.pdf}
 \end{center}
-Generating code from these nodes follows an identical process to that described in \cref{sec:pyop3_codegen} with one exception: the matrix packing operation `\ccode{write(t0, mat[(f(ix),:), (f(ix),:)])}'.
-Since the data are stored in a PETSc \ccode{Mat} instead of a \numpy array, its values must be accessed using the PETSc C API, instead of directly addressing offsets in a memory buffer.
+Generating code from these nodes follows an identical process to that described in \cref{sec:example1_assign,sec:example2_outer_loops} with one exception: the matrix packing operation `\ccode{write(t0, mat[(f(ix),:), (f(ix),:)])}'.
+Since the data are stored in a PETSc \ccode{Mat} instead of a \numpy{} array, its values must be accessed using the PETSc C API, instead of directly addressing offsets in a memory buffer.
 
-In order to read from and write to a PETSc \ccode{Mat}, the functions \ccode{MatGetValues()} and \ccode{MatSetValues()} must be used respectively.
+In order to read from and write to a PETSc \ccode{Mat}, the functions \ccode{MatGetValues()} and \ccode{MatSetValues()} must be used.
 They have near-identical function signatures, with that for \ccode{MatGetValues()} being:
 \begin{cinline}
   MatGetValues(Mat mat,
@@ -420,9 +375,10 @@ They have near-identical function signatures, with that for \ccode{MatGetValues(
                PetscInt n, PetscInt idxn[],
                PetscScalar v[])
 \end{cinline}
-Here \ccode{mat} is the PETSc matrix object and \ccode{v[]} the dense array containing the read values.
+\ccode{mat} is the PETSc matrix object and \ccode{v[]} the dense array containing the read values.
 The arrays \ccode{idxm[]} and \ccode{idxn[]} specify the row and column indices whose values are to be read (with \ccode{m} and \ccode{n} their respective extents).
-Observe that the data type of \ccode{v[]} is \ccode{PetscScalar}; unlike other data structures in \pyop3, matrices are only able to store values with whatever floating point type PETSc was configured with.
+
+We remark that the data type of \ccode{v[]} is \ccode{PetscScalar}; unlike other data structures in \pyop3, matrices are only able to store values with whichever floating point type PETSc was configured with.
 
 To generate code for the \ccode{write} node above we therefore need to emit a function call like:
 \begin{cinline}
@@ -450,12 +406,10 @@ Note that \pyop2 does not need to do this as the `compressed' maps are always pa
 \section{Future performance optimisations}
 \label{sec:codegen_optimisation}
 
-\todo[inline]{Reference chapter 1 for inspector-executor}
-
 In the same way that loopy provides a convenient abstraction level for expressing loop-level optimisations, \pyop3 provides a good level of abstraction for reasoning about higher-level optimisations.
-Notably, by having access to both the symbolics of the computation \emph{and} the input data, exciting inspector-executor-type optimisations become expressible.
+Notably, by having access to both the symbolics of the computation \emph{and} the input data, inspector-executor optimisations (\cref{sec:intro_software_codegen}) become expressible.
 
-Due to the work-in-progress nature of \pyop3 none of the listed optimisations have yet been implemented, but they are included in this thesis as examples of the potential that the abstraction has.
+None of the listed optimisations have yet been implemented, but they are included in this thesis as examples of the potential that the abstraction has.
 
 \subsection{Expression compression}
 \label{sec:pyop3_expression_compression}
@@ -463,12 +417,12 @@ Due to the work-in-progress nature of \pyop3 none of the listed optimisations ha
 In \cref{sec:impl_matrices_codegen} we saw that we needed to `compress' the layout functions for matrices into a flat map between the iteration set and the row/column DoFs.
 Generalising this operation to other settings constitutes a performance optimisation.
 
-Consider, for example, a flat \pycode{Dat} indexed with the map composition $g(f(p))$ where $p$ is some outer loop and $f$ and $g$ are maps tabulated with arrays \pycode{map_f} and \pycode{map_g} respectively.
+Consider, for example, a \pycode{Dat} indexed with the composed map $g(f(p))$ with $p$ some outer loop and $f$ and $g$ maps tabulated with arrays \pycode{map_f} and \pycode{map_g} respectively.
 With these, the indexed \pycode{Dat} would have the substituted layout function
 \begin{equation*}
   \textnormal{offset}(L^p,i_f,i_g) = \pycode{map_g[map_f[?$L^p$?,?$i_f$?],?$i_g$?]}.
 \end{equation*}
-Which, if we further stipulate that $g$ have arity 1, simplifies to
+Which, if we further stipulate $g$ to have arity 1, simplifies to
 \begin{equation*}
   \textnormal{offset}(L^p,i_f) = \pycode{map_g[map_f[?$L^p$?,?$i_f$?]]}.
 \end{equation*}
@@ -496,16 +450,17 @@ Compared with the uncompressed version, using this new layout is advantageous fo
     \pycode{map_f} has the same size as \pycode{map_fg} and so the memory needed for the calculation is $n\cdot a$ \emph{plus} however much memory is read from \pycode{map_g}.
 \end{description}
 
-Expression compression is a similar technique to that done in~\cite{dasSlicingAnalysisIndirect1994}, and is an example of the inspector-executor approach to code generation (\cref{sec:introduction_software}).
+Optimising access patterns like this is similar to the approach taken by~\cite{dasSlicingAnalysisIndirect1994}.
 
 Note that this optimisation does not need to be implemented in \pyop2 because the `compressed' maps are provided at parallel loop construction.
-This optimisation therefore provides a way to reproduce existing \pyop2 performance.
+It therefore provides a way to reproduce existing \pyop2 performance.
 
 \subsection{Runtime data layout transformations}
 
 As described in \cref{sec:intro_data_layout_flex}, it is desirable for mesh stencil codes to have support for expressing the same data in a variety of layouts, so as to take advantage of the performance characteristics of different hardware.
 In sections~\ref{sec:axis_tree_alternative_layouts} and~\ref{sec:indexing_data_layout_transformations} we established that this is entirely possible within \pyop3.
-However, we have assumed thus far that any data layout is immutable for the duration of a program and there are circumstances where one data layout may be optimal for one loop, and another layout may be optimal for another, for example if one is executed on a GPU and the other on the CPU.
+However, we have assumed thus far that any data layout is immutable for the duration of a program.
+This is invalid since there are circumstances where one data layout may be optimal for one loop and another layout be optimal for another, for example if one is executed on a GPU and the other on the CPU.
 At present \pyop3 requires that the user commit to one layout or the other, potentially sacrificing performance.
 
 As an alternative to this, \pyop3 \pycode{Dats} could internally store a number of arrays, each with a different data layout.

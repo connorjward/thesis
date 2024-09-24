@@ -323,7 +323,7 @@ They are computed in two stages:
     The \emph{full layout function} is then determined by summing the partial layout functions.
 \end{enumerate}
 
-To explain how the layout functions are actually computed we present a series of algorithms, starting from the simplest case and iteratively adding features until the complete\footnote{There are additional considerations in parallel that are not considered here, see \cref{sec:parallel_data_layouts} instead.} algorithm is reached.
+To explain how the layout functions are actually computed we present a series of algorithms, starting from the simplest case and iteratively adding features until the complete\footnote{There are additional considerations in parallel that are not considered here, see \cref{sec:parallel_data_layouts}.} algorithm is reached.
 
 \subsection{Intermediate algorithm 1: just linear axis trees}
 
@@ -728,9 +728,11 @@ The instructions \pycode{dependent_axes.iter()} (line~\ref{code:loop_dependent_a
   Accelerating this algorithm through either rewriting it in a faster language like C or using code generation is a high priority.
 }
 
-\subsubsection{Limitations}
+Note that at present it is not possible to have multi-component axes if one of the components is ragged.
+Resolving this requires that the \pycode{start} variable in \cref{alg:collect_layouts_ragged} to support adding offset arrays as well as integers.
 
-At present it is not possible to have multi-component axes if one of the components is ragged.
-Resolving this is possible but requires the \pycode{start} variable in \cref{alg:collect_layouts_ragged} to support adding offset arrays as well as integers.
+\section{Outlook}
+
+TODO
 
 \end{document}

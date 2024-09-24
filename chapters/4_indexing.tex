@@ -732,7 +732,6 @@ To demonstrate this behaviour we consider an identical packing transformation to
 All other code - including the indexing code - is unchanged.
 
 By keeping the indexing code the same we therefore produce the same axis tree and index information as \cref{fig:index_map}:
-
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
     \hline[1pt]
@@ -742,10 +741,7 @@ By keeping the indexing code the same we therefore produce the same axis tree an
     \hline[1pt]
   \end{tblr}
 \end{center}
-
-\noindent
 But, since the layout functions for the unindexed object are different to before, the substituted layout is also necessarily different:
-
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
     \hline[1pt]
@@ -755,8 +751,12 @@ But, since the layout functions for the unindexed object are different to before
     \hline[1pt]
   \end{tblr}
 \end{center}
-
-\noindent
 This demonstrates that even though the DoFs in the local array are exactly the same as before, \emph{they have been extracted from totally different parts of the input array}.
+
+\section{Outlook}
+
+% As we shall see in \cref{chapter:pyop3}, the indexing operations described here provide a natural way to describe the pack/unpack operations necessary for a mesh stencil library.
+
+% Further, views let us have component views...
 
 \end{document}
