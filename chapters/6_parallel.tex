@@ -10,7 +10,7 @@ To extend its functionality to support distributed-memory environments, a number
 Specifically, \pyop3 now needs to consider both how parallel data are arranged (\cref{sec:parallel_data_layouts}), and how ghost data are exchanged (\cref{sec:parallel_star_forests,sec:communication_optimisations}).
 
 Note that most of the following exposition is specific to parallel arrays (i.e. \pycode{Dats} and \pycode{Globals}).
-\pycode{Mats}, by using PETSc matrices as their underlying storage mechanism, are parallel by default and interact little with \pyop3.
+\pycode{Mats}, by using PETSc matrices as their underlying storage mechanism, are parallel by default and so require little intervention by \pyop3.
 
 \section{Parallel data layouts}
 \label{sec:parallel_data_layouts}
@@ -19,26 +19,26 @@ As described in \cref{sec:intro_parallelism,sec:dmplex_parallel}, the usual way 
 Since mesh stencils typically require DoFs from adjacent entities in order to be computable, a small number of \emph{ghost} DoFs must also be kept in the local array.
 
 Whilst essential for the stencil computation, ghost points can be inconvenient for other operations occurring during a simulation.
-To use the finite element method as an example, having assembled the linear system with stencil computations it then needs to be solved to get the solution.
-For this subsequent solve step ghost DoFs need to be discarded so as not to be duplicated in the global vector/matrix.
-To avoid copying data between ghost-inclusive and ghost-free representations of an array, \pyop3 follows the example of \pyop2 and reorders the DoFs so that ghost entries are always stored after owned ones.
+Using the finite element method as an example, to solve the assembled linear system ghost DoFs need to be discarded so as not to appear in the global vector/matrix.
+To avoid copying data between ghost-inclusive and ghost-free representations of an array, \pyop3 follows the example of \pyop2 (\cref{sec:pyop2_interleave}) and reorders the DoFs so that ghost entries are always stored after owned ones.
 This allows one to transform between the different representations without needing to copy data - the ghost-free version is simply a truncated slice of the full, ghost-inclusive array.
 
-In order to represent distributed parallel data layouts using axis trees, axis components are passed an additional \emph{star forest} (\cref{sec:dmplex_parallel}) that encodes the point-to-point equivalence between processes:
+In order to represent distributed parallel data layouts using axis trees, axis components are passed an additional \pycode{StarForest} object (\cref{sec:dmplex_parallel}) that encodes the point-to-point equivalence between processes:
 \begin{pyinline}
   star_forest = StarForest(...)
   parallel_component = AxisComponent(size, sf=star_forest)
   parallel_axis = Axis(parallel_component)
 \end{pyinline}
+\pyop3 \pycode{StarForests} are simply thin wrappers around PETSc ones.
 The ghost points are then stored at the end of the resulting data layout, giving a layout like the following:
 \begin{center}
   \includegraphics{parallel_partition_mesh_axis.pdf}
 \end{center}
-Where ghost points are denoted by the hatching pattern.
+where ghost points are denoted by the hatching pattern.
 
 \subsection{Parallel layout functions}
 
-Whilst straightforward for the linear case, partitioning ghost points to live at the end of the array becomes more difficult in a multi-component setting.
+Whilst straightforward for the linear case, partitioning ghost points to the end of the array becomes more difficult in a multi-component setting.
 As an example, consider the ghost/non-ghost partitioning for the nested axis tree:
 \begin{center}
   \includegraphics{parallel_partition_mixed.pdf}
@@ -55,7 +55,7 @@ Whereas the desired layout should instead look like:
 The need for the latter layout suggests some limitations in our existing layout tabulation algorithms (\cref{sec:axis_tree_layouts}).
 The layout functions for $V_h$ and $Q_h$ both now have discontinuous jumps in the location of their points and so can no longer be expressed as affine functions of the form `$\textnormal{index} \times \textnormal{step} + \textnormal{start}$', and must instead tabulate offsets into an array in a similar manner to the approach used for ragged axis trees.
 Further, tabulating layouts for the ghost portions of $V_h$ and $Q_h$ now requires that \emph{the layouts for both their owned portions be tabulated first}.
-This is because the offset for the ghost section of $V_h$ depends on the size of the owned section of $Q_h$, and vice versa for $Q_h$.
+This is because the offset for the ghost section of $V_h$ depends on the size of the owned section of $Q_h$, and equivalently for $Q_h$.
 
 To address these new conditions, we introduce the concept of \emph{axis component regions}.
 Regions replace the existing concept of an axis component having a size with a collection of $(\textnormal{label}, \textnormal{size})$ 2-tuples.
@@ -74,13 +74,14 @@ For the owned/ghost point classification this means that distributed axis compon
         def collect_layouts(axis_tree: AxisTree):
           layouts = {}
 
-          # extra counter to track the 'shift' between owned and ghost points
+          # counter to track the 'shift' between owned and ghost points
           offset = 0?\label{code:region_offset}?
-          # loop over owned and then owned points
+          # loop over owned and then ghost points
           for region in axis_tree.regions:?\label{code:region_loop}?
-            # call the layout function from ?\cref{sec:axis_tree_layouts}?, but passing
-            # in the extra offset counter and existing layout functions
-            size = collect_layouts_inner(axis_tree.root, layouts, region, offset)
+            # call the layout function from ?\cref{sec:axis_tree_layouts}?, but pass
+            # in an extra offset counter and existing layout functions
+            size = collect_layouts_inner(axis_tree.root, layouts,
+                                         region, offset)
             offset += size
           return layouts
       \end{pyalg2}
@@ -98,26 +99,28 @@ Shown in \cref{alg:collect_layouts_parallel}, the core differences are:
     To account for offset contributions from other axis components a further \pycode{offset} variable is used (line~\ref{code:region_offset}).
     It indicates the initial offset from which offset tabulation should start from.
 \end{itemize}
-These additions are sufficient to correctly compute layout functions for parallel data layouts.
 
-As an additional benefit, the general purpose abstraction of regions means that the same partitioning approach can be taken for other circumstances where this separation is desirable.
+As an additional benefit of this approach, the general purpose abstraction of regions means that the same partitioning approach can be taken for other circumstances where this separation is desirable.
 One example of where this occurs is with Dirichlet boundary conditions, where values on the boundary are constrained to a particular value.
 It can be desirable to store these values in the array but still be able to discard them when solving the assembled system.
 This is the approach taken in~\cite{rothwellImplementingRestrictedFunction2024}.
-One could therefore add an additional region to the axis components to give:
+This can be expressed in \pyop3 by adding additional regions to the axis components:
 \begin{pyinline}
-  [("owned", num_owned), ("constrained", num_constrained), ("ghost", num_ghost)]
+  [("owned", num_owned),
+   ("constrained_owned", num_constrained_owned),
+   ("ghost", num_ghost)
+   ("constrained_ghost", num_constrained_ghost)]
 \end{pyinline}
 
 \subsubsection{Comparison with \pyop2}
 
-Rather than storing data for multi-field problems in a contiguous array, \pyop2 stores each field in a separate sub-array.
+For the multi-field data layout example shown above, \pyop2 would not store the fields in a contiguous array, but instead store each field separately.
 This results in a data layout that looks like:
 \begin{center}
   \includegraphics{parallel_partition_mixed_flat_pyop2.pdf}
 \end{center}
-To construct a global vector from this layout therefore requires copying the owned portions of each array into contiguous storage, which can be expensive on certain hardware.
-\pyop3, by using regions to partition the ghost data to the end of the array regardless of the field structure, is able to avoid this copy, improving performance.
+Constructing a global vector from this layout therefore requires copying the owned portions of each array into contiguous storage, which can be expensive on certain hardware.
+\pyop3, by using regions to partition the ghost data to the end of the array regardless of the field structure, is able to avoid this copy.
 
 \subsection{DoF star forests}
 \label{sec:parallel_star_forests}
@@ -159,7 +162,7 @@ This DoF star forest is generated in two steps:
   \item
     DoF star forests are generated for each parallel axis component from their point star forests and stride information.
   \item
-    These per-axis DoF star forests are then combined to form the final DoF star forest.
+    These per-axis DoF star forests are then combined to form the final DoF star forest for the entire axis tree.
 \end{enumerate}
 
 \section{Communication optimisations}
@@ -171,7 +174,7 @@ Since parallel communication is an expensive operation, we now present optimisat
 \subsection{Minimising communication}
 \label{sec:parallel_minimising_communication}
 
-In order to make sure that the data held by each \pycode{Dat} is valid, two attributes are stored:
+In order to make sure that the data held by each \pycode{Dat} are valid, two attributes are stored:
 \begin{description}
   \item[\pycode{leaves_valid}]
     A boolean value indicating whether or not ghost DoFs (leaves of the DoF star forest) are up-to-date.
@@ -190,11 +193,11 @@ Examples include:
   \item If the array is being read from and all values are already up-to-date, no exchange is necessary.
   \item If ghost values are not being read then they need not be made valid.
   \item If the array is being written to, pending communications can be discarded since the data are being overwritten.
-  \item If the array is being incremented into multiple times in a row, the pending summation reduction need not be executed because the operations commute.
+  \item If the array is being repeatedly incremented into, the summation reduction need not be executed between operations because the reductions commute.
 \end{itemize}
 
 This approach is similar to that of \pyop2 with the exception of \pycode{pending_reduction}, which is a novel contribution.
-Instead \pyop2 would perform leaf-to-root reductions eagerly, which was found to be a bottleneck in certain finite element simulations with multiple assembly loops executed in sequence.
+Instead \pyop2 performs leaf-to-root reductions eagerly, which was found to be a bottleneck in certain finite element simulations with multiple assembly loops executed in sequence.
 
 \subsection{Overlapping communication with computation}
 \label{sec:parallel_overlap_computation_communication}
@@ -202,22 +205,22 @@ Instead \pyop2 would perform leaf-to-root reductions eagerly, which was found to
 \begin{algorithm}
   \caption{The \pyop3 parallel loop execution algorithm to interleave computation and communication.}
   \begin{algorithmic}[1]
-    \State \Call{ReduceLeavesToRootsBegin}{} \Comment{Begin updating \rootiter points}
+    \State \Call{ReduceLeavesToRootsBegin}{} \Comment{Begin updating \rootiter{} points}
 
-    \For{\textit{item} \textbf{in} \textit{iterset.core}} \Comment{Do the computations that \textbf{do not} need \rootiter data}
+    \For{\textit{item} \textbf{in} \textit{iterset.core}} \Comment{Compute \coreiter{} points}
       \State \Call{Compute}{\textit{item}}
     \EndFor
 
-    \State \Call{ReduceLeavesToRootsEnd}{} \Comment{Finish updating \rootiter points}
-    \State \Call{BroadcastRootsToLeavesBegin}{} \Comment{Start updating \leafiter points}
+    \State \Call{ReduceLeavesToRootsEnd}{} \Comment{Finish updating \rootiter{} points}
+    \State \Call{BroadcastRootsToLeavesBegin}{} \Comment{Start updating \leafiter{} points}
 
-    \For{\textit{item} \textbf{in} \textit{iterset.root}} \Comment{Do the computations that \textbf{do} need \rootiter data but \textbf{not} need \leafiter data}
+    \For{\textit{item} \textbf{in} \textit{iterset.root}} \Comment{Compute \rootiter{} points}
       \State \Call{Compute}{\textit{item}}
     \EndFor
 
-    \State \Call{BroadcastRootsToLeavesEnd}{} \Comment{Finish updating \leafiter points}
+    \State \Call{BroadcastRootsToLeavesEnd}{} \Comment{Finish updating \leafiter{} points}
 
-    \For{\textit{item} \textbf{in} \textit{iterset.leaf}} \Comment{Do the computations that \textbf{do} need \leafiter data}
+    \For{\textit{item} \textbf{in} \textit{iterset.leaf}} \Comment{Compute \leafiter{} points}
       \State \Call{Compute}{\textit{item}}
     \EndFor
   \end{algorithmic}
@@ -231,61 +234,61 @@ Since reductions are not done eagerly in \pyop3 the transfer algorithm (\cref{al
   \centering
   \includegraphics{split_mesh_partition.pdf}
   \caption{
-    \coreiter (\textbf{C}), \rootiter (\textbf{R}), and \leafiter (\textbf{L}) labels for a cell-wise loop with stencil shown by the shaded region.
+    \coreiter{} (\textbf{C}), \rootiter{} (\textbf{R}), and \leafiter{} (\textbf{L}) labels for a cell-wise stencil computation with the stencil shown by the shaded region.
     Owned DoFs are filled in and ghost DoFs are hollow.
     Entries that exist in the DoF star forest (those that are duplicated across processes) are shown as diamonds.
   }
   \label{fig:split_mesh_partition}
 \end{figure}
 
-To perform this overlap we first partition the iteration set into 3 disjoint subsets - \coreiter, \rootiter and \leafiter - representing the following:
+To perform this overlap we first partition the iteration set into 3 disjoint subsets:
 \begin{description}
-  \item[\coreiter]
+  \item[\coreiter{}]
     Entities that can be evaluated without waiting for any parallel exchanges to complete because all of the data necessary for the computation is already correctly stored locally.
 
-  \item[\rootiter]
+  \item[\rootiter{}]
     Entities that use data from roots of the DoF star forest.
-    Computing at these points therefore requires that the root data has been updated via a reduction.
+    Computing at these points therefore requires that the root data are (potentially) updated via a reduction.
 
-  \item[\leafiter]
+  \item[\leafiter{}]
     Entities that access data from the leaves of the DoF star forest.
     Executing computations at these points requires that both reductions and broadcasts have been completed beforehand.
 \end{description}
 
-An example iteration set partitioning is shown in \cref{fig:split_mesh_partition}, with \coreiter, \rootiter, and \leafiter points marked as \textbf{C}, \textbf{R}, and \textbf{L} respectively.
-It can be seen that points in the iteration set (the cells) are labelled as \leafiter if their stencil includes a ghost point (hollow diamond), and \rootiter if it includes a shared but owned point (filled diamond).
-All other points do not require any shared data and hence are marked \coreiter.
+An example iteration set partitioning is shown in \cref{fig:split_mesh_partition}, with \coreiter{}, \rootiter{}, and \leafiter{} points marked as \textbf{C}, \textbf{R}, and \textbf{L} respectively.
+It can be seen that points in the iteration set (the cells) are labelled as \leafiter{} if their stencil includes a ghost point (hollow diamond), and \rootiter{} if it includes a shared but owned point (filled diamond).
+All other points do not require any shared data and hence are marked \coreiter{}.
 
 From the figure it is clear to see that the partitioning of the iteration set is a \emph{stencil-dependent process}.
-Larger stencils would result in more points being classified as \rootiter and \leafiter.
-\pyop3 therefore addresses the stated limitation of \pyop2 (\cref{sec:pyop2_parallel}) where the iteration set partition is decided at array initialisation, leading to incorrect partitioning for different stencil sizes.
+Larger stencils would result in more points being classified as \rootiter{} and \leafiter{}.
+\pyop3 therefore addresses the stated limitation of \pyop2 (\cref{sec:pyop2_parallel_limitation}) where the iteration set partition is decided at array initialisation, leading to incorrect partitioning for different stencil sizes and parallel decompositions.
 
-\subsubsection{Determining \coreiter, \rootiter, and \leafiter}
+\subsubsection{Determining \coreiter{}, \rootiter{}, and \leafiter{}}
 
 \begin{algorithm}
   \caption{
-    Algorithm to partition an iteration set into \coreiter, \rootiter, and \leafiter.
+    Algorithm to partition an iteration set into \coreiter{}, \rootiter{}, and \leafiter{}.
   }
   \begin{algorithmic}[1]
     \Require \textit{iteration set}
-    \Require \textit{arrays} \Comment{Arrays that are used in the computation}
+    \Require \textit{arrays} \Comment{Arrays used in the computation}
+    \Require \textit{labels} \Comment{Label for each iterate, defaults to \coreiter{}}
 
-    \State \textit{labels} $\gets$ \Call{AllocArray}{\textit{iteration set.size}} \Comment{Array to hold the labels, defaults to \coreiter}
     \For{\textit{point} \textbf{in} \textit{iteration set}}
-      \For{\textit{array} \textbf{in} \textit{arrays}}
-        \If {\textit{labels}[\textit{point}] = \leafiter}
+      \For{\textit{array} \textbf{in} \textit{arrays}} \Comment{Check the stencil of each array}
+        \If {\textit{labels}[\textit{point}] = \leafiter{}} \Comment{Skip if already \leafiter{}}
           \State \textbf{continue}
         \EndIf
 
-        \For{\textit{stencil point} \textbf{in} \Call{CollectStencil}{point}}
-          \State \textit{sflabel} $\gets$ \Call{GetStarForestLabel}{\textit{stencil point}}
-          \If {\textit{sflabel} = \leafiter}
-            \State \textit{labels}[\textit{point}] $\gets$ \leafiter
-            \State \textbf{break} \Comment{No point checking any more}
-          \ElsIf {\textit{sflabel} = \rootiter}
-            \State \textit{labels}[\textit{point}] $\gets$ \rootiter
-          \Else
-            \State \textbf{pass} \Comment{Default value is \coreiter}
+        \For{\textit{stencil point} \textbf{in} \Call{CollectStencil}{\textit{point}}}
+          \If {\textit{stencil point} \textbf{in} \textit{array.star forest}}
+            \State \textit{star forest label} $\gets$ \Call{GetStarForestLabel}{\textit{stencil point}}
+            \If {\textit{star forest label} = \leafiter{}}
+              \State \textit{labels}[\textit{point}] $\gets$ \leafiter{}
+              \State \textbf{break} \Comment{Most restrictive case, stop further checks}
+            \Else
+              \State \textit{labels}[\textit{point}] $\gets$ \rootiter{}
+            \EndIf
           \EndIf
         \EndFor
       \EndFor
@@ -294,10 +297,14 @@ Larger stencils would result in more points being classified as \rootiter and \l
   \label{alg:partition_iterset}
 \end{algorithm}
 
-The algorithm to partition the iteration set into \coreiter, \rootiter, and \leafiter subsets is straightforward.
-Shown in \cref{alg:partition_iterset}, one simulates the stencil operation and inspects the points touched at each iterate to see whether they are a shared point (i.e. present in the DoF star forest).
-If so then the iterate is marked as \rootiter or \leafiter as appropriate.
-Naturally \leafiter, as the most restrictive condition, takes precendence over \rootiter.
+The algorithm to partition the iteration set into \coreiter{}, \rootiter{}, and \leafiter{} subsets is straightforward.
+Shown in \cref{alg:partition_iterset}, one simulates the stencil operation and inspects the points touched at each iterate to see whether they are a shared point (i.e. whether they are present in the DoF star forest).
+If so then the iterate is marked as \rootiter{} or \leafiter{} as appropriate.
+\leafiter{}, as the most restrictive condition, takes precendence over \rootiter{}.
+
+\section{Summary}
+
+%This chapter stops suddenly, which makes it feel incomplete. I think what is missing is a concluding section which explains why what has been presented is a complete parallel implementation. I think this should include how matrices fit in and hence why they weren't discussed.
 
 \end{document}
 

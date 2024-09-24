@@ -394,6 +394,7 @@ Both \pycode{Dats} associate data with some \pycode{target_set} and hence are ad
 \pycode{dat0} is accessed using the \pycode{READ} access descriptor, meaning that it only needs to be packed and passed into the local kernel, whereas \pycode{dat1} is accessed with \pycode{WRITE}, so it only requires unpacking.
 
 \subsubsection{Interleaving computation and communication}
+\label{sec:pyop2_interleave}
 
 \begin{algorithm}
   \caption{The \pyop2 parallel loop execution algorithm to interleave computation and communication.}
@@ -435,6 +436,7 @@ To facilitate this algorithm, \pyop2 arranges sets, and thus stores data, in a p
 \end{center}
 
 \subsubsection{Limitations}
+\label{sec:pyop2_parallel_limitation}
 
 Arranging the data like this is problematic for one key reason: it conflates the partitioning of the data layout (\ghostiter{}/non-\ghostiter{}) with that of the iteration set (\coreiter{}/\ownediter{}).
 
