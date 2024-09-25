@@ -107,17 +107,17 @@ Given the definition of these spaces and in particular the fact that $v$ is defi
   \end{aligned}
 \end{equation}
 
-\subsubsection{Resolving boundary conditions}
+\subsubsection{Boundary conditions}
 
-To better represent the boundary conditions on space $V$, we can split it in two:
-\begin{equation*}
+To represent the inhomogeneous boundary conditions on space $V$, we split it in two:
+\begin{equation}
   V = V_0 \oplus V_\Gamma,
-\end{equation*}
+\end{equation}
 where $V_0$ has the usual definition from \cref{eq:vspace}, and $V_\Gamma$ is defined as the space spanned by the functions of $V$ that are non-zero on the boundary.
 With this split we may then rewrite the function $u$ as the sum of the functions $u_0 \in V_0$ and $u_\Gamma \in V_\Gamma$ to give
-\begin{equation*}
+\begin{equation}
   u = u_0 + u_\Gamma.
-\end{equation*}
+\end{equation}
 $u_\Gamma$ is prescribed by the boundary condition and hence known.
 This allows us to move it to the right hand side of \cref{eq:weak_stokes_no_surface_terms} giving: find $(u_0, p) \in V_0 \times Q$ such that
 \begin{equation} \label{eq:weak_stokes}
@@ -137,17 +137,17 @@ This allows us to move it to the right hand side of \cref{eq:weak_stokes_no_surf
 \subsection{Discretising the system of equations}
 
 In order to solve this weak formulation using the finite element method we discretise the function spaces in use by replacing them with finite-dimensional equivalents:
-\begin{equation*}
+\begin{equation}
   V_0 \to V_{0,h} \subset V_0,
   \quad
   \quad
   Q \to Q_h \subset Q.
-\end{equation*}
+\end{equation}
 Each of these discrete spaces is spanned by a set of basis functions, allowing functions to be expressed as a linear combination of basis functions and coefficients.
 For example, we can write the function $u_{0,h} \in V_{0,h}$ as
-\begin{equation*}
+\begin{equation}
   u_{0,h} = \sum^N_{i=1} \hat u_i \psi^{V_{0,h}}_i,
-\end{equation*}
+\end{equation}
 where $\psi^{V_{0,h}}_i$ are the basis functions that span $V_{0,h}$ and $\hat u_i$ the coefficients.
 
 If we substitute these discrete spaces into \cref{eq:weak_stokes}, and discard the basis coefficients for the arbitrary functions $v_h$ and $q_h$, we obtain the discrete problem: find the vector $(\hat u, \hat p)$ such that
@@ -246,17 +246,17 @@ First formalised by Ciarlet~\parencite{ciarletElement2002}, a finite element is 
 
 A simple example of a finite element - the Lagrange element with polynomial degree 2, written $P_2$ - is shown in \cref{fig:lagrange_element_2}.
 For this element $K$ is a triangle, $P$ is the space of order 2 polynomials, and the linear functionals of $N$ are defined as the point evaluations
-\begin{equation*}
+\begin{equation}
   l_i(v) = v(x_i)
   \quad
   i = 0,1,\dots,5
-\end{equation*}
+\end{equation}
 for each of the 6 nodes shown in \cref{fig:lagrange_element_2_dofs}, with $x_i$ being the coordinates of the $i$-th node.
 
 Given this definition, one can determine a basis, $\psi_j$, for $P$ by imposing that
-\begin{equation*}
+\begin{equation}
   l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, 5
-\end{equation*}
+\end{equation}
 which for the $P_2$ element yields the basis functions:
 \begin{align*}
   % see https://defelement.com/elements/examples/triangle-lagrange-equispaced-2.html
@@ -311,9 +311,9 @@ These\footnotemark are shown in \cref{fig:scott_vogelius_element} for $k = 3$.
 The finite element basis functions from the Ciarlet definition above are given in \emph{reference space}.
 For them to be usable for assembling the Stokes system of \cref{eq:stokes_linear_system} we must first draw a connection between the domain of the problem, $\Omega$, with the domain of the finite element, $K$.
 To do this, we partition $\Omega$ into a set of disjoint cells, $\mathcal{K}$, called a \emph{mesh}, where
-\begin{equation*}
+\begin{equation}
   \bigcup \mathcal{K} = \Omega.
-\end{equation*}
+\end{equation}
 
 Owing to the local support property of finite element basis functions, one can now rewrite the integrals in \cref{eq:stokes_linear_system} as a sum of cell-wise contributions.
 Using the top left block of the matrix as an example, the integral can be rewritten as
@@ -409,7 +409,7 @@ Variations in characteristics between different high-performance computing (HPC)
 This limitation is obvious in some cases, for example CPU-only applications cannot be run on a GPU, but less obvious in others where, for instance, one may need to modify the numerics of the simulation (e.g.~\cite{betteridgeCodeGenerationProductive2021}).
 
 Many continuum mechanics software packages commit eagerly to particular implementation choices and `bake them in' to the software stack, making backing out such changes at a later date very difficult.
-Nowhere is this more obvious than with the recent transition from CPUs to GPUs as the dominant architecture on HPC systems.
+Nowhere is this more obvious than with the recent ongoing transition from CPUs to GPUs as the dominant architecture on HPC systems.
 Many popular simulation packages still do not support GPUs and those that do are only able to because of an immense community effort involving large numbers of developers (e.g.~\cite{millsPETScTAODevelopments2024,millsPerformancePortablePETScGPUbased2020,brownLibCEEDFastAlgebra2021,abdelfattahGPUAlgorithmsEfficient2021}).
 
 In order to avoid this sort of huge re-engineering effort, packages exist that automate the transition between the different implementation choices.
@@ -437,11 +437,11 @@ Since the details of the abstraction are only present at compile-time, code gene
 Examples of continuum mechanics simulation packages where code generation is used for the mesh stencil step include the finite element libraries DUNE-FEM~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, as well as the finite difference library Devito~\cite{devito-api,luporiniArchitecturePerformanceDevito2020}.
 
 In addition to providing a zero-cost abstraction, by representing the problem at a high level, it is sometimes possible for the compiler to apply specialised optimisations that would be difficult to apply by hand.
-Whilst always the case that any automatically generated code could also have been written by hand, compilers frequently generate code with comparable or even superior performance to hand-written implementations~\cite{ragan-kelleyHalideLanguageCompiler}.
+Whilst it is always the case that any automatically generated code could also have been written by hand, compilers frequently generate code with comparable or even superior performance to hand-written implementations (e.g.~\cite{ragan-kelleyHalideLanguageCompiler}).
 One example of this is sum factorisation, a FLOP-reduction technique applicable to finite element simulations with tensor-product structure~\cite{homolyaExposingExploitingStructure2017}.
-The compiler can even sometimes do auto-tuning, where a space of possible solutions is explored to find the fastest one.
+The compiler can even sometimes perform auto-tuning, where a space of possible solutions is explored to find the fastest one.
 Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler}, and the Sparse Polyhedral Framework (sparse linear algebra)~\cite{stroutSparsePolyhedralFramework2018}.
-If done at runtime, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy}.
+If performed at runtime with additional problem-specific information, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy} (e.g.~\cite{saltzRunTimeParallelizationScheduling,kriegerLoopChainingProgramming2013}).
 
 \subsubsection{Abstraction design}
 
@@ -452,14 +452,14 @@ For the design of a mesh stencil abstraction there are a number of clear require
   \item There must be a mechanism for declaring loops over mesh entities.
   \item It should either accept, or be able to express, arbitrary local kernels that accept any number of inputs and outputs.
   \item There must be a mechanism for specifying the pack/unpack operations that relate global data to the current iterate.
-  \item Scalar, vector and (preferably sparse) matrix types should all be supported.
+  \item Scalar, vector and (sparse) matrix types should all be supported.
 \end{itemize}
 
 Further, it is not always the case that stencil algorithms consist of a single loop and single local kernel.
 Whilst this model holds for finite element assembly, other algorithms important for solving continuum mechanics problems are not expressible.
 Examples include hybridisation~\cite{arnoldMixedNonconformingFinite1985,boffi2013mixed} and additive-Schwartz methods~\cite{arnoldPRECONDITIONINGDivAPPLICATIONS1997}.
 Hybridisation requires that multiple local kernels be evaluated at each stencil iterate~\cite{gibsonSlateExtendingFiredrake2020}, and additive-Schwartz methods need to execute extra nested loops~\cite{farrellPCPATCHSoftwareTopological2021}.
-If we want our abstraction to be able to express these algorithms then it is important that it has a flexible and composable interface.
+For the abstraction to be able to express these algorithms it is thus important that it has a flexible and composable interface.
 This sort of interface is often called a \emph{domain-specific language} (DSL).
 
 \subsection{Desirable characteristics for a mesh stencil package}

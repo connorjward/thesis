@@ -295,11 +295,11 @@ This means that the size of $c$ is effectively determined by the table:
     \boldmath${i_a}$ & \boldmath$i_b$ & \boldmath$\textnormal{\bf size}(i_a, i_b)$ \\
     \hline[1pt]
     0 & 0 & 1 \\
-    \hline
+    \hline[1pt]
     0 & 1 & 0 \\
-    \hline
+    \hline[1pt]
     1 & 0 & 2 \\
-    \hline
+    \hline[1pt]
     1 & 1 & 1 \\
     \hline[1pt]
   \end{tblr}
@@ -350,9 +350,9 @@ To explain how the layout functions are actually computed we present a series of
       \textbf{Path} & \SetCell{c}\textbf{Partial layout} & \SetCell{c}\textbf{Full layout} \\
       \hline[1pt]
       $\{a\}$ & $\textnormal{offset}(i_a) = 6 i_a$ & $\textnormal{offset}(i_a) = 6 i_a$ \\
-      \hline
+      \hline[1pt]
       $\{a, b\}$ & $\textnormal{offset}(i_b) = 2 i_b$ & $\textnormal{offset}(i_a, i_b) = 6 i_a + 2 i_b$ \\
-      \hline
+      \hline[1pt]
       $\{a, b, c\}$ & $\textnormal{offset}(i_c) = i_c$ & $\textnormal{offset}(i_a, i_b, i_c) = 6 i_a + 2 i_b + i_c$ \\
       \hline[1pt]
     \end{tblr}
@@ -455,11 +455,11 @@ Notable elements of the algorithm include:
       \textbf{Path} & \SetCell{c}\textbf{Partial layout} & \SetCell{c}\textbf{Full layout} \\
       \hline[1pt]
       $\{ a^x \}$ & $\textnormal{offset}(i_a) = 3 i_a$ & $\textnormal{offset}(i_a) = 3 i_a$ \\
-      \hline
+      \hline[1pt]
       $\{ a^x, b \}$ & $\textnormal{offset}(i_b) = i_b$ & $\textnormal{offset}(i_a, i_b) = 3 i_a + i_b$ \\
-      \hline
+      \hline[1pt]
       $\{ a^y \}$ & $\textnormal{offset}(i_a) = 2 i_a + 6$ & $\textnormal{offset}(i_a) = 2 i_a + 6$ \\
-      \hline
+      \hline[1pt]
       $\{ a^y, c \}$ & $\textnormal{offset}(i_c) = i_c$ & $\textnormal{offset}(i_a, i_c) = 2 i_a + 6 + i_c$ \\
       \hline[1pt]
     \end{tblr}
@@ -575,14 +575,14 @@ The key differences are highlighted in red and include:
       \textbf{Path} & \SetCell{c}\textbf{Partial layout} & \SetCell{c}\textbf{Full layout} \\
       \hline[1pt]
       $\{a\}$ & $\textnormal{offset}(i_a) = \pycode{[0,1][?$i_a$?]}$ & $\textnormal{offset}(i_a) = \pycode{[0,1][?$i_a$?]}$ \\
-      \hline
+      \hline[1pt]
       $\{a,b\}$
       & $\textnormal{offset}(i_a, i_b) = \pycode{[[0,1],[0,2]][?$i_a$?,?$i_b$?]}$
       & $\begin{aligned}[t]
         &\textnormal{offset}(i_a, i_b) = \\
         &\quad \pycode{[0,1][?$i_a$?]} + \pycode{[[0,1],[0,2]][?$i_a$?,?$i_b$?]} \\
       \end{aligned}$ \\
-      \hline
+      \hline[1pt]
       $\{a,b,c\}$
       & $\textnormal{offset}(i_c) = i_c$
       & $\begin{aligned}[t]
@@ -623,7 +623,7 @@ Compared with previous, non-ragged axis trees, this has a number of implications
         \boldmath$i_a$ & \boldmath$\textnormal{\bf offset}(i_a)$ \\
         \hline[1pt]
         0 & 0 \\
-        \hline
+        \hline[1pt]
         1 & 1 \\
         \hline[1pt]
       \end{tblr}

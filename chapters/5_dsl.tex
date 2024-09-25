@@ -54,18 +54,18 @@ As a first example of the code generation process in \pyop3, we consider the fol
 \end{pyinline}
 Here, we assign the scalar value \pycode{666} to entries in the indexed linear array \pycode{dat[::2, 1:]}.
 Since a newly initialised \pycode{Dat} starts with a memory buffer of all zeros, following this operation the entries in \pycode{dat} will be
-\begin{equation*}
+\begin{equation}
   \pycode{[0, 666, 666, 0, 0, 0, 0, 666, 666, 0, 0, 0, 0, 666, 666]}.
-\end{equation*}
+\end{equation}
 
 If we assume the axes of the indexed array to be labelled $c$ and $d$, mapping from $a$ and $b$ respectively, then the indexed array has the following structure:
 \begin{center}
   \includegraphics{codegen_example1_axis_tree.pdf}
 \end{center}
 which has
-\begin{equation*}
+\begin{equation}
   \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1
-\end{equation*}
+\end{equation}
 as the substituted layout function (\cref{chapter:indexing}).
 
 \subsubsection{Code generation}
@@ -156,9 +156,9 @@ and substituted layout
 where \pycode{[...][?$L^p_a$?,?$i_c$?]} is the lookup expression for the tabulated map.
 \pycode{dat1} is fully indexed by the loop index and so contains just a single entry.
 It simply has the substituted layout
-\begin{equation*}
+\begin{equation}
   \textnormal{offset}(L^p_a) = L^p_a.
-\end{equation*}
+\end{equation}
 
 
 \begin{table}
@@ -387,9 +387,9 @@ To generate code for the \ccode{write} node above we therefore need to emit a fu
 Where \ccode{map0} is an array relating entries in the outer loop (i.e. $L^p_x$) to the appropriate 9 entries in \ccode{mat}.
 This is not as straightforward as it seems because \ccode{map0} \emph{does not exist}.
 The relation between entries in the outer loop and entries in the \ccode{mat} is instead represented by the \emph{symbolic} layout function
-\begin{equation*}
+\begin{equation}
   \textnormal{offset}(L^p_x,i_c,i_b) = 3 f(L^p_x,i_c) + i_b,
-\end{equation*}
+\end{equation}
 which cannot be passed as an argument to \ccode{MatGetValues()}.
 
 As a result, prior to generating code for matrix insertion, \pyop3 has to pre-tabulate the layout function to produce \ccode{map0}:
@@ -419,13 +419,13 @@ Generalising this operation to other settings constitutes a performance optimisa
 
 Consider, for example, a \pycode{Dat} indexed with the composed map $g(f(p))$ with $p$ some outer loop and $f$ and $g$ maps tabulated with arrays \pycode{map_f} and \pycode{map_g} respectively.
 With these, the indexed \pycode{Dat} would have the substituted layout function
-\begin{equation*}
+\begin{equation}
   \textnormal{offset}(L^p,i_f,i_g) = \pycode{map_g[map_f[?$L^p$?,?$i_f$?],?$i_g$?]}.
-\end{equation*}
+\end{equation}
 Which, if we further stipulate $g$ to have arity 1, simplifies to
-\begin{equation*}
+\begin{equation}
   \textnormal{offset}(L^p,i_f) = \pycode{map_g[map_f[?$L^p$?,?$i_f$?]]}.
-\end{equation*}
+\end{equation}
 
 Since these maps are available at compile-time, \pyop3 can pack the results into a new array, \pycode{map_fg}:
 \begin{pyinline}
@@ -434,9 +434,9 @@ Since these maps are available at compile-time, \pyop3 can pack the results into
       map_fg[?$L^p$?, ?$i_f$?] = map_g[map_f[?$L^p$?,?$i_f$?]]
 \end{pyinline}
 Giving us the new substituted layout
-\begin{equation*}
+\begin{equation}
   \textnormal{offset}(L^p,i_f) = \pycode{map_fg[?$L^p$?,?$i_f$?]}.
-\end{equation*}
+\end{equation}
 
 Compared with the uncompressed version, using this new layout is advantageous for two reasons:
 \begin{description}

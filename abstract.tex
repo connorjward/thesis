@@ -4,15 +4,15 @@
 
 The numerical solution of partial differential equations (PDEs) is critical to a wide range of scientific and engineering disciplines.
 Developing software to solve such systems is difficult, requiring expertise in many disparate areas and months or years of developer time.
-To ease this burden, it is popular to program simulation frameworks with high-level domain-specific languages (DSLs) that mirror the underlying mathematics.
+To ease this burden, a number of simulation frameworks make use of high-level domain-specific languages (DSLs) that mirror the underlying mathematics.
 The use of DSLs introduces a separation of concerns between the top-level mathematics and the low-level implementation and lowers the barrier to entry to high fidelity simulation codes, leading to more and better science.
 
-The expressivity power, and hence to some extent the value, of a DSL as a tool for computation hinges upon the existence of the right abstractions.
+The expressive power, and hence to some extent the value, of a DSL as a tool for computation hinges upon the existence of the right abstractions.
 If the abstractions that underly the DSL are are a poor fit to the top-level mathematics then many problems that should naturally be expressible are not, either barring the user from implementing the desired method, or requiring sui-generis solutions that compose poorly with the rest of the software stack.
 
 This thesis focusses on one particular type of abstraction that is relevant to the solution of PDEs: the application of compact computational kernels (a.k.a. stencils) to unstructured meshes.
 Classically, finding abstractions for this operation is difficult because data stored on unstructured meshes have complex layouts, with additional considerations such as parallelism making things even more challenging.
-In this work, we present a suite of novel abstractions that encapsulate the processes of storing and accessing complex data layouts on unstructured meshes, as well as an implementation of said abstractions in the new Python library \pyop3.
+This work presents a suite of novel abstractions that encapsulate the processes of storing and accessing complex data layouts on unstructured meshes, as well as an implementation of said abstractions in the new Python library \pyop3.
 These abstractions better capture the semantics of what it means to apply a kernel over a mesh, leading to a framework where a greater range of algorithms may be expressed, transformed, and optimised.
 
 \end{abstract}

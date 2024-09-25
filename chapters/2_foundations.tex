@@ -30,11 +30,11 @@ In addition to considering implementation details, elements of \numpy{}'s interf
     \begin{tblr}{|[1pt]l|[1pt]l|[1pt]}
       \hline[1pt]
       \texttt{data} & \texttt{0x7ff...} \\
-      \hline
+      \hline[1pt]
       \texttt{data type} & \texttt{int32} \\
-      \hline
+      \hline[1pt]
       \texttt{shape} & \texttt{(2, 3, 2)} \\
-      \hline
+      \hline[1pt]
       \texttt{strides} & \texttt{(24, 8, 4)} \\
       \hline[1pt]
     \end{tblr}
@@ -54,9 +54,9 @@ These have a multi-level \emph{shape}, with each level called an \emph{axis} (e.
 In order to access a value from the array a \emph{multi-index} - a list of integers, one per axis - must be provided.
 Given a multi-index, the correct value may be read from the array by first computing an offset, and then reading a value at that offset.
 The function used to compute this offset is a function of each multi-index, for example, for the array shown in \cref{fig:numpy_ndarray}, the offset is given by
-\begin{equation*}
+\begin{equation}
   \textnormal{offset}(i_0, i_1, i_2) = 6 i_0 + 2 i_1 + i_2
-\end{equation*}
+\end{equation}
 where $i_0$, $i_1$, and $i_2$ are the values of the multi-index for axes 0, 1, and 2 respectively.
 The Python syntax for performing this access would be \pycode{array[i0, i1, i2]}.
 

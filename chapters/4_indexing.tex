@@ -53,9 +53,9 @@ That is, each index takes an input axis and transforms it, returning a new axis 
 
 This process may then be extended to indexing an entire axis tree, giving the transformation
 
-\begin{equation*}
+\begin{equation}
   \textnormal{axis tree} \quad \circ \quad \textnormal{index tree} \quad \to \quad (\textnormal{axis tree},\ \textnormal{index information}),
-\end{equation*}
+\end{equation}
 
 \noindent
 this time returning a new axis tree and aggregated index information from each of the indices.
@@ -165,16 +165,16 @@ Indexing axis $a$ with the slice \pycode{[::2]}, for example, means that entries
 Given this information, we may now construct a substituted layout function for addressing the original array with multi-indices of the indexed axis tree.
 From the target path we know that the correct, unsubstituted, layout function is
 
-\begin{equation*}
+\begin{equation}
   \textnormal{offset}(i_a, i_b) = 3 i_a + i_b,
-\end{equation*}
+\end{equation}
 
 \noindent
 which, applying the target expression substitutions, produces the substituted layout function
 
-\begin{equation*}
+\begin{equation}
   \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1
-\end{equation*}
+\end{equation}
 
 \noindent
 as desired.
@@ -256,7 +256,7 @@ Indexing the array as described produces the following target path and target ex
     \textbf{Target path} & \textbf{Target expressions} \\
     \hline[1pt]
     $\{d^t\} \to \{a^x,b\}$ & $\{i_a = \pycode{[0,2][?$i_d$?]},\ i_b = 1\}$ \\
-    \hline
+    \hline[1pt]
     $\{d^u,e\} \to \{a^y,c\}$ & $\{i_a = i_d + 1,\ i_c = \pycode{[1,2][?$i_e$?]}\}$ \\
     \hline[1pt]
   \end{tblr}
@@ -271,7 +271,7 @@ With these target paths and expressions it is now straightforward to again deter
     \textbf{Path} & \SetCell{c}\textbf{Original layout} & \SetCell{c}\textbf{Substituted layout} \\
     \hline[1pt]
     $\{a^x, b\}$ & $\textnormal{offset}(i_a, i_b) = 2 i_a + i_b$ & $\textnormal{offset}(i_d) = 2 ( \pycode{[0,2][?$i_d$?]} ) + 1$ \\
-    \hline
+    \hline[1pt]
     $\{a^y, c\}$ & $\textnormal{offset}(i_a, i_c) = 3 i_a + i_c + 6$ & $\textnormal{offset}(i_d, i_e) = 3(i_d+1) + \pycode{[1,2][?$i_e$?]} + 6$ \\
     \hline[1pt]
   \end{tblr}

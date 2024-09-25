@@ -26,9 +26,9 @@ Since the majority of mesh stencil computations are memory-bound, doing this eff
 
 A suitable technique for quantifying memory performance is to produce a \emph{roofline plot}.
 Shown in \cref{fig:roofline}, a roofline plot compares \emph{arithmetic intensity}, defined as
-\begin{equation*}
+\begin{equation}
   \textnormal{arithmetic intensity (FLOP/byte)} = \frac{\textnormal{operation count (FLOP)}}{\textnormal{memory volume (byte)}},
-\end{equation*}
+\end{equation}
 against computational throughput.
 Roofline plots are useful because they provide theoretical bounds for the maximum attainable performance.
 Given a computation with a high arithmetic intensity, performing many floating-point operations per byte of data loaded, the performance will be limited by the rate at which these FLOPs may be executed - we say that it is \emph{compute-bound}.
@@ -125,22 +125,22 @@ The first, termed \emph{optimal caching}, assumes that values are only loaded fr
 The other, called \emph{pessimal caching}, does the opposite; values are never in cache so must be loaded from memory at each local kernel invocation.
 
 For optimal caching the amount of data streamed from main memory (in bytes) is given by
-\begin{equation*}
+\begin{equation}
   \textnormal{dim}(V) \times (N + 1) \times 8 + n_{\textnormal{map}}
-\end{equation*}
+\end{equation}
 where $\textnormal{dim}(V)$ represents the number of DoFs associated with the function space and there are $N$ input arrays (one per coefficient) and a single output array.
 The factor of 8 is included as the values being streamed are in double precision.
 The additional term $n_{\textnormal{map}}$ accounts for the cell-node map that the packing code needs because the mesh is unstructured.
 It is given by
-\begin{equation*}
+\begin{equation}
   n_{\textnormal{map}} = n_{\textnormal{cells}} \times n_{\textnormal{nodes}} \times 4
-\end{equation*}
+\end{equation}
 where $n_{\textnormal{cells}}$ is the number of cells in the mesh, $n_{\textnormal{nodes}}$ is the number of nodes addressed by the map per iteration, equivalently the size of the packed temporary, and the factor of 4 is included because the map uses 4 byte integers.
 
 For pessimal caching, where the cache is always missed, we expect to load
-\begin{equation*}
+\begin{equation}
   n_{\textnormal{cells}} \times (N + 1) \times n_{\textnormal{nodes}} \times 8 + n_{\textnormal{map}}
-\end{equation*}
+\end{equation}
 bytes.
 
 Due to the various data locality optimisations that \pyop2/\pyop3 performs we would expect that data locality is good, and so the true arithmetic intensity lies closer to the optimal caching approximation.
