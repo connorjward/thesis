@@ -694,8 +694,15 @@ The instructions \pycode{dependent_axes.iter()} (line~\ref{code:loop_dependent_a
 Note that at present it is not possible to have multi-component axes if one of the components is ragged.
 Resolving this requires that the \pycode{start} variable in \cref{alg:collect_layouts_ragged} support adding offset arrays as well as integers.
 
-\section{Summary}
+\section{Outlook}
 
-TODO
+% axis trees are a novel abstraction for representing data layouts
+
+% they preserve the hierarchical structure of mesh data
+
+% as we shall see in \cref{chapter:firedrake}, the sorts of complex data layouts that occur in finite element calculations are straightforward to describe using axis trees
+
+% keeping extra topological information allows for an expressive interface
+
 
 \end{document}

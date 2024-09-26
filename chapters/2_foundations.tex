@@ -2,7 +2,7 @@
 
 \begin{document}
 
-\chapter{Foundations}
+\chapter{Existing abstractions for arrays and stencils}
 \label{chapter:foundations}
 
 Before introducing any new abstractions for mesh data, it is instructive to review some `foundations', that is, pieces of software that have inspired their design.
@@ -10,7 +10,7 @@ In order these are: \numpy{}, PETSc DMPlex and \pyop2.
 
 \section{\numpy{}} \label{sec:numpy}
 
-As we have established in \cref{chapter:introduction}, data structures for mesh-based computations have a non-trivial hierarchical structure that existing mesh stencil packages are incapable of representing in full.
+As we have established in \cref{chapter:background}, data structures for mesh-based computations have a non-trivial hierarchical structure that existing mesh stencil packages are incapable of representing in full.
 Prior to introducing any new abstractions it is therefore valuable to examine existing techniques for handling hierarchically structured data.
 To that end we will review \numpy{}, the fundamental package for array-based computation in Python~\cite{harrisArrayProgrammingNumPy2020}.
 In addition to considering implementation details, elements of \numpy{}'s interface will be presented since, given \numpy{}'s ubiquity, our DSL will aim to reuse much of its terminology and syntax.
@@ -364,7 +364,7 @@ Like \numpy{}, each of these are implemented by coupling `simple' data structure
 In \pyop2 this metadata is called a \emph{data set}.
 Internally, \pycode{Globals} and \pycode{Dats} both use \numpy{} arrays to store data, whereas \pycode{Mats} use PETSc matrices (that are also called \ccode{Mats}).
 
-For multi-field problems such as the Stokes example in \cref{chapter:introduction} \pyop2 has \emph{mixed data sets}, which are simply a collection of regular data sets.
+For multi-field problems such as the Stokes example in \cref{chapter:background} \pyop2 has \emph{mixed data sets}, which are simply a collection of regular data sets.
 Mixed data sets produce \pycode{MixedDats} which are, again, simply a collection of regular \pycode{Dats}.
 An example of a \pyop2 data layout for a multi-field problem is shown in \cref{fig:scott_vogelius_element_dof_layout_pyop2}.
 Observe that, since the DoFs are associated with multiple mesh entities, data are stored on a \emph{node set}, losing topological information.
