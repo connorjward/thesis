@@ -20,19 +20,19 @@
 \coordinate (origin) at (0,0);
 
 % mesh
-\drawBoxNewNew{0}{1}{bgcelldofcolor};
-\drawBoxNewNew{1}{1}{bgvertdofcolor};
-\drawBoxNewNew{2}{1}{bgedgedofcolor};
-\drawBoxNewNew{3}{1}{bgcelldofcolor};
-\drawBoxNewNew{4}{1}{bgvertdofcolor};
-\drawBoxNewNew{5}{2}{white};
+\drawBoxNewNew{0}{1}{white};
+\drawBoxNewNew{1}{1}{white};
+\drawBoxNewNew{2}{1}{white};
+\drawBoxNewNew{3}{1}{white};
+\drawBoxNewNew{4}{1}{white};
+\drawBoxNewNew{5}{1.5}{white};
 
-\labelBoxNew{ .5}{$p_0$}{bgcelldofcolor};
-\labelBoxNew{1.5}{$p_1$}{bgvertdofcolor};
-\labelBoxNew{2.5}{$p_2$}{bgedgedofcolor};
-\labelBoxNew{3.5}{$p_3$}{bgcelldofcolor};
-\labelBoxNew{4.5}{$p_4$}{bgvertdofcolor};
-\labelBoxNew{6  }{\dots}{white};
+\labelBoxNew{ .5}{$p_0$}{white};
+\labelBoxNew{1.5}{$p_1$}{white};
+\labelBoxNew{2.5}{$p_2$}{white};
+\labelBoxNew{3.5}{$p_3$}{white};
+\labelBoxNew{4.5}{$p_4$}{white};
+\labelBoxNew{5.75}{\dots}{white};
 
 \tikzmath { \yshift = \yshift - 2; }
 
@@ -58,7 +58,7 @@
 
 % --- TIMES ---
 
-\drawCompositionCircle{(7.5, -.5)};
+\drawCompositionCircle{(7.25, -.5)};
 
 % --- INDEX TREE ---
 
@@ -81,22 +81,20 @@ $\textnormal{slice}(\pycode{"mesh"}, \{ \component{top0}{\pycode{[0,3,..]}},\ \c
 
 % --- ARROW ---
 
-\bigArrow{(14.75,-.5)};
+\bigArrow{(15.5,-.5)};
 
 % % --- INDEXED ---
 
-\tikzmath { \xshift = 16; \yshift = 0; }
+\tikzmath { \xshift = 17; \yshift = 0; }
 
 \drawDofSmall{(\xshift+0,\yshift)}{$c_0/p_0$}{bgcelldofcolor};
-\drawBoxNewNew{\xshift+1}{1.5}{white};
-\drawDofSmall{(\xshift+2.5,\yshift)}{$e_0/p_2$}{bgedgedofcolor};
-\drawBoxNewNew{\xshift+3.5}{1.5}{white};
-\drawDofSmall{(\xshift+5,\yshift)}{$v_0/p_1$}{bgvertdofcolor};
-\drawBoxNewNew{\xshift+6}{1.5}{white};
+\drawDofSmall{(\xshift+1,\yshift)}{$v_0/p_1$}{bgvertdofcolor};
+\drawDofSmall{(\xshift+2,\yshift)}{$e_0/p_2$}{bgedgedofcolor};
+\drawDofSmall{(\xshift+3,\yshift)}{$c_1/p_3$}{bgcelldofcolor};
+\drawDofSmall{(\xshift+4,\yshift)}{$v_1/p_4$}{bgvertdofcolor};
+\drawBoxNewNew{\xshift+5}{1.5}{white};
 
-\labelBoxNew{\xshift+1.75}{\dots}{white};
-\labelBoxNew{\xshift+4.25}{\dots}{white};
-\labelBoxNew{\xshift+6.75}{\dots}{white};
+\labelBoxNew{\xshift+5.75}{\dots}{white};
 
 \tikzmath { \yshift = -2; }
 
@@ -107,18 +105,18 @@ $\textnormal{slice}(\pycode{"mesh"}, \{ \component{top0}{\pycode{[0,3,..]}},\ \c
 \draw [connector] (\xshift+1,0) -- (\xshift+1,-1);
 
 % edge nodes
-\drawBoxNewNew{\xshift+2}{1}{white};
-\drawBoxNewNew{\xshift+3}{1}{white};
-\labelBoxNew{\xshift+2.5}{$n_0$}{white};
-\labelBoxNew{\xshift+3.5}{$n_1$}{white};
-\draw [connector] (\xshift+2.5,0) -- (\xshift+2,-1);
-\draw [connector] (\xshift+3.5,0) -- (\xshift+4,-1);
+\drawBoxNewNew{\xshift+1.5}{1}{white};
+\drawBoxNewNew{\xshift+2.5}{1}{white};
+\labelBoxNew{\xshift+2}{$n_0$}{white};
+\labelBoxNew{\xshift+3}{$n_1$}{white};
+\draw [connector] (\xshift+2,0) -- (\xshift+1.5,-1);
+\draw [connector] (\xshift+3,0) -- (\xshift+3.5,-1);
 
 % vertex nodes
-\drawBoxNewNew{\xshift+5}{1}{white};
-\labelBoxNew{\xshift+5.5}{$n_0$}{white};
+\drawBoxNewNew{\xshift+4}{1}{white};
+\labelBoxNew{\xshift+4.5}{$n_0$}{white};
+\draw [connector] (\xshift+4,0) -- (\xshift+4,-1);
 \draw [connector] (\xshift+5,0) -- (\xshift+5,-1);
-\draw [connector] (\xshift+6,0) -- (\xshift+6,-1);
 
 \end{tikzpicture}
 \end{document}

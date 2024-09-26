@@ -141,7 +141,7 @@ We now consider a more complex example that more closely approximates a mesh ste
     kernel(dat0[map0(ia), :], dat1[ia]),
   )
 \end{pyinline}
-Here we loop over the entries in \pycode{axis_a} and apply local kernel \pycode{kernel}, whose implementation is externally provided as a loopy kernel, to indexed arguments \pycode{dat0} and \pycode{dat1}.
+Here we loop over the entries in \pycode{axis_a} and apply local kernel \pycode{kernel}, a \pyop3 \pycode{Function} whose implementation is externally provided as a loopy kernel, to indexed arguments \pycode{dat0} and \pycode{dat1}.
 
 \pycode{dat0} is a two-dimensional array with shape \pycode{(5, 3)} and axis labels $a$ and $b$, whereas \pycode{dat1} is one-dimensional with shape \pycode{(5,)}, having only axis $a$ in its axis tree.
 \pycode{dat0} is indexed with an arity 2 tabulated map and a slice, giving it an indexed axis tree like:

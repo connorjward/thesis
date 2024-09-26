@@ -96,7 +96,7 @@ Note $h$-adaptivity and $p$-adaptivity can be combined to $hp$-adaptivity and an
 
 \subsubsection{Different data structures}
 
-The abstractions introduced in this thesis are sufficiently high-level that the specific choices of underlying data structure, currently \numpy arrays and PETSc matrices, are not fixed.
+The abstractions introduced in this thesis are sufficiently high-level that the specific choices of underlying data structure, currently \numpy{} arrays and PETSc matrices, are not fixed.
 For cases like additive-Schwartz methods, using PETSc matrices may have poor performance because they are designed for massively parallel applications, whereas patch problems instead require the assembly of many `small' matrices.
 Instead, using dense arrays or matrix types from other linear algebra libraries like LIBXSMM~\cite{heineckeLIBXSMMAcceleratingSmall2016} may be more suitable.
 Similarly, for particle and adaptive methods the data structures may need to be frequently updated to account for moving particles or extra unknowns.

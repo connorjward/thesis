@@ -40,9 +40,9 @@ The fundamental characteristics of an axis tree are as follows:
 
 \todo[inline]{Need to be explicit about what an axis is.}
 
-Axis trees are analogous to the metadata of a \numpy array, or a \pyop2 \pycode{DataSet}: they exist alongside a block of memory and provide the information necessary to interpret it.
-Axis trees are especially similar to \numpy arrays in that they both describe multi-dimensional data and accept multi-indices that are transformed into offsets.
-Indeed, single-component axes in \pyop3 are equivalent to the axes of a \numpy array, hence the choice of name.
+Axis trees are analogous to the metadata of a \numpy{} array, or a \pyop2 \pycode{DataSet}: they exist alongside a block of memory and provide the information necessary to interpret it.
+Axis trees are especially similar to \numpy{} arrays in that they both describe multi-dimensional data and accept multi-indices that are transformed into offsets.
+Indeed, single-component axes in \pyop3 are equivalent to the axes of a \numpy{} array, hence the choice of name.
 The core difference to these existing abstractions that axis trees bring is the ability to describe more heterogeneous data layouts since axes can \emph{branch}.
 
 \todo[inline]{Make the heading bold (and consistent across examples).}
@@ -81,10 +81,10 @@ The core difference to these existing abstractions that axis trees bring is the 
 
 As a first example to demonstrate axis trees we consider the simplest case: \emph{linear} axis trees.
 Linear axis trees are defined as being axis trees where all of the axes have a single component.
-They are equivalent to multi-dimensional arrays in \numpy.
+They are equivalent to multi-dimensional arrays in \numpy{}.
 
 An example of a linear axis tree is shown in \cref{fig:linear_axis_tree}.
-Consisting of 3 axes labelled $a$, $b$, and $c$, it is equivalent to a \numpy array with shape \pycode{(2, 3, 2)} with axis $a$ of the axis tree matching axis 0 of the \numpy array and so on.
+Consisting of 3 axes labelled $a$, $b$, and $c$, it is equivalent to a \numpy{} array with shape \pycode{(2, 3, 2)} with axis $a$ of the axis tree matching axis 0 of the \numpy{} array and so on.
 Each axis has a single component, all labelled $x$, with sizes 2, 3, and 2.
 
 Some important features of this axis tree include:

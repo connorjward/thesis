@@ -7,8 +7,8 @@
 
 \todo[inline]{It seems a bit clunky to have "example" sections only at the start when the whole chapter is built from examples.}
 
-Just like \numpy, data structures in \pyop3 can be indexed.
-Compared with \numpy where indexing is accomplished with a list of index-like objects, one for each axis (\cref{sec:numpy_indexing_arrays}), \pyop3 needs a more complicated solution to accomodate for the fact that data structures are now tree-like.
+Just like \numpy{}, data structures in \pyop3 can be indexed.
+Compared with \numpy{} where indexing is accomplished with a list of index-like objects, one for each axis (\cref{sec:numpy_indexing_arrays}), \pyop3 needs a more complicated solution to accomodate for the fact that data structures are now tree-like.
 Instead of lists of indices, \pyop3 instead uses \emph{index trees}.
 
 \section{Index trees}
@@ -82,7 +82,7 @@ With these, \pyop3 has sufficient information to:
 (1) select the right layout function from the target axis tree, and
 (2) substitute index expressions into the layout function, resulting in a \emph{substituted layout function} that accepts multi-indices of the source axis tree instead of the target.
 This approach allows \pyop3 to represent indexing operations symbolically as views, regardless of the indexing operation applied.
-This contrasts with \numpy where only `simple' indexing operations are supported without copying the array.
+This contrasts with \numpy{} where only `simple' indexing operations are supported without copying the array.
 
 \begin{example}{Linear index trees} \label{example:linear_index_tree}
 
@@ -143,7 +143,7 @@ From \cref{fig:index_linear} we may make several observations:
   \item
     The \pycode{Dat} in \cref{fig:index_linear_code} is not explicitly indexed with an index tree.
     Instead it is indexed with the pair of slices \pycode{[::2, 1::]} (line~\ref{code:index_linear_apply}) that are internally converted into an index tree.
-    This syntactic sugar facilitates writing concise code and means that the syntax here is identical to the equivalent \numpy code for an array with shape \pycode{(5, 3)}.
+    This syntactic sugar facilitates writing concise code and means that the syntax here is identical to the equivalent \numpy{} code for an array with shape \pycode{(5, 3)}.
 \end{itemize}
 
 Alongside the creation of a new axis tree, indexing the array produces the following index information:
@@ -238,7 +238,7 @@ Compared with the linear case there are a number of changes:
   \item
     Some of the slices now include \emph{subsets}.
     Instead of providing \pycode{start}, \pycode{stop}, and \pycode{step} arguments an integer array is provided.
-    This is equivalent to `integer array indexing' for \numpy (\cref{sec:numpy_indexing_arrays}).
+    This is equivalent to `integer array indexing' for \numpy{} (\cref{sec:numpy_indexing_arrays}).
 
   \item
     Instead of a slice, axis $b$ is indexed with a \emph{scalar index}.
@@ -370,7 +370,7 @@ Enabling one to produce appropriate substituted layouts relating the source and 
 \end{center}
 
 This ability to compose indexing operations means that \pyop3 is able to to represent \emph{all} indexed arrays symbolically, as views.
-This contrasts with \numpy which is only capable of doing this for `simple' indexing operations and otherwise resorts to a copy.
+This contrasts with \numpy{} which is only capable of doing this for `simple' indexing operations and otherwise resorts to a copy.
 
 \section{Outer loops}
 \label{sec:outer_loops}
@@ -421,7 +421,7 @@ Symbolically, loop indices are represented by the tuple $(L^p_{x_0}, L^p_{x_1}, 
 
 An example demonstrating loop index usage is shown in \cref{fig:loop_index_linear_tree_data_layout_all}.
 Given two axes, $a$ and $b$, the loop index is created only for axis $a$ (line~\ref{code:loop_index_init}), which is then used to index into \pycode{dat} (line~\ref{code:loop_index_apply}).
-It is equivalent to the following \numpy code:
+It is equivalent to the following \numpy{} code:
 
 \begin{pyinline}
   array = numpy.empty((5, 3))  # create an empty array with shape (5, 3)
