@@ -300,7 +300,7 @@
 @article{arnoldMixedNonconformingFinite1985,
   title = {Mixed and Nonconforming Finite Element Methods : Implementation, Postprocessing and Error Estimates},
   shorttitle = {Mixed and Nonconforming Finite Element Methods},
-  author = {Arnold, D. N. and Brezzi, F.},
+  author = {Arnold, Douglas N. and Brezzi, Franco},
   date = {1985},
   journaltitle = {ESAIM: Mathematical Modelling and Numerical Analysis},
   shortjournal = {ESAIM: M2AN},
@@ -315,11 +315,12 @@
   file = {/home/connor/.local/share/zotero/storage/PDSNP8TG/Arnold and Brezzi - 1985 - Mixed and nonconforming finite element methods  implementation, postprocessing and error estimates.pdf}
 }
 
-@article{arnoldPRECONDITIONINGDivAPPLICATIONS1997,
-  title = {{{PRECONDITIONING IN H}} (Div) {{AND APPLICATIONS}}},
-  author = {Arnold, Douglas N and Falk, Richard S and Winther, R},
+@article{arnoldPreconditioningHdivApplications1997,
+  title = {Preconditioning in {{H}}(Div) and {{Applications}}},
+  author = {Arnold, Douglas N. and Falk, Richard S. and Winther, Ragnar},
   date = {1997},
-  pages = {28},
+  journaltitle = {Mathematics of Computation},
+  volume = {66},
   abstract = {We consider the solution of the system of linear algebraic equations which arises from the finite element discretization of boundary value problems associated to the differential operator I − grad div. The natural setting for such problems is in the Hilbert space H (div) and the variational formulation is based on the inner product in H (div). We show how to construct preconditioners for these equations using both domain decomposition and multigrid techniques. These preconditioners are shown to be spectrally equivalent to the inverse of the operator. As a consequence, they may be used to precondition iterative methods so that any given error reduction may be achieved in a finite number of iterations, with the number independent of the mesh discretization. We describe applications of these results to the efficient solution of mixed and least squares finite element approximations of elliptic boundary value problems.},
   langid = {english},
   file = {/home/connor/.local/share/zotero/storage/WBBF59PM/Arnold et al. - PRECONDITIONING IN H (div) AND APPLICATIONS.pdf}
@@ -412,11 +413,13 @@
   file = {/home/connor/.local/share/zotero/storage/AGJLSVQ4/tr80-159.pdf}
 }
 
-@article{barattaDOLFINxNextGeneration2023,
+@online{barattaDOLFINxNextGeneration2023,
   title = {{{DOLFINx}}: {{The}} next Generation {{FEniCS}} Problem Solving Environment},
-  author = {Baratta, Igor A and Dean, Joseph P and Dokken, Jørgen S and Habera, Michal and Hale, Jack S and Richardson, Chris N and Rognes, Marie E and Scroggs, Matthew W and Sime, Nathan and Wells, Garth N},
+  author = {Baratta, Igor A. and Dean, Joseph P and Dokken, Jørgen S and Habera, Michal and Hale, Jack S and Richardson, Chris N and Rognes, Marie E and Scroggs, Matthew W and Sime, Nathan and Wells, Garth N},
   date = {2023},
+  doi = {10.5281/zenodo.10447666},
   langid = {english},
+  pubstate = {prepublished},
   file = {/home/connor/.local/share/zotero/storage/8YKJY7R6/Baratta et al. - DOLFINx The next generation FEniCS problem solvin.pdf}
 }
 
@@ -486,6 +489,15 @@
   isbn = {978-1-4799-5500-8 978-1-4799-5499-5},
   langid = {english},
   file = {/home/connor/.local/share/zotero/storage/8Z7J6RPD/Bauer et al. - 2014 - Structure Slicing Extending Logical Regions with .pdf}
+}
+
+@inproceedings{baxter1989run,
+  title = {Run-Time Parallelization and Scheduling of Loops},
+  booktitle = {Proceedings of the First Annual {{ACM}} Symposium on Parallel Algorithms and Architectures},
+  author = {Baxter, Doug and Mirchandaney, Ravi and Saltz, Joel H},
+  date = {1989},
+  pages = {303--312},
+  file = {/home/connor/.local/share/zotero/storage/4QUEGVDE/Baxter - Joel H. Saltz Ravi Mirchandaney.pdf}
 }
 
 @article{bazilevsIsogeometricAnalysisUsing2010,
@@ -592,19 +604,20 @@
   file = {/home/connor/.local/share/zotero/storage/7IJQ65UP/Bernstein et al_2016_Ebb.pdf}
 }
 
-@unpublished{betteridgeCodeGenerationProductive2021,
-  title = {Code Generation for Productive Portable Scalable Finite Element Simulation in {{Firedrake}}},
+@article{betteridgeCodeGenerationProductive2021,
+  title = {Code {{Generation}} for {{Productive}}, {{Portable}}, and {{Scalable Finite Element Simulation}} in {{Firedrake}}},
   author = {Betteridge, Jack D. and Farrell, Patrick E. and Ham, David A.},
-  date = {2021-04-16},
-  eprint = {2104.08012},
-  eprinttype = {arXiv},
-  eprintclass = {cs},
-  url = {http://arxiv.org/abs/2104.08012},
-  urldate = {2021-06-22},
-  abstract = {Creating scalable, high performance PDE-based simulations requires a suitable combination of discretizations, differential operators, preconditioners and solvers. The required combination changes with the application and with the available hardware, yet software development time is a severely limited resource for most scientists and engineers. Here we demonstrate that generating simulation code from a high-level Python interface provides an effective mechanism for creating high performance simulations from very few lines of user code. We demonstrate that moving from one supercomputer to another can require significant algorithmic changes to achieve scalable performance, but that the code generation approach enables these algorithmic changes to be achieved with minimal development effort.},
-  langid = {english},
-  keywords = {Computer Science - Mathematical Software},
-  file = {/home/connor/.local/share/zotero/storage/M3YLEMJ5/Betteridge et al_2021_Code generation for productive portable scalable finite element simulation in.pdf}
+  date = {2021-07-01},
+  journaltitle = {Computing in Science \& Engineering},
+  shortjournal = {Comput. Sci. Eng.},
+  volume = {23},
+  number = {4},
+  pages = {8--17},
+  issn = {1521-9615, 1558-366X},
+  doi = {10.1109/MCSE.2021.3085102},
+  url = {https://ieeexplore.ieee.org/document/9447889/},
+  urldate = {2024-09-27},
+  file = {/home/connor/.local/share/zotero/storage/XJB64LMU/Betteridge et al. - 2021 - Code Generation for Productive, Portable, and Scalable Finite Element Simulation in Firedrake.pdf}
 }
 
 @thesis{betteridgeEfficientEllipticSolvers2019,
@@ -721,10 +734,11 @@
 
 @book{boffi2013mixed,
   title = {Mixed Finite Element Methods and Applications},
-  author = {Boffi, Daniele and Brezzi, Franco and Fortin, Michel and others},
+  author = {Boffi, Daniele and Brezzi, Franco and Fortin, Michel},
   date = {2013},
   volume = {44},
-  publisher = {Springer}
+  publisher = {Springer},
+  file = {/home/connor/.local/share/zotero/storage/2CY54LBR/Boffi et al. - 2013 - Mixed finite element methods and applications.pdf}
 }
 
 @article{boltenAlgebraicDescriptionAutomatic2017,
@@ -788,7 +802,7 @@
 
 @book{brennerMathematicalTheoryFinite2008,
   title = {The Mathematical Theory of Finite Element Methods},
-  author = {Brenner, Susanne C. and Scott, Larkin Ridgway},
+  author = {Brenner, Susanne C. and Scott, L. Ridgway},
   date = {2008},
   series = {Texts in Applied Mathematics},
   edition = {Third edition},
@@ -1687,7 +1701,7 @@
 
 @unpublished{fenics2021-kulkarni,
   title = {{{UFL}} to {{GPU}}: {{Generating}} near Roofline Actions Kernels},
-  author = {Kulkarni, Kaushik and Kloeckner, Andreas},
+  author = {Kulkarni, Kaushik and Klöckner, Andreas},
   namea = {Baratta, Igor and Dokken, Jørgen S. and Richarson, Chris and Scroggs, Matthew W.},
   nameatype = {collaborator},
   date = {2021},
@@ -1734,7 +1748,7 @@
 
 @article{frigoDesignImplementationFFTW32005,
   title = {The {{Design}} and {{Implementation}} of {{FFTW3}}},
-  author = {Frigo, M. and Johnson, S.G.},
+  author = {Frigo, Matteo and Johnson, Steven G.},
   date = {2005-02},
   journaltitle = {Proceedings of the IEEE},
   shortjournal = {Proc. IEEE},
@@ -2198,7 +2212,7 @@
 
 @article{homolyaParallelEdgeOrientation2016,
   title = {A {{Parallel Edge Orientation Algorithm}} for {{Quadrilateral Meshes}}},
-  author = {Homolya, M. and Ham, D. A.},
+  author = {Homolya, Miklós and Ham, David A.},
   date = {2016-01},
   journaltitle = {SIAM Journal on Scientific Computing},
   shortjournal = {SIAM J. Sci. Comput.},
@@ -2702,23 +2716,6 @@
   file = {/home/connor/.local/share/zotero/storage/8RX4HDB5/Knepley et al. - Exascale Computing without Threads˚.pdf}
 }
 
-@unpublished{knepleyMeshAlgorithmsPDE2009,
-  title = {Mesh {{Algorithms}} for {{PDE}} with {{Sieve I}}: {{Mesh Distribution}}},
-  shorttitle = {Mesh {{Algorithms}} for {{PDE}} with {{Sieve I}}},
-  author = {Knepley, Matthew G. and Karpeev, Dmitry A.},
-  date = {2009-08-30},
-  eprint = {0908.4427},
-  eprinttype = {arXiv},
-  eprintclass = {cs},
-  doi = {10.3233/SPR-2009-0249},
-  url = {http://arxiv.org/abs/0908.4427},
-  urldate = {2021-02-16},
-  abstract = {We have developed a new programming framework, called Sieve, to support parallel numerical PDE1 algorithms operating over distributed meshes. We have also developed a reference implementation of Sieve in C++ as a library of generic algorithms operating on distributed containers conforming to the Sieve interface. Sieve makes instances of the incidence relation, or arrows, the conceptual first-class objects represented in the containers. Further, generic algorithms acting on this arrow container are systematically used to provide natural geometric operations on the topology and also, through duality, on the data. Finally, coverings and duality are used to encode not only individual meshes, but all types of hierarchies underlying PDE data structures, including multigrid and mesh partitions.},
-  langid = {english},
-  keywords = {unstructured-mesh},
-  file = {/home/connor/Obsidian/30 Literature notes/knepleyMeshAlgorithmsPDE2009 - Comment 36 pages, 22 figures.md;/home/connor/Obsidian/30 Literature notes/knepleyMeshAlgorithmsPDE2009 - Extracted Annotations (18052021, 103526)Our Sieve framework, is a collection of interfaces and algorithms for manip.md;/home/connor/Obsidian/30 Literature notes/knepleyMeshAlgorithmsPDE2009 - Summary.md;/home/connor/Obsidian/30 Literature notes/knepleyMeshAlgorithmsPDE2009-zotero.md;/home/connor/Obsidian/30 Literature notes/knepleyMeshAlgorithmsPDE2009.md;/home/connor/Obsidian/30 Literature notes/Zotero/knepleyMeshAlgorithmsPDE2009 - Comment 36 pages, 22 figures.md;/home/connor/Obsidian/30 Literature notes/Zotero/knepleyMeshAlgorithmsPDE2009 - Extracted Annotations (18052021, 103526)Our Sieve framework, is a collection of interfaces and algorithms for manip.md;/home/connor/Obsidian/30 Literature notes/Zotero/knepleyMeshAlgorithmsPDE2009 - Summary.md;/home/connor/Obsidian/30 Literature notes/Zotero/knepleyMeshAlgorithmsPDE2009-zotero.md;/home/connor/OneDrive/AppData/Zotero/Knepley_Karpeev_2009_Mesh Algorithms for PDE with Sieve I.pdf}
-}
-
 @book{knepleyProgrammingLanguagesScientific2015,
   title = {Programming {{Languages}} for {{Scientific Computing}}},
   author = {Knepley, Matthew G.},
@@ -2733,6 +2730,22 @@
   langid = {english},
   keywords = {{Computer Science - Computational Engineering, Finance, and Science},Computer Science - Mathematical Software,Computer Science - Programming Languages},
   file = {/home/connor/.local/share/zotero/storage/UNY6TDU4/Knepley - 2015 - Programming Languages for Scientific Computing.pdf}
+}
+
+@article{knepleysieve2009,
+  title = {Mesh {{Algorithms}} for {{PDE}} with {{Sieve I}}: {{Mesh Distribution}}},
+  author = {Knepley, Matthew G. and Karpeev, Dmitry A.},
+  date = {2009},
+  journaltitle = {Scientific Programming},
+  volume = {17},
+  number = {3},
+  eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.3233/SPR-2009-0249},
+  pages = {948613},
+  doi = {10.3233/SPR-2009-0249},
+  url = {https://onlinelibrary.wiley.com/doi/abs/10.3233/SPR-2009-0249},
+  abstract = {We have developed a new programming framework, called Sieve, to support parallel numerical partial differential equation(s) (PDE) algorithms operating over distributed meshes. We have also developed a reference implementation of Sieve in C++ as a library of generic algorithms operating on distributed containers conforming to the Sieve interface. Sieve makes instances of the incidence relation, or arrows, the conceptual first-class objects represented in the containers. Further, generic algorithms acting on this arrow container are systematically used to provide natural geometric operations on the topology and also, through duality, on the data. Finally, coverings and duality are used to encode not only individual meshes, but all types of hierarchies underlying PDE data structures, including multigrid and mesh partitions. In order to demonstrate the usefulness of the framework, we show how the mesh partition data can be represented and manipulated using the same fundamental mechanisms used to represent meshes. We present the complete description of an algorithm to encode a mesh partition and then distribute a mesh, which is independent of the mesh dimension, element shape, or embedding. Moreover, data associated with the mesh can be similarly distributed with exactly the same algorithm. The use of a high level of abstraction within the Sieve leads to several benefits in terms of code reuse, simplicity, and extensibility. We discuss these benefits and compare our approach to other existing mesh libraries.},
+  keywords = {distribution,Mesh,partitioning,Sieve,topology},
+  file = {/home/connor/OneDrive/AppData/Zotero/Knepley_Karpeev_2009_Mesh Algorithms for PDE with Sieve I.pdf}
 }
 
 @unpublished{knepleyUnstructuredOverlappingMesh2015,
@@ -3373,9 +3386,9 @@
 }
 
 @article{markallFiniteElementAssembly2013,
-  title = {Finite Element Assembly Strategies on Multi-Core and Many-Core Architectures: {{FINITE ELEMENT ASSEMBLY ON MULTI-CORE AND MANY-CORE ARCHITECTURES}}},
+  title = {Finite Element Assembly Strategies on Multi-Core and Many-Core Architectures},
   shorttitle = {Finite Element Assembly Strategies on Multi-Core and Many-Core Architectures},
-  author = {Markall, G. R. and Slemmer, A. and Ham, David A. and Kelly, Paul H. J. and Cantwell, C. D. and Sherwin, S. J.},
+  author = {Markall, Graham R. and Slemmer, A. and Ham, David A. and Kelly, Paul H. J. and Cantwell, C. D. and Sherwin, S. J.},
   date = {2013-01-10},
   journaltitle = {International Journal for Numerical Methods in Fluids},
   shortjournal = {Int. J. Numer. Meth. Fluids},
@@ -3795,13 +3808,23 @@
   file = {/home/connor/.local/share/zotero/storage/BF4WA5CN/Puschel et al. - 2005 - SPIRAL Code Generation for DSP Transforms.pdf}
 }
 
-@article{ragan-kelleyHalideLanguageCompiler,
-  title = {Halide: {{A Language}} and {{Compiler}} for {{Optimizing Parallelism}}, {{Locality}}, and {{Recomputation}} in {{Image Processing Pipelines}}},
-  author = {Ragan-Kelley, Jonathan and Barnes, Connelly and Adams, Andrew},
-  pages = {12},
-  abstract = {Image processing pipelines combine the challenges of stencil computations and stream programs. They are composed of large graphs of different stencil stages, as well as complex reductions, and stages with global or data-dependent access patterns. Because of their complex structure, the performance difference between a naive implementation of a pipeline and an optimized one is often an order of magnitude. Efficient implementations require optimization of both parallelism and locality, but due to the nature of stencils, there is a fundamental tension between parallelism, locality, and introducing redundant recomputation of shared values.},
+@article{ragan-kelleyHalideLanguageCompiler2013,
+  title = {Halide: A Language and Compiler for Optimizing Parallelism, Locality, and Recomputation in Image Processing Pipelines},
+  shorttitle = {Halide},
+  author = {Ragan-Kelley, Jonathan and Barnes, Connelly and Adams, Andrew and Paris, Sylvain and Durand, Frédo and Amarasinghe, Saman},
+  date = {2013-06-23},
+  journaltitle = {ACM SIGPLAN Notices},
+  shortjournal = {SIGPLAN Not.},
+  volume = {48},
+  number = {6},
+  pages = {519--530},
+  issn = {0362-1340, 1558-1160},
+  doi = {10.1145/2499370.2462176},
+  url = {https://dl.acm.org/doi/10.1145/2499370.2462176},
+  urldate = {2024-09-27},
+  abstract = {Image processing pipelines combine the challenges of stencil computations and stream programs. They are composed of large graphs of different stencil stages, as well as complex reductions, and stages with global or data-dependent access patterns. Because of their complex structure, the performance difference between a naive implementation of a pipeline and an optimized one is often an order of magnitude. Efficient implementations require optimization of both parallelism and locality, but due to the nature of stencils, there is a fundamental tension between parallelism, locality, and introducing redundant recomputation of shared values.             We present a systematic model of the tradeoff space fundamental to stencil pipelines, a schedule representation which describes concrete points in this space for each stage in an image processing pipeline, and an optimizing compiler for the Halide image processing language that synthesizes high performance implementations from a Halide algorithm and a schedule. Combining this compiler with stochastic search over the space of schedules enables terse, composable programs to achieve state-of-the-art performance on a wide range of real image processing pipelines, and across different hardware architectures, including multicores with SIMD, and heterogeneous CPU+GPU execution. From simple Halide programs written in a few hours, we demonstrate performance up to 5x faster than hand-tuned C, intrinsics, and CUDA implementations optimized by experts over weeks or months, for image processing applications beyond the reach of past automatic compilers.},
   langid = {english},
-  file = {/home/connor/.local/share/zotero/storage/8ZLKIVN7/Ragan-Kelley et al. - Halide A Language and Compiler for Optimizing Par.pdf}
+  file = {/home/connor/.local/share/zotero/storage/8ZLKIVN7/Ragan-Kelley et al. - Halide A Language and Compiler for Optimizing Par.pdf;/home/connor/.local/share/zotero/storage/LM5SNKTY/Ragan-Kelley et al. - 2013 - Halide a language and compiler for optimizing parallelism, locality, and recomputation in image pro.pdf}
 }
 
 @article{ramanujamTilingMultidimensionalIteration1992,
@@ -4024,14 +4047,6 @@
   pagetotal = {528},
   keywords = {{Differential equations, Partial},Iterative methods (Mathematics),Numerical solutions,Sparse matrices},
   file = {/home/connor/.local/share/zotero/storage/GFXRT22K/Saad_2003_Iterative methods for sparse linear systems.pdf}
-}
-
-@article{saltzRunTimeParallelizationScheduling,
-  title = {Run-{{Time Parallelization}} and {{Scheduling}} of {{Loops}}},
-  author = {Saltz, Joel H. and {Ravi Mirchandaney} and {Doug Baxter}},
-  abstract = {In this paper, we extend t h e class of problenis t h a t can be effcrtively m n piled by parallelizing compilers. This is accornplislictl with t h e doconsider coils t r u c t which would allow these compilers t o paralldizc\textasciitilde many prohlcnis i n \textbackslash vliit 11 siil)staiitial loop-lcvel parallelisin is available h i t cattnot bc tlctcctctl hy staiitl;irtl corn pile-t iriie analysis. \textbackslash Ire describe and espcriincii till I J analyze m c d i a nisni.; II srd to parallclize t h e work required for these types of loops. I n each of t hcse met Iiotls. a new loop structure is produced hy modifying t h e loop to be parallclizcd. \textbackslash\textbackslash 'P also prcscnt t h e rules by wliicli these loop transformations may be autoiiiatcd i n oi t1c.r.},
-  langid = {english},
-  file = {/home/connor/.local/share/zotero/storage/4QUEGVDE/Baxter - Joel H. Saltz Ravi Mirchandaney.pdf}
 }
 
 @article{saundersDevelopmentPerformancePortableFramework,
@@ -4293,11 +4308,12 @@
   file = {/home/connor/.local/share/zotero/storage/3PS78C9V/Śmigaj et al. - 2015 - Solving Boundary Integral Problems with BEM++.pdf}
 }
 
-@article{smithPETScSoftwareStrategy,
-  title = {{{PETSc}}’s {{Software Strategy}} for the {{Design Space}} of {{Composable Extreme-Scale Solvers}}\$},
+@article{smith2012petsc,
+  title = {{{PETSc}}’s Software Strategy for the Design Space of Composable Extreme-Scale Solvers},
   author = {Smith, Barry and McInnes, Lois Curfman and Constantinescu, Emil and Adams, Mark and Balay, Satish and Brown, Jed and Knepley, Matthew and Zhang, Hong},
-  abstract = {Emerging extreme-scale architectures present new opportunities for broader scope of simulations as well as new challenges in algorithms and software to exploit unprecedented levels of parallelism. Composable, hierarchical solver algorithms and carefully designed portable software are crucial to the success of extremescale simulations, because solver phases often dominate overall simulation time. This paper presents the PETSc design philogophy and recent advances in the library that enable application scientists to investigate the design space of composable linear, nonlinear, and timestepping solvers. In particular, separation of the control logic of the algorithms from the computational kernels of the solvers is crucial to allow injecting new hardware-specific computational kernels without having to rewrite the entire solver software library. Progress in this direction has already begun in PETSc, with new support for pthreads, OpenMP, and GPUs as a first step toward hardware-independent, high-level control logic for computational kernels. This multipronged software strategy for composable extreme-scale solvers will help exploit unprecedented extreme-scale computational power in two important ways: by facilitating the injection of newly developed scalable algorithms and data structures into fundamental components, and by providing the underlying foundation for a paradigm shift that raises the level of abstraction from simulation of complex systems to the design and uncertainty quantification of these systems.},
-  langid = {english},
+  date = {2012},
+  journaltitle = {Preprint ANL/MCS-P2059-0312, Argonne National Laboratory},
+  pages = {16--18},
   file = {/home/connor/.local/share/zotero/storage/RQSVICJ4/Smith et al. - PETSc’s Software Strategy for the Design Space of .pdf}
 }
 
@@ -4311,14 +4327,21 @@
   file = {/home/connor/.local/share/zotero/storage/HGIL6JHY/xmllogevent.html}
 }
 
-@article{stoneOpenCLParallelProgramming2010,
+@article{stoneOpenCLParallelProgramming2010a,
   title = {{{OpenCL}}: {{A Parallel Programming Standard}} for {{Heterogeneous Computing Systems}}},
-  author = {Stone, John E and Gohara, David and Shi, Guochun},
-  date = {2010},
-  pages = {8},
-  langid = {english},
-  keywords = {opencl},
-  file = {/home/connor/.local/share/zotero/storage/I3SUNSD4/Stone et al. - 2010 - OpenCL A Parallel Programming Standard for Heterogeneous Computing Systems.pdf;/home/connor/Obsidian/30 Literature notes/stoneOpenCLParallelProgramming2010 - Summary.md;/home/connor/Obsidian/30 Literature notes/stoneOpenCLParallelProgramming2010-zotero.md;/home/connor/Obsidian/30 Literature notes/stoneOpenCLParallelProgramming2010.md;/home/connor/Obsidian/30 Literature notes/Zotero/stoneOpenCLParallelProgramming2010 - Summary.md;/home/connor/Obsidian/30 Literature notes/Zotero/stoneOpenCLParallelProgramming2010-zotero.md;/home/connor/OneDrive/AppData/Zotero/Stone et al_2010_OpenCL.pdf}
+  shorttitle = {{{OpenCL}}},
+  author = {Stone, John E. and Gohara, David and Shi, Guochun},
+  date = {2010-05},
+  journaltitle = {Computing in Science \& Engineering},
+  shortjournal = {Comput. Sci. Eng.},
+  volume = {12},
+  number = {3},
+  pages = {66--73},
+  issn = {1521-9615},
+  doi = {10.1109/MCSE.2010.69},
+  url = {http://ieeexplore.ieee.org/document/5457293/},
+  urldate = {2024-09-27},
+  file = {/home/connor/.local/share/zotero/storage/VZPEX5V3/Stone et al. - 2010 - OpenCL A Parallel Programming Standard for Heterogeneous Computing Systems.pdf}
 }
 
 @inproceedings{stroutGeneralizingRunTimeTiling2014,
@@ -4357,13 +4380,30 @@
   file = {/home/connor/OneDrive/AppData/Zotero/Strout et al_2018_The Sparse Polyhedral Framework.pdf;/home/connor/.local/share/zotero/storage/GF69FP84/8436444.html}
 }
 
-@article{sulyokImprovingLocalityUnstructured2018,
+@online{sulyokImprovingLocalityUnstructured2018,
   title = {Improving {{Locality}} of {{Unstructured Mesh Algorithms}} on {{GPUs}}},
   author = {Sulyok, András Attila and Balogh, Gábor Dániel and Reguly, István Zoltán and Mudalige, R},
   date = {2018},
   abstract = {To most efficiently utilize modern parallel architectures, the memory access patterns of algorithms must make heavy use of the cache architecture: successively accessed data must be close in memory (spatial locality) and one piece of data must be reused as many times as possible (temporal locality).},
   langid = {english},
+  pubstate = {prepublished},
   file = {/home/connor/.local/share/zotero/storage/JYIJ4MBD/Sulyok et al. - Improving Locality of Unstructured Mesh Algorithms.pdf}
+}
+
+@article{sulyokLocalityOptimizedUnstructured2019,
+  title = {Locality Optimized Unstructured Mesh Algorithms on {{GPUs}}},
+  author = {Sulyok, András Attila and Balogh, Gábor Dániel and Reguly, István Z and Mudalige, Gihan R},
+  date = {2019-12},
+  journaltitle = {Journal of Parallel and Distributed Computing},
+  shortjournal = {Journal of Parallel and Distributed Computing},
+  volume = {134},
+  pages = {50--64},
+  issn = {07437315},
+  doi = {10.1016/j.jpdc.2019.07.011},
+  url = {https://linkinghub.elsevier.com/retrieve/pii/S0743731519301698},
+  urldate = {2024-09-27},
+  langid = {english},
+  file = {/home/connor/.local/share/zotero/storage/8ABQLGDC/Sulyok et al. - 2019 - Locality optimized unstructured mesh algorithms on GPUs.pdf}
 }
 
 @thesis{sunAbstractionsPerformanceOptimisations2021,
@@ -4393,9 +4433,10 @@
   file = {/home/connor/Obsidian/30 Literature notes/sunStudyVectorizationMatrixfree2020 - Extracted Annotations (24022021, 143917)The data objects can be directly defined on the mesh entities, or indirectl.md;/home/connor/Obsidian/30 Literature notes/sunStudyVectorizationMatrixfree2020 - Summary.md;/home/connor/Obsidian/30 Literature notes/sunStudyVectorizationMatrixfree2020-zotero.md;/home/connor/Obsidian/30 Literature notes/sunStudyVectorizationMatrixfree2020.md;/home/connor/Obsidian/30 Literature notes/Zotero/sunStudyVectorizationMatrixfree2020 - Extracted Annotations (24022021, 143917)The data objects can be directly defined on the mesh entities, or indirectl.md;/home/connor/Obsidian/30 Literature notes/Zotero/sunStudyVectorizationMatrixfree2020 - Summary.md;/home/connor/Obsidian/30 Literature notes/Zotero/sunStudyVectorizationMatrixfree2020-zotero.md;/home/connor/OneDrive/AppData/Zotero/Sun et al_2020_A study of vectorization for matrix-free finite element methods.pdf}
 }
 
-@article{SYCL2020Specification2020,
+@misc{SYCL2020Specification2020,
   title = {{{SYCL}}™ 2020 {{Specification}} (Revision 9)},
   date = {2020},
+  url = {https://registry.khronos.org/SYCL/specs/sycl-2020/pdf/sycl-2020.pdf},
   file = {/home/connor/.local/share/zotero/storage/5PI9K6HA/2020 - SYCL™ 2020 Specification (revision 9).pdf}
 }
 

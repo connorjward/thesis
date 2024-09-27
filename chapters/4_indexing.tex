@@ -708,8 +708,12 @@ This demonstrates that even though the DoFs in the local array are exactly the s
 
 \section{Outlook}
 
-% As we shall see in \cref{chapter:pyop3}, the indexing operations described here provide a natural way to describe the pack/unpack operations necessary for a mesh stencil library.
+There are two essential contributions made by this chapter:
+(a) the ability to symbolically represent views of a larger array, in an analogous manner to views of \numpy{} arrays, and
+(b) the ability to express `outer loops' using loop indices.
+Put together, these additions provide the necessary ingredients to be able to express mesh stencil algorithms.
+Loop indices let us declare loops over mesh entities and axis tree views (i.e. indexed axis trees) are appropriate for representing pack/unpack operations.
 
-% Further, views let us have component views...
+All that remains to be done for these abstractions to be functional is to wrap them up in a library, which is the focus of the upcoming chapters.
 
 \end{document}

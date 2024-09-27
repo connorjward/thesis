@@ -475,6 +475,10 @@ For example, given two arrays, \pycode{dat_soa} and \pycode{dat_aos}, with axis 
 
 \section{Outlook}
 
-TODO.
+In this chapter we have introduced the new mesh stencil library \pyop3.
+\pyop3 shares many similarities with its precursor \pyop2 but it has a much more composable, and hence flexible, interface.
+This composability comes from the fact that axis trees and index trees are used to describe data layouts and access patterns, in place of \pyop2 data sets.
+
+The next chapter will focus on the necessary changes in \pyop3 to enable distributed memory parallelism before \cref{chapter:firedrake,chapter:demonstrator_applications} that demonstrate that \pyop3 is capable of expressing a range of mesh stencil operations, including some not viable using \pyop2.
 
 \end{document}

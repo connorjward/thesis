@@ -7,38 +7,26 @@
 
 As we have seen thus far, existing software abstractions for mesh-like data layouts are limited by their ability to flexibly describe complex layouts without discarding important topological information.
 We address this by introducing a new abstraction for describing data layouts: \emph{axis trees}.
-The fundamental characteristics of an axis tree are as follows:
-
+The fundamental objects making up an axis tree are as follows:
 \begin{itemize}
   \item
-    An axis tree is a tree of \emph{axis} objects.
-
+    An \emph{axis tree} is a directed tree whose vertices are \emph{axis} objects.
   \item
-    Each axis object has one or more \emph{axis components}.
-
+    An \emph{axis} is an object carrying two attributes: an identifier called a \emph{label}, and an ordered collection of \emph{axis components}.
   \item
-    The axis at the top of the tree is called the \emph{root} axis.
-
-  \item
-    \emph{Non-root axes attach to components of their parent axis.}
-    That is, each axis has a \emph{parent} consisting of the 2-tuple $(\textnormal{\it parent axis}, \textnormal{\it parent component})$.
-
-  \item
-    Both axes and components have a \emph{label}.
-
-  \item
-    No ancestors or children of an axis may share the same label.
-    Axes in a tree may have the same labels, but only if they do not share a common \emph{path} from root to leaf.
-
-  \item
-    Axis component labels must be unique within an axis.
-
-  \item
-    Axis components store a size attribute.
+    An \emph{axis component} is an object that also carries a \emph{label} as well as a \emph{size} (usually an integer).
 \end{itemize}
 
-\todo[inline]{Need to be explicit about what an axis is.}
-% and put as definitions...
+When constructing an axis tree there are a number of important constraints to consider:
+\begin{itemize}
+  \item
+    Child axes are associated with a particular component of their parent axis.
+    That is, each (non-root) axis has a \emph{parent} that is the 2-tuple $(\textnormal{\it parent axis}, \textnormal{\it parent component})$.
+  \item
+    Along each possible \emph{path} from root to leaf, axes in a tree are not allowed to have the same label.
+  \item
+    All of the labels of the axis components for an axis must be unique.
+\end{itemize}
 
 Axis trees are analogous to the metadata of a \numpy{} array, or a \pyop2 \pycode{DataSet}: they exist alongside a block of memory and provide the information necessary to interpret it.
 Axis trees are especially similar to \numpy{} arrays in that they both describe multi-dimensional data and accept multi-indices that are transformed into offsets.
@@ -696,13 +684,9 @@ Resolving this requires that the \pycode{start} variable in \cref{alg:collect_la
 
 \section{Outlook}
 
-% axis trees are a novel abstraction for representing data layouts
+Axis trees are a novel abstraction for representing hiearchically structured, tree-like data layouts.
+They generalise \numpy{} N-dimensional arrays to ragged and multi-component settings and are capable of representing more structure PETSc DMPlex can using \ccode{PetscSections}.
 
-% they preserve the hierarchical structure of mesh data
-
-% as we shall see in \cref{chapter:firedrake}, the sorts of complex data layouts that occur in finite element calculations are straightforward to describe using axis trees
-
-% keeping extra topological information allows for an expressive interface
-
+As we will show in \cref{chapter:firedrake}, the sorts of complex data layouts that occur in continuum mechanics calculations are straightforward to describe using axis trees without losing important structural information and this facilitates the development of expressive interfaces.
 
 \end{document}

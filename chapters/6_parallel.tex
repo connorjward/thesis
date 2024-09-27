@@ -302,15 +302,14 @@ Shown in \cref{alg:partition_iterset}, one simulates the stencil operation and i
 If so then the iterate is marked as \rootiter{} or \leafiter{} as appropriate.
 \leafiter{}, as the most restrictive condition, takes precendence over \rootiter{}.
 
-\section{Summary}
+\section{Outlook}
 
-%This chapter stops suddenly, which makes it feel incomplete. I think what is missing is a concluding section which explains why what has been presented is a complete parallel implementation. I think this should include how matrices fit in and hence why they weren't discussed.
+In this chapter we have presented the modifications necessary to extend the heretofore serial-only version of \pyop3 to work in a distributed memory parallel environment.
+For this to work, additional care must be taken to ensure that data are stored correctly on a single process, and that they are correctly mapped between processes.
+Further consideration is also given to minimise the impact of any communication that may take place.
+Matrices were not discussed because their parallel implementation is entirely provided by PETSc.
+
+Now having a parallel implementation, all of the fundamental features of \pyop3 have been established and we may now consider integrating it into existing PDE-solving frameworks.
+This is the subject of the next chapter.
 
 \end{document}
-
-% ======================================= OLD ==================================
-% Although this interleaving approach may seem like the most sensible approach to this problem, it is worthwhile to note that there are subtle performance considerations that affect the effectiveness of the algorithm over a simpler blocking halo exchange approach.
-% \cite{bisbasAutomatedMPICode2023} showed that, in the (structured) finite difference setting, it is in fact often a better choice to use blocking exchanges because
-% (a) the background thread running the non-blocking communication occasionally interrupts the stream of execution, and
-% (b) looping over entries that touch halo data separately adversely affects data locality.
-% With \pyop3 we have only implemented the non-blocking approach for now, though a comparison with blocking exchanges in the context of an unstructured mesh would be interesting to pursue in future.

@@ -481,10 +481,11 @@ This gives us a general expression for permuting DoFs that applies to meshes wit
 By being able to encode the transformation symbolically, \pyop3 is able to generate code for performing them as part of the assembly loop, a necessary step towards enabling run-time transformations like that required for \cref{fig:element_orientation_flip}.
 At present only permutation transformations have been implemented, to allow the \pyop3 version of Firedrake to assemble Lagrange elements on hexahedra, but extending the approach to support more general transformations should be straightforward.
 
-\section{Summary}
+\section{Outlook}
 
-% we have the data structures and loop expressions for assembly - things work!!!
+In this chapter we have demonstrated the changes necessary to integrate \pyop3 into Firedrake, replicating existing \pyop2 functionality.
+The changes are all internal and so existing Firedrake scripts will run without modification.
 
-% now go onto other demonstrator applications that investigate this in more detail
+In \cref{chapter:demonstrator_applications} we take this integration further and explore the functionality and performance of a number of simple examples.
 
 \end{document}

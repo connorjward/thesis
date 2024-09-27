@@ -26,7 +26,48 @@ For all of these methods, an integral part of their usage is the application of 
 To apply one, one loops over a particular collection of mesh entities and, for each entity, computes a contribution to some global data structure using the DoFs that lie in the neighbourhood of the current iterate.
 An example of a mesh stencil operation is shown in \cref{fig:mesh_stencil}.
 
-Mesh stencil computations crop up repeatedly in continuum mechanics simulations and developing methods for their application is the central focus of this thesis.
+Obtaining portable performance when solving PDEs is challenging because it requires high-level modifications to algorithms and data structures so as to best take advantage of the properties of the underlying hardware.
+To hide the complexity inherent in making such changes, packages exist providing high-level \emph{abstractions} with which the necessary transformations become straightforward to express.
+This leads to a separation of concerns whereby the package user can write their program using objects that are familiar to them, and they need not concern themselves with lower-level details.
+
+For mesh stencil calculations it is difficult to developing high-level abstractions because unstructured mesh data structures are complex and map poorly to existing representations of structured data (e.g. N-dimensional arrays).
+This means that existing abstractions for mesh stencils are limited in what they can express, either working for a range of different algorithms or a range of complex data structures, but not both.
+
+This thesis introduces a novel suite of abstractions for describing unstructured mesh data.
+Unlike existing approaches, the abstraction is fully capable of describing complex data layouts without losing essential structural information, allowing for an expressive, composable interface suitable for representing a wider range of algorithms.
+
+\section{Contributions}
+
+The core contributions presented in this thesis are:
+\begin{itemize}
+  \item The development of new abstractions for describing unstructured mesh data, called \emph{axis trees} and \emph{index trees}.
+  \item The implementation a this new abstraction as part of the new mesh stencil library \pyop3, which has been integrated into the finite element library Firedrake~\cite{FiredrakeUserManual}.
+\end{itemize}
+
+\section{Thesis outline}
+
+The remainder of this thesis proceeds as follows:
+\begin{itemize}
+  \item
+    \Cref{chapter:background} describes some of the relevant background, motivating the need for mesh stencil computations and identifying shortcomings with existing approaches.
+  \item
+    \Cref{chapter:foundations} introduces in more detail the abstractions and software packages that contributed to the design of the new abstractions.
+  \item
+    \Cref{chapter:axis_trees,chapter:indexing} introduce the new abstractions developed for describing mesh data layouts: the \emph{axis tree} and \emph{index tree}.
+  \item
+    \Cref{chapter:pyop3} presents \pyop3, a new mesh stencil package built upon these abstractions that meets the full set of requirements of \cref{tab:existing_stencil_code_capabilities}
+    Additional considerations to enable distributed memory parallelism in \pyop3 are then discussed in \cref{chapter:parallel}.
+  \item \Cref{chapter:firedrake} describes how \pyop3 has been integrated into the finite element framework Firedrake, replacing \pyop2, and \cref{chapter:demonstrator_applications} demonstrates this integration with a number of examples.
+  \item Lastly we conclude our findings in \cref{chapter:conclusions} and consider a number of potential directions for future research.
+\end{itemize}
+
+
+% =============================================================================
+
+\chapter{Background}
+\label{chapter:background}
+
+In this chapter we introduce the relevant background necessary for understanding the relevance of mesh stencil calculations for solving PDEs and motivate the need for a new abstraction for mesh data.
 
 \section{Mesh stencils in practice: the finite element method}
 \label{sec:stokes_equations}
@@ -412,36 +453,47 @@ Many continuum mechanics software packages commit eagerly to particular implemen
 Nowhere is this more obvious than with the recent ongoing transition from CPUs to GPUs as the dominant architecture on HPC systems.
 Many popular simulation packages still do not support GPUs and those that do are only able to because of an immense community effort involving large numbers of developers (e.g.~\cite{millsPETScTAODevelopments2024,millsPerformancePortablePETScGPUbased2020,brownLibCEEDFastAlgebra2021,abdelfattahGPUAlgorithmsEfficient2021}).
 
-In order to avoid this sort of huge re-engineering effort, packages exist that automate the transition between the different implementation choices.
-Examples include the SYCL~\cite{SYCL2020Specification2020} and OpenCL~\cite{stoneOpenCLParallelProgramming2010} programming models, which provide unified interfaces for programming heterogeneous hardware, and, at a much higher level, PETSc~\cite{petsc-user-ref,petsc-web-page,petsc-efficient}, a library for massively parallel linear algebra that allows the user to very easily try different solvers and preconditioners (e.g.~\cite{brownComposableLinearSolvers2012,smithPETScSoftwareStrategy}).
-With packages such as these, users can easily experiment with different implementations to find the optimum configuration for their platform.
+In order to avoid this sort of huge re-engineering effort, developers can use libraries with interfaces that exist at a high level of \emph{abstraction}.
+Dealing with abstract interfaces allow low-level details to be hidden, resulting in a unified codebase where support for different implementation choices is delegated to the library.
+Examples of such abstractions include SYCL~\cite{SYCL2020Specification2020} and OpenCL~\cite{stoneOpenCLParallelProgramming2010a}, which provide unified interfaces for programming heterogeneous hardware, and, at a higher level, the Basic Linear Algebra Subprograms (BLAS) linear algebra interface~\cite{lawsonBasicLinearAlgebra1979}, which allows users to reason about their program using vectors and matrices as primitives, instead of lower-level operations like loops and scalar operations.
 
-This sort of automation is achieved with the use of appropriate, high-level \emph{abstractions}.
-Instead of reasoning about a program in terms of primitives of a low-level programming language (i.e. loops, scalar instructions, pointers), the user is presented with an interface that better represents the semantics of the problem domain.
-An example of this is the Basic Linear Algebra Subprograms (BLAS) linear algebra interface~\cite{lawsonBasicLinearAlgebra1979}.
-With it, users can reason about their programs using vectors and matrices as primitives and apply operations to them, without needing to consider the internal details of their implementation.
 The use of high-level abstractions leads to a separation of concerns between users of a library, who reason at the level of the abstraction, and the library developers, who implement it. 
 The result is a programming environment where users are able to produce high performance code in a productive way.
+
+\subsubsection{Composable abstractions}
+
+The value of high-level abstractions can be further increased by making them \emph{composable}.
+Instead of presenting a fixed finite set of function calls to the user, a library may instead present a collection of building blocks from which a user may build a bespoke program.
+
+Having composable abstractions is beneficial for two reasons.
+Firstly, it enables the library to describe, and hence automate, the solution of a much wider selection of programs.
+Secondly, it makes it easy to experiment with different approaches for solving a problem, which is sometimes necessary to get optimal performance on a particular platform.
+
+One example of a successful library built upon composable abstractions is PETSc~\cite{petsc-user-ref,petsc-web-page,petsc-efficient}, a library for massively parallel linear algebra.
+Provided with the requisite vectors and matrices, PETSc exposes a powerful solver configuration language, with which different types of solvers and preconditioners may be specified and composed arbitrarily~\cite{brownComposableLinearSolvers2012,smith2012petsc}.
+This allows one to achieve excellent performance on different systems using only high-level configuration changes (e.g.~\cite{betteridgeCodeGenerationProductive2021}).
+
+Composable abstractions are sometimes referred to as \emph{domain-specific languages} (DSLs).
 
 \subsubsection{Code generation}
 \label{sec:intro_software_codegen}
 
 It is especially challenging to develop high-level abstractions for mesh stencil calculations because of the level at which problem-specific information is exposed.
 Compared with BLAS-like linear algebra routines, where operations are expressed over entire matrices and vectors, the specifics of the PDE and discretisation manifest in the performance-critical local kernel and pack/unpack operations.
-Developing abstract interfaces for these operations is therefore not possible without harming performance.
 
+At this scale, implementing high-level abstractions as function calls is not suitable because the additional overhead incurs a substantial performance penalty.
 Code generation can be used to solve this problem.
 Instead of hiding implementation details behind abstract operations at run-time, a \emph{compiler} can be used to take a symbolic representation of the problem and convert it into fast code.
 Since the details of the abstraction are only present at compile-time, code generation can be thought of as a `zero-cost' abstraction.
 
-Examples of continuum mechanics simulation packages where code generation is used for the mesh stencil step include the finite element libraries DUNE-FEM~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, as well as the finite difference library Devito~\cite{devito-api,luporiniArchitecturePerformanceDevito2020}.
+Examples of continuum mechanics simulation packages where code generation is used for the mesh stencil step include the finite element libraries DUNE-FEM~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, all using the Unified Form Language (UFL)~\cite{alnaesUnifiedFormLanguage2014a} as a DSL for expressing weak forms, as well as the finite difference library Devito~\cite{devito-api,luporiniArchitecturePerformanceDevito2020} which uses SymPy~\cite{10.7717/peerj-cs.103} as a DSL.
 
 In addition to providing a zero-cost abstraction, by representing the problem at a high level, it is sometimes possible for the compiler to apply specialised optimisations that would be difficult to apply by hand.
-Whilst it is always the case that any automatically generated code could also have been written by hand, compilers frequently generate code with comparable or even superior performance to hand-written implementations (e.g.~\cite{ragan-kelleyHalideLanguageCompiler}).
+Whilst it is always the case that any automatically generated code could also have been written by hand, compilers frequently generate code with comparable or even superior performance to hand-written implementations (e.g.~\cite{ragan-kelleyHalideLanguageCompiler2013}).
 One example of this is sum factorisation, a FLOP-reduction technique applicable to finite element simulations with tensor-product structure~\cite{homolyaExposingExploitingStructure2017}.
 The compiler can even sometimes perform auto-tuning, where a space of possible solutions is explored to find the fastest one.
-Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler}, and the Sparse Polyhedral Framework (sparse linear algebra)~\cite{stroutSparsePolyhedralFramework2018}.
-If performed at runtime with additional problem-specific information, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy} (e.g.~\cite{saltzRunTimeParallelizationScheduling,kriegerLoopChainingProgramming2013}).
+Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler2013}, and the Sparse Polyhedral Framework (sparse linear algebra)~\cite{stroutSparsePolyhedralFramework2018}.
+If performed at runtime with additional problem-specific information, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy} (e.g.~\cite{baxter1989run,kriegerLoopChainingProgramming2013}).
 
 \subsubsection{Abstraction design}
 
@@ -457,10 +509,9 @@ For the design of a mesh stencil abstraction there are a number of clear require
 
 Further, it is not always the case that stencil algorithms consist of a single loop and single local kernel.
 Whilst this model holds for finite element assembly, other algorithms important for solving continuum mechanics problems are not expressible.
-Examples include hybridisation~\cite{arnoldMixedNonconformingFinite1985,boffi2013mixed} and additive-Schwartz methods~\cite{arnoldPRECONDITIONINGDivAPPLICATIONS1997}.
+Examples include hybridisation~\cite{arnoldMixedNonconformingFinite1985,boffi2013mixed} and additive-Schwartz methods~\cite{arnoldPreconditioningHdivApplications1997}.
 Hybridisation requires that multiple local kernels be evaluated at each stencil iterate~\cite{gibsonSlateExtendingFiredrake2020}, and additive-Schwartz methods need to execute extra nested loops~\cite{farrellPCPATCHSoftwareTopological2021}.
-For the abstraction to be able to express these algorithms it is thus important that it has a flexible and composable interface.
-This sort of interface is often called a \emph{domain-specific language} (DSL).
+For the abstraction to be able to express these algorithms it is thus important that it has a flexible and composable interface, in effect, a DSL.
 
 \subsection{Desirable characteristics for a mesh stencil package}
 \label{sec:intro_desirable_traits}
@@ -536,7 +587,7 @@ Whilst not necessary for low-order methods, where DoFs are only stored on a sing
 \subsubsection{Data layout flexibility}
 \label{sec:intro_data_layout_flex}
 
-In order to get optimal performance on different platforms, especially when transitioning from CPU to GPU architectures, the way in which data are laid out must be altered (e.g.~\cite{markallFiniteElementAssembly2013,sulyokImprovingLocalityUnstructured2018}).
+In order to get optimal performance on different platforms, especially when transitioning from CPU to GPU architectures, the way in which data are laid out must be altered (e.g.~\cite{markallFiniteElementAssembly2013,sulyokLocalityOptimizedUnstructured2019}).
 This poses a challenge to many simulation packages as they often commit to a particular representation of the data, typically one optimised for CPU execution, making performance portability difficult to achieve without a substantial rewrite of much of the software.
 One possible way in which this manifests is whether to use a `struct-of-array' (SoA) or `array-of-structs' (AoS) data layout.
 Applied to a finite element function space these data layouts can manifest as, say, having vector components DoFs stored adjacent to one another (AoS, \cref{fig:scott_vogelius_element_dof_layout_packed}) or as separate contiguous blocks (SoA, \cref{fig:scott_vogelius_element_dof_layout_swap}).
@@ -640,20 +691,5 @@ Simit can define data structures using either mesh entities or node sets and so 
 
 To meet the requirements of \cref{tab:existing_stencil_code_capabilities} it is therefore necessary that a new abstraction for mesh data be developed that is capable of representing complex, interleaved data layouts whilst retaining sufficient topological information to enable an expressive DSL.
 Developing such an abstraction forms the central contribution of this thesis.
-
-\section{Thesis outline}
-
-The remainder of this thesis proceeds as follows:
-\begin{itemize}
-  \item
-    \Cref{chapter:foundations} introduces in more detail the abstractions and software packages that contributed to the design of the new abstractions.
-  \item
-    \Cref{chapter:axis_trees,chapter:indexing} introduce the new abstractions developed for describing mesh data layouts: the \emph{axis tree} and \emph{index tree}.
-  \item
-    \Cref{chapter:pyop3} presents \pyop3, a new mesh stencil package built upon these abstractions that meets the full set of requirements of \cref{tab:existing_stencil_code_capabilities}
-    Additional considerations to enable distributed memory parallelism in \pyop3 are then discussed in \cref{chapter:parallel}.
-  \item \Cref{chapter:firedrake} describes how \pyop3 has been integrated into the finite element framework Firedrake, replacing \pyop2, and \cref{chapter:demonstrator_applications} demonstrates this integration with a number of examples.
-  \item Lastly we conclude our findings in \cref{chapter:conclusions} and consider a number of potential directions for future research.
-\end{itemize}
 
 \end{document}

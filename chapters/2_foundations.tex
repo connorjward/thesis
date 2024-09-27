@@ -125,7 +125,7 @@ Both representations are imperfect: the former cannot represent complex data lay
   \label{fig:dmplex_hasse}
 \end{figure}
 
-One piece of software that offers a unifying solution to these conflicting approaches is DMPlex~\cite{knepleyMeshAlgorithmsPDE2009,knepleyUnstructuredOverlappingMesh2015,langeEfficientMeshManagement2016}, the unstructured mesh component of PETSc~\cite{petsc-efficient,petsc-user-ref,petsc-web-page}.
+One piece of software that offers a unifying solution to these conflicting approaches is DMPlex~\cite{knepleysieve2009,knepleyUnstructuredOverlappingMesh2015,langeEfficientMeshManagement2016}, the unstructured mesh component of PETSc~\cite{petsc-efficient,petsc-user-ref,petsc-web-page}.
 DMPlex represents meshes as directed acyclic graphs (DAGs) where mesh entities, termed \emph{points}, are the vertices of the graph and entity covering relations are its edges (e.g. cells connect to facets).
 Since the DAG forms a partially-ordered set, it is common to visualise DMPlex instances as Hasse diagrams (\cref{fig:dmplex_hasse}).
 All entities with the same topological dimension are shown as different layers, or \emph{strata}, of the diagram.
@@ -479,7 +479,7 @@ Given its high level of abstraction, loopy is a convenient target for \pyop2 for
     \pycode{LoopKernels} may be transformed to apply optimisations such as loop tiling, common subexpression elimination and vectorisation~\cite{sunStudyVectorizationMatrixfree2020}.
   \item
     % cite these
-    Code may be generated for targets other than CPUs including the GPU languages OpenCL~\cite{stoneOpenCLParallelProgramming2010} and CUDA~\cite{CUDAProgrammingGuide}.
+    Code may be generated for targets other than CPUs including the GPU languages OpenCL~\cite{stoneOpenCLParallelProgramming2010a} and CUDA~\cite{CUDAProgrammingGuide}.
     This means that \pyop2 is capable of executing parallel loops on GPUs without making intrusive changes to the code - a fact demonstrated (as a proof-of-concept) by \cite{fenics2021-kulkarni}.
 \end{itemize}
 
@@ -505,36 +505,22 @@ Given its high level of abstraction, loopy is a convenient target for \pyop2 for
   \label{listing:pyop2_example_c_code}
 \end{listing}
 
-% \section{Outlook}
-%
-% Having introduced the three pieces of software: \numpy{}, DMPlex, and \pyop2, we now have all of the pieces that we need to develop a mesh data abstraction and associated mesh stencil library:
-% \begin{itemize}
-%   \item
-%     \numpy{} provides a language for interacting with hierarchically structured data, including the ability to make no-copy views of pieces of a larger array.
-%     This is similar to the pack/unpack operations that a mesh stencil package must provide.
-%   \item
-%     DMPlex 
-% \end{itemize}
-%
-% % DSL interface from numpy
-% % dual/multi- interpretation of data from DMPlex, also parallel, also weird striding behaviour from sections.
-% % code generation/execution model pipeline from pyop2
-%
-% As mentioned in \cref{sec:intro_missing_abstraction}, the design of \pyop2 has two key shortcomings with respect to designing an expressive DSL for mesh stencil calculations:
-% \begin{description}
-%   \item[Inflexible interface]
-%     Not all mesh operations are expressible as a single kernel executed within a single loop.
-%     Algorithms for physics-based preconditioners such as hybridisation~\cite{gibsonSlateExtendingFiredrake2020} and additive Schwartz methods~\cite{farrellPCPATCHSoftwareTopological2021} involve multiple kernels and nested loops.
-%     Though each has been implemented with \pyop2 and Firedrake, sui-generis code has been needed making the resulting software harder to compose.
-%
-%   \item[Loses topological information]
-%     Associating mesh data with node sets discards topological information.
-%     This places a burden on the user to keep track of the relations between the mesh topology and the nodes, and also makes composition (e.g. of maps) harder.
-% \end{description}
-%
-% \pyop3 aims to resolve both of these limitations with \pyop2 by rethinking the core abstractions.
-% In particular it introduces a new abstraction for data layouts, superseding \pycode{DataSets}, that is capable of representing nodal data layouts without losing reference to the mesh topology.
-% This new abstraction is called an \emph{axis tree}.
-%
+\subsection{Limitations}
+
+As an abstraction for mesh stencil computations, \pyop2 is limited because of its inflexible interface.
+Not all mesh operations are expressible as a single kernel executed within a single loop.
+Algorithms for physics-based preconditioners such as hybridisation~\cite{gibsonSlateExtendingFiredrake2020} and additive Schwartz methods~\cite{farrellPCPATCHSoftwareTopological2021} involve multiple kernels and nested loops.
+Though each has been implemented with \pyop2 and Firedrake, sui-generis code has been needed making the resulting software harder to compose.
+
+This limitation exists because \pyop2 associates unknowns with node sets instead of mesh entities and hence \emph{discards topological information}, making composition harder.
+
+\section{Outlook}
+
+In this chapter we introduced three existing pieces of software: \numpy{}, PETSc DMPlex, and \pyop2.
+\pyop2 is a powerful library for automating mesh stencil calculations but weaknesses in its ability to describe mesh data limit its expressivity and hence certain mesh stencil algorithms cannot be described.
+\numpy{} and DMPlex both provide abstractions for describing different types of structured data: \numpy{} describing fully structured, hierarchical N-dimensional arrays and DMPlex describing fully unstructured mesh data.
+
+In this thesis we seek a unifying abstraction for mesh data, combining elements of \numpy{} and DMPlex, which may then be implemented in a mesh stencil package reusing concepts from \pyop2.
+The new abstractions, called \emph{axis trees} and \emph{index trees} are discussed in \cref{chapter:axis_trees,chapter:indexing}, and the new mesh stencil package, called \pyop3, is introduced in \cref{chapter:pyop3}.
 
 \end{document}
