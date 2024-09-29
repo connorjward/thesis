@@ -100,7 +100,7 @@ The abstractions introduced in this thesis are sufficiently high-level that the 
 For cases like additive-Schwartz methods, using PETSc matrices may have poor performance because they are designed for massively parallel applications, whereas patch problems instead require the assembly of many `small' matrices.
 Instead, using dense arrays or matrix types from other linear algebra libraries like LIBXSMM~\cite{heineckeLIBXSMMAcceleratingSmall2016} may be more suitable.
 Similarly, for particle and adaptive methods the data structures may need to be frequently updated to account for moving particles or extra unknowns.
-For these cases one may want to use dynamically resizable data structures like the \ccode{vector} type from the \cplusplus standard library.
+For these cases one may want to use dynamically resizable data structures like the \ccode{vector} type from the \cplusplus{} standard library.
 By providing a higher level of abstraction for data structures - \pycode{Globals}, \pycode{Dats}, and \pycode{Mats} - \pyop3 abstracts away the underlying data structures such that alternatives should be usable.
 
 \subsubsection{Communication optimisations}

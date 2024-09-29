@@ -10,9 +10,9 @@ In order these are: \numpy{}, PETSc DMPlex and \pyop2.
 
 \section{\numpy{}} \label{sec:numpy}
 
-As we have established in \cref{chapter:background}, data structures for mesh-based computations have a non-trivial hierarchical structure that existing mesh stencil packages are incapable of representing in full.
+As established in \cref{chapter:background}, data structures for mesh-based computations have a non-trivial hierarchical structure that existing mesh stencil packages are incapable of representing in full.
 Prior to introducing any new abstractions it is therefore valuable to examine existing techniques for handling hierarchically structured data.
-To that end we will review \numpy{}, the fundamental package for array-based computation in Python~\cite{harrisArrayProgrammingNumPy2020}.
+To that end we will review \numpy{}~\cite{harrisArrayProgrammingNumPy2020}, the fundamental package for array-based computation in Python.
 In addition to considering implementation details, elements of \numpy{}'s interface will be presented since, given \numpy{}'s ubiquity, our DSL will aim to reuse much of its terminology and syntax.
 
 \subsection{N-dimensional arrays} \label{sec:numpy_ndarray}
@@ -48,12 +48,13 @@ In addition to considering implementation details, elements of \numpy{}'s interf
   \label{fig:numpy_ndarray}
 \end{figure}
 
-In \numpy{}, hierarchical data are represented by \emph{N-dimensional arrays}.
+In \numpy{}, hierarchical data structures are represented by \emph{N-dimensional arrays}.
 These have a multi-level \emph{shape}, with each level called an \emph{axis} (e.g. \cref{fig:numpy_ndarray}, left).
 
 In order to access a value from the array a \emph{multi-index} - a list of integers, one per axis - must be provided.
 Given a multi-index, the correct value may be read from the array by first computing an offset, and then reading a value at that offset.
-The function used to compute this offset is a function of each multi-index, for example, for the array shown in \cref{fig:numpy_ndarray}, the offset is given by
+The function used to compute this offset is a function of each multi-index.
+As an example, for the array shown in \cref{fig:numpy_ndarray}, the offset is given by
 \begin{equation}
   \textnormal{offset}(i_0, i_1, i_2) = 6 i_0 + 2 i_1 + i_2
 \end{equation}
@@ -93,7 +94,7 @@ For this thesis the most relevant indexing operations (demonstrated in \cref{tab
 \begin{description}
   \item[Slicing]
     For affine indexing operations one can pass a Python \pycode{slice} object to index an axis.
-    The syntax to construct a slice is \pycode{[start:stop:step]}, where omitting \pycode{start}, \pycode{stop} or \pycode{step} will default to 0, the end of the array, and 1 respectively.
+    The syntax to construct a slice is \pycode{[start:stop:step]}, where omitting \pycode{start}, \pycode{stop}, or \pycode{step} will default to 0, the end of the array, and 1 respectively.
     Due to the regular access pattern of a slice, indexing \numpy{} arrays with them will return a view.
   \item[Integer array indexing]
     For irregular access patterns, an array of indices may be used to select entries from a given axis.
@@ -102,8 +103,6 @@ For this thesis the most relevant indexing operations (demonstrated in \cref{tab
 
 \section{PETSc DMPlex}
 \label{sec:foundations_dmplex}
-
-% NOTE: Could remark that DMPlex provides a *data model*, not an execution model
 
 As discussed in \cref{sec:intro_missing_abstraction}, existing mesh stencil packages take one of two approaches to describe mesh data, either associating data directly with specific entity types, or by using the more flexible concept of node sets.
 Both representations are imperfect: the former cannot represent complex data layouts and the latter loses topological information.
@@ -131,7 +130,7 @@ Since the DAG forms a partially-ordered set, it is common to visualise DMPlex in
 All entities with the same topological dimension are shown as different layers, or \emph{strata}, of the diagram.
 
 By treating mesh entities equivalently, DMPlex is able to express mesh algorithms generically in a dimension-independent fashion (e.g. parallel mesh distribution~\cite{knepleyUnstructuredOverlappingMesh2015}, checkpointing~\cite{hamEfficientNtoMCheckpointing2024}).
-It also becomes trivial to represent data stored on different mesh entities.
+It also becomes trivial to represent data stored on different mesh entities (\cref{sec:dmplex_data_layout}).
 
 \subsection{Topological queries}
 \label{sec:dmplex_queries}
@@ -173,7 +172,7 @@ It also becomes trivial to represent data stored on different mesh entities.
 To traverse the DAG and build appropriate stencils, DMPlex provides two core topological query operations: \emph{cone} and \emph{support}.
 The cone of a point, written $\cone(p)$, is the set of points that are pointed to \emph{from} $p$.
 The support of a point, written $\support(p)$, is the dual of cone and yields the set of points that point \emph{to} $p$.
-Transitive closures for both of these operations, where the operation is applied repeatedly and all points are accumulated, are also supplied by DMPlex.
+Transitive closures for both of these operations, where the operation is applied repeatedly and all points are accumulated, are also supplied.
 The transitive closure of cone is termed the \emph{closure}, written $\plexclosure(p)$, and the transitive closure of support is called the \emph{star}, written $\plexstar(p)$.
 These operations are shown in \cref{fig:dmplex_queries}.
 
@@ -183,8 +182,6 @@ Similarly, $\plexclosure(\plexstar(p))$ is the \textit{adjacency} relation for f
 
 \subsection{Representing data layouts}
 \label{sec:dmplex_data_layout}
-
-\todo[inline]{Fix formatting of inline array}
 
 \begin{listing}
   \centering
@@ -240,7 +237,7 @@ Similarly, $\plexclosure(\plexstar(p))$ is the \textit{adjacency} relation for f
   \label{alg:petsc_section_tabulate}
 \end{algorithm}
 
-In order to associate data with DMPlex points users must construct a \ccode{PetscSection}, a simple data structure that associates DoFs with mesh points.
+In order to store data on a DMPlex, users must construct a \ccode{PetscSection}, a simple data structure that associates DoFs with mesh points.
 Code for constructing a \ccode{PetscSection} is shown in \cref{listing:section_p3}.
 
 \ccode{PetscSections} work by converting DoF counts for points into offsets that, like \numpy{}, can be used to read from an array.
@@ -258,7 +255,7 @@ Whilst a powerful and flexible tool for describing data layouts, \ccode{PetscSec
 \begin{description}
   \item[They are fully ragged]
     \ccode{PetscSections} do not distinguish between different types of topological entity and so important information about the structure of the computation cannot be represented.
-    DoF information is stored per point in a completely unstructured way, so \ccode{PetscSections} are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
+    DoF information is stored per point in a completely unstructured way so \ccode{PetscSections} are incapable of knowing, say, that every cell in the mesh stores exactly one DoF.
     This can prevent the compiler from making certain optimisations (e.g. loop unrolling) which can significantly affect performance.
     Further, not knowing the loop sizes a priori means that an additional array needs to be passed about during the calculation, increasing the memory footprint and thus directly harming the performance of memory-bound codes.
 
@@ -390,7 +387,7 @@ The loop takes as arguments a \emph{local kernel}, \emph{iteration set} and any 
 Constructing a parallel loop requires an invocation like that shown in \cref{listing:pyop2_parloop_demo}.
 \pycode{kernel} is the local kernel representing the stencil operation to be performed per iteration, \pycode{src_set} is the set that is iterated over (termed the \emph{iteration set}), and \pycode{dat0} and \pycode{dat1} are \pycode{Dat} objects that are passed through to the local kernel.
 \pycode{kernel} may be either a string of C code or a \emph{loopy kernel} (see \cref{sec:pyop2_codegen}).
-Both \pycode{Dats} associate data with some \pycode{target_set} and hence are addressed with the map \pycode{src_to_target_map}.
+Both \pycode{Dats} associate data with some \pycode{target_set} and hence are addressed with a map relating these sets (\pycode{src_to_target_map}).
 \pycode{dat0} is accessed using the \pycode{READ} access descriptor, meaning that it only needs to be packed and passed into the local kernel, whereas \pycode{dat1} is accessed with \pycode{WRITE}, so it only requires unpacking.
 
 \subsubsection{Interleaving computation and communication}
@@ -447,9 +444,9 @@ By contrast, \ownediter{} points are defined as being points that need ghost dat
 Larger stencils touch more adjacent points and hence the partitioning of \coreiter{}/\ownediter{} should be modified.
 \pyop2 will therefore not work correctly in parallel for programs that use several different stencil sizes acting on the same data.
 
-Further, during parallel loop execution, the partitioning of \coreiter{}/\ownediter{} points is associated with the \emph{iteration set}, instead of the data structures.
-This means that \pyop2 cannot do the right thing for cases where data structures do not have the right parallel decomposition (e.g. when transferring data between meshes).
-  Stencils may touch only owned points on one mesh, leading to the iterate being classified as \coreiter{}, but they may be \ghostiter{} on the other mesh, and hence the iterate ought to be labelled \ownediter{}.
+Further, the partitioning of \coreiter{}/\ownediter{} points is associated with the \emph{iteration set}, instead of the data structures.
+This means that \pyop2 cannot do the right thing for cases where data structures do not share the same parallel decomposition (e.g. when transferring data between meshes).
+  Stencils may touch only non-\ghostiter{} points on one mesh, leading to the iterate being classified as \coreiter{}, but they may be \ghostiter{} on the other mesh, and hence the iterate ought to be labelled \ownediter{}.
 
 \subsection{Code generation}
 \label{sec:pyop2_codegen}
@@ -460,8 +457,8 @@ This means that \pyop2 cannot do the right thing for cases where data structures
   \label{fig:pyop2_codegen}
 \end{figure}
 
-To turn the abstract parallel loop definition into executable, fast code, \pyop2 utilises run-time code generation.
-First, the parallel loop is \emph{lowered} to loopy (see below), which is then lowered to C code and compiled to a binary.
+To turn abstract parallel loop definitions into executable, fast code, \pyop2 utilises run-time code generation.
+First, the parallel loop is \emph{lowered} to loopy, which is then lowered to C code and compiled to a binary.
 This binary may then be called passing in the arguments from the original parallel loop.
 This process is summarised in \cref{fig:pyop2_codegen}.
 
@@ -469,6 +466,7 @@ This process is summarised in \cref{fig:pyop2_codegen}.
 
 Loopy~\cite{klocknerLooPyTransformationbased2014}, a polyhedral-model-inspired code generation library written in Python, is the primary intermediate representation of \pyop2.
 Given a parallel loop, \pyop2 generates a loopy \pycode{LoopKernel} which is then lowered to C code and compiled.
+
 In order to construct a \pycode{LoopKernel} the user needs to provide \emph{domains} (loops), \emph{instructions}, and \emph{arguments} (data passed into the kernel).
 For the parallel loop in \cref{listing:pyop2_parloop_demo}, the \pycode{LoopKernel} and generated C code are shown in \cref{listing:pyop2_example_loopy_kernel} and \cref{listing:pyop2_example_c_code} respectively.
 The local kernel, here omitted, is also (usually) a \pycode{LoopKernel} and would be included in the generated code as a separate function.
@@ -476,9 +474,8 @@ The local kernel, here omitted, is also (usually) a \pycode{LoopKernel} and woul
 Given its high level of abstraction, loopy is a convenient target for \pyop2 for a number of reasons:
 \begin{itemize}
   \item
-    \pycode{LoopKernels} may be transformed to apply optimisations such as loop tiling, common subexpression elimination and vectorisation~\cite{sunStudyVectorizationMatrixfree2020}.
+    \pycode{LoopKernels} may be transformed to apply optimisations such as loop tiling, common subexpression elimination and vectorisation~\cite{klocknerLooPyFortran2015,klocknerArrayProgramTransformation2016,sunStudyVectorizationMatrixfree2020}.
   \item
-    % cite these
     Code may be generated for targets other than CPUs including the GPU languages OpenCL~\cite{stoneOpenCLParallelProgramming2010a} and CUDA~\cite{CUDAProgrammingGuide}.
     This means that \pyop2 is capable of executing parallel loops on GPUs without making intrusive changes to the code - a fact demonstrated (as a proof-of-concept) by \cite{fenics2021-kulkarni}.
 \end{itemize}

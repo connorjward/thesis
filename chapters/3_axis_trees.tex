@@ -7,6 +7,7 @@
 
 As we have seen thus far, existing software abstractions for mesh-like data layouts are limited by their ability to flexibly describe complex layouts without discarding important topological information.
 We address this by introducing a new abstraction for describing data layouts: \emph{axis trees}.
+
 The fundamental objects making up an axis tree are as follows:
 \begin{itemize}
   \item
@@ -14,7 +15,7 @@ The fundamental objects making up an axis tree are as follows:
   \item
     An \emph{axis} is an object carrying two attributes: an identifier called a \emph{label}, and an ordered collection of \emph{axis components}.
   \item
-    An \emph{axis component} is an object that also carries a \emph{label} as well as a \emph{size} (usually an integer).
+    An \emph{axis component} is an object that carries a \emph{label} as well as a \emph{size} (usually an integer).
 \end{itemize}
 
 When constructing an axis tree there are a number of important constraints to consider:
@@ -60,7 +61,7 @@ The core difference to these existing abstractions that axis trees bring is the 
     \caption{The data layout.}
   \end{subfigure}
   \caption{
-    A linear axis tree.
+    A linear axis tree with shape \pycode{(2, 3, 2)}.
     The axes are labelled $a$, $b$, and $c$ and all have a single component, labelled $x$.
   }
   \label{fig:linear_axis_tree}
@@ -68,7 +69,7 @@ The core difference to these existing abstractions that axis trees bring is the 
 
 As a first example to demonstrate axis trees we consider the simplest case: \emph{linear} axis trees.
 Linear axis trees are defined as being axis trees where all of the axes have a single component.
-They are equivalent to multi-dimensional arrays in \numpy{}.
+They are equivalent to N-dimensional arrays in \numpy{}.
 
 An example of a linear axis tree is shown in \cref{fig:linear_axis_tree}.
 Consisting of 3 axes labelled $a$, $b$, and $c$, it is equivalent to a \numpy{} array with shape \pycode{(2, 3, 2)} with axis $a$ of the axis tree matching axis 0 of the \numpy{} array and so on.
@@ -102,6 +103,7 @@ For single-component axes this ambiguity is not present and so in future compone
 \subsubsection{Example 2: Multi-component axis trees}
 
 \begin{figure}
+  \centering
   \begin{subfigure}{.9\textwidth}
     \begin{pyalg2}
       axis_a = Axis({"x": 2, "y": 2}, "a")
@@ -164,7 +166,7 @@ Being the most widely used, we will mostly focus of \pycode{Dats} during this th
 
 \begin{figure}
   \centering
-  \begin{subfigure}{.45\textwidth}
+  \begin{subfigure}{.42\textwidth}
     \centering
     \begin{minipage}{.35\textwidth}
       \begin{center}
@@ -178,9 +180,9 @@ Being the most widely used, we will mostly focus of \pycode{Dats} during this th
     \end{minipage}
   \end{subfigure}
   %
-  % \hspace{1em}
+  \hspace{2em}
   %
-  \begin{subfigure}{.45\textwidth}
+  \begin{subfigure}{.42\textwidth}
     \centering
     \begin{minipage}{.35\textwidth}
       \begin{center}
@@ -196,7 +198,7 @@ Being the most widely used, we will mostly focus of \pycode{Dats} during this th
 
   \caption{
     Two equivalent data layouts storing the same information.
-    With the left axis tree, axis $c$ is `innermost', with unit stride, whilst for the right tree this is axis $a$.
+    With the left axis tree, axis $c$ is innermost, with unit stride, whilst for the right tree this is axis $a$.
   }
   \label{fig:linear_axis_tree_flip}
 \end{figure}
@@ -259,13 +261,13 @@ By avoiding assumptions about axis ordering, a user can create a data layout usi
 \end{figure}
 
 Thus far we have only considered data layouts where the axis components have constant sizes.
-However, there are circumstances where the size is variable; for instance when representing a map from vertices to their incident edges ($\support(v)$, \cref{sec:dmplex_queries}), as the number of incident edges is not constant for all vertices.
+However, there are circumstances where the size is variable; for instance when representing a map from vertices in a mesh to their incident edges ($\support(v)$, \cref{sec:dmplex_queries}), as the number of incident edges is not constant for all vertices.
 Axis trees describing this sort of structure are described as \emph{ragged}.
 
 Ragged axis trees are created by passing a \pycode{Dat} as the size of the axis component, instead of an integer.
 This is shown in \cref{fig:ragged_axis_tree}.
 Here, the axis tree has 3 axes labelled $a$, $b$, and $c$.
-Axes $a$ and $b$ both have a constant size of 2 but $c$, the innermost axis, has a variable size given by the linear \pycode{Dat} with shape \pycode{(2, 2)} and axis labels $a$ and $b$ (line~\ref{code:ragged_size_dat}).
+Axes $a$ and $b$ both have a constant size of 2 but $c$, the innermost axis, has a variable size given by a linear \pycode{Dat} with shape \pycode{(2, 2)} and axis labels $a$ and $b$ (line~\ref{code:ragged_size_dat}).
 
 The values of this \pycode{Dat} can be written as \pycode{[[1,0],[2,1]][?$i_a$?,?$i_b$?]}, meaning that the size of $c$ is determined by the table:
 \begin{center}
@@ -288,15 +290,15 @@ The values of this \pycode{Dat} can be written as \pycode{[[1,0],[2,1]][?$i_a$?,
 \label{sec:axis_tree_layouts}
 
 In order for axis trees to provide a complete specification of a data layout, they need to provide a mechanism that transforms multi-indices into offsets.
-To that end, axis trees carry additional \emph{layout functions}, that take a multi-indices and return offsets.
+To that end, axis trees carry additional \emph{layout functions}, that take multi-indices and return offsets.
 
 Layout functions are computed automatically from the specification of the axis tree.
 They are computed in two stages:
 \begin{enumerate}
   \item
-    \emph{Partial} layout functions are determined for each axis component.
+    First, \emph{partial layout functions} are determined for each axis component.
   \item
-    Then, the full layout function is determined by summing the partial layout functions.
+    Then, the full layout functions, one per path through the axis tree, are determined by summing the partial layout functions.
 \end{enumerate}
 
 To explain how the layout functions are actually computed we present a series of algorithms, starting from the simplest case and iteratively adding features until the complete\footnote{There are additional considerations in parallel that are not considered here, see \cref{sec:parallel_data_layouts}.} algorithm is reached.
@@ -347,15 +349,16 @@ From the layout functions in \cref{fig:linear_axis_tree_layouts} we may make the
     Partial layouts, expressed per axis, are always just the index multiplied by the step size.
     For example, the partial layout for axis $b$ is $2 i_b$ because the strides are over axis $c$, which has size 2.
   \item
-    The innermost axis (here $c$) always has a trivial partial layout of just the index because it has a step size of 1.
+    The innermost axis (here $c$) always has a trivial partial layout of just the index (here $i_c$) because it always has a step size of 1.
   \item
     Full layout functions are the sum of the partial layout functions as the tree is descended.
     For instance, the full layout function at path $\{a,b\}$ is the sum of the partial layouts $6 i_a$ and $2 i_b$.
 
   \item
     Multiple full layout functions exist, one for each partial descent of the axis tree.
-    If we only have indices $i_a$ and $i_b$, corresponding to the path $\{a,b\}$, for example, it is legitimate to compute the offset as $6i_a+2i_b$
-    If instead the indices $i_b$ and $i_c$, corresponding to the path $\{b,c\}$, were provided then this would not be possible as it would be ambiguous whether $(a_0, i_b, i_c)$ or $(a_1, i_b, i_c)$ were meant.
+    This means that it is still possible to compute an offset if only a partial multi-index is provided.
+    For example, if provided the indices $i_a$ and $i_b$, corresponding to the path $\{a,b\}$, it is legitimate to compute the offset as $6i_a+2i_b$.
+    However, if instead the indices $i_b$ and $i_c$ were provided, corresponding to the path $\{b,c\}$, then it is not possible to compute an offset because it is ambiguous whether $(a_0, i_b, i_c)$ or $(a_1, i_b, i_c)$ is meant.
 \end{itemize}
 
 \begin{algorithm}
@@ -439,7 +442,7 @@ The partial layouts are symbolic expressions of the form \pycode{AxisVar(axis.la
 
 When considering multi-component axis trees, a number of complications to the simple linear case are introduced.
 First, there is no longer a single partial layout function per axis, instead there is a partial layout function \emph{per axis component}.
-In addition, as well as weighted sums of indices, layout functions can now include \emph{integer offsets}.
+Also, as well as weighted sums of indices, layout functions can now include \emph{integer offsets}.
 
 These modifications are demonstrated in \cref{fig:multi_component_axis_tree_layouts}.
 Unlike before, axis $a$ now has two components, $x$ and $y$, with each component having a separate child axis.
@@ -448,10 +451,10 @@ If we again inspect the computed layout functions we may make the following obse
   \item
     The paths are now partitioned by component: $a^x$ and $a^y$ are treated separately.
   \item
-    The fact that all the $y$ component entries of axis $a$ come after $x$ is accounted for by the addition of an integer offset of 6, which is the size of the $x$ block of $a$.
+    The fact that all the $y$ component entries of axis $a$ come after $x$ is accounted for by the addition of an integer offset of 6, which is the size of $a^x$.
   \item
     As before, the full layout functions are constructed by adding together the partial layout functions.
-    However, in this case the fact that there are two distinct paths - $\{a^x, b\}$ and $\{a^y, c\}$ - through the axis tree means that not all partial functions are added together.
+    However, the fact that there are two distinct paths through the axis tree, $\{a^x, b\}$ and $\{a^y, c\}$, means that not all partial layouts are added together.
 \end{itemize}
 
 \begin{algorithm}
@@ -492,11 +495,11 @@ If we again inspect the computed layout functions we may make the following obse
   \label{alg:collect_layouts_multi_component}
 \end{algorithm}
 
-A modified version of \cref{alg:collect_layouts_linear} is shown in \cref{alg:collect_layouts_multi_component}.
-The key differences are highlighted in red and include:
+To account for these changes some modifications must be made to \cref{alg:collect_layouts_linear}.
+Shown in \cref{alg:collect_layouts_multi_component}, the key differences are highlighted in red and include:
 \begin{itemize}
   \item
-    The axis tree traversal is now be over \emph{per component} subaxes.
+    The axis tree traversal now visits each component of each axis.
     This means that additional loops over \pycode{axis.components} are required (lines~\ref{code:mc_loop1},~\ref{code:mc_loop2}).
   \item
     Since separate partial layouts are required for each axis component, the \pycode{layouts} dictionary now stores values per \pycode{(axis, component)} pair (line~\ref{code:mc_layout_store}).
@@ -516,31 +519,14 @@ Compared with previous, non-ragged axis trees, this has a number of implications
 \begin{itemize}
   \item
     Due to the non-uniform size of axis $c$, both axes $a$ and $b$ have non-uniform strides.
-    The offsets must therefore be tabulated into \emph{offset arrays}.
+    The offsets must therefore be tabulated into \emph{offset arrays}, which are implemented as \pycode{Dats} with linear axis trees.
 
   \item
-    Offset arrays are implemented as \pycode{Dats} with linear axis trees.
-
-  \item
-    The offset arrays at a minimum must include the current axis in their own axis tree.
-    Axis $a$, for example, has partial layout function $\pycode{[0,1][?$i_a$?]}$, meaning that it is a 1-dimensional array with an axis tree consisting of only axis $a$.
-    Similar to the size array in \cref{sec:ragged_axis_trees}, this partial layout is (trivially) equivalent to the table:
-
-    \begin{center}
-      \begin{tblr}{|[1pt] X[1.2cm,c] |[1pt] c |[1pt]}
-        \hline[1pt]
-        \boldmath$i_a$ & \boldmath$\textnormal{\bf offset}(i_a)$ \\
-        \hline[1pt]
-        0 & 0 \\
-        \hline[1pt]
-        1 & 1 \\
-        \hline[1pt]
-      \end{tblr}
-    \end{center}
-
+    The axis trees for the offset arrays must, at a minimum, include the current axis.
+    For example, axis $a$ has partial layout function $\pycode{[0,1][?$i_a$?]}$, meaning that it is a 1-dimensional array with an axis tree consisting of only axis $a$.
   \item
     Since the stride of axis $b$ depends on the size of axis $c$, which in turn depends on the index $i_a$, the offset array for axis $b$ depends on \emph{both} $i_a$ and $i_b$.
-    By depending on axis $a$ as well as itself, we say that axis $a$ is a \textit{dependent} axis for axis $b$.
+    By depending on axis $a$ as well as itself, we say that axis $a$ is a \emph{dependent} axis for axis $b$.
 \end{itemize}
 
 \begin{figure}
@@ -632,7 +618,7 @@ Compared with previous, non-ragged axis trees, this has a number of implications
 
 To determine the partial layouts for ragged axis trees we must modify \cref{alg:collect_layouts_multi_component} to account for the case where axis component step size is non-uniform.
 The new version is shown in \cref{alg:collect_layouts_ragged}.
-In it, none of the code from the earlier algorithms is changed, but an additional branch is added to handle the new case (line~\ref{code:has_constant_step}).
+In it, none of the code from the earlier algorithms is changed, but an additional branch is added to handle this new case (line~\ref{code:has_constant_step}).
 If the axis component's steps are found to be non-uniform then, instead of making an affine layout function involving \pycode{AxisVars}, the function \pycode{tabulate_offsets()} is called (line~\ref{code:call_tabulate_offsets}), returning an appropriate offset array to be used as the partial layout instead.
 
 \begin{algorithm}
@@ -680,13 +666,12 @@ The instructions \pycode{dependent_axes.iter()} (line~\ref{code:loop_dependent_a
 }
 
 Note that at present it is not possible to have multi-component axes if one of the components is ragged.
-Resolving this requires that the \pycode{start} variable in \cref{alg:collect_layouts_ragged} support adding offset arrays as well as integers.
 
 \section{Outlook}
 
 Axis trees are a novel abstraction for representing hiearchically structured, tree-like data layouts.
-They generalise \numpy{} N-dimensional arrays to ragged and multi-component settings and are capable of representing more structure PETSc DMPlex can using \ccode{PetscSections}.
+They generalise \numpy{} N-dimensional arrays to ragged and multi-component settings and are capable of representing more structure than PETSc DMPlex can using \ccode{PetscSections}.
 
-As we will show in \cref{chapter:firedrake}, the sorts of complex data layouts that occur in continuum mechanics calculations are straightforward to describe using axis trees without losing important structural information and this facilitates the development of expressive interfaces.
+As we will show in later chapters, axis trees provide a natural means to describe the sorts of complex data layouts that occur in continuum mechanics calculations in a way that retains important structural information and facilitates the development of expressive interfaces.
 
 \end{document}

@@ -6,14 +6,14 @@
 \label{chapter:indexing}
 
 Just like \numpy{} (\cref{sec:numpy_indexing_arrays}), data structures in \pyop3 can be indexed, extracting portions of the full structure and returning them as a new object.
-However, unlike \numpy{}, where indexing is accomplished with a list of index-like objects, one for each axis, \pyop3 needs a more complicated solution to accomodate for the fact that data structures are now tree-like.
+However, unlike \numpy{} where indexing is accomplished with a list of index-like objects, one for each axis, \pyop3 needs a more complicated solution to accomodate for the fact that data structures are now tree-like.
 Instead of lists of indices, \pyop3 instead uses \emph{index trees}.
 
 \section{Index trees}
 \label{sec:index_trees}
 
 In the same way that axis trees are built from labelled axis objects and axis components, index trees are built from labelled \emph{index} objects and \emph{index components}.
-Whereas axes and axis components encode data layout, indices in index trees encode \emph{axis transformations} of the form
+Whereas axes and axis components encode levels in data layouts, indices in index trees encode \emph{axis transformations} of the form
 \begin{equation}
   \textnormal{axis} \quad \circ \quad \textnormal{index} \quad \to \quad (\textnormal{axis tree},\ \textnormal{index information}).
   \label{eq:index_transform}
@@ -22,11 +22,10 @@ That is, each index takes an input axis and transforms it, returning a new axis 
 
 When dealing with index trees, as opposed to individual indices, this process expands to index entire axis trees, giving the transformation
 \begin{equation}
+  \label{eq:index_tree_apply}
   \textnormal{axis tree} \quad \circ \quad \textnormal{index tree} \quad \to \quad (\textnormal{axis tree},\ \textnormal{index information}).
 \end{equation}
-
-What this means is that, to index a data structure created with axis tree, a compatible index tree must be applied to it.
-The result is an \emph{indexed axis tree} consisting of a new axis tree and additional indexing information mapping the new axis tree back to the original one.
+In other words, to index an axis tree, an index tree must be applied to it, with the result being an \emph{indexed axis tree} consisting of a new axis tree plus additional indexing information mapping the new axis tree back to the original one.
 
 \begin{algorithm}
   \caption{
@@ -39,7 +38,7 @@ The result is an \emph{indexed axis tree} consisting of a new axis tree and addi
   \begin{pyalg2}
     def index_axes(index: Index, input_axis_tree: AxisTree):
       # process the current index
-      axis_tree, index_info = index_handler(index, input_axis_tree)
+      axis_tree, index_info = index_handler(index, input_axis_tree)?\label{code:index_handler}?
 
       # recursively visit child indices
       for component in index.components:
@@ -58,22 +57,23 @@ The result is an \emph{indexed axis tree} consisting of a new axis tree and addi
   \label{alg:index_axis_tree}
 \end{algorithm}
 
-Pseudocode for the indexing transformation that occurs when indexing an axis tree with an index tree is shown in \cref{alg:index_axis_tree}.
-The index tree is traversed and the function \pycode{index_handler()}, representing the transformation in \cref{eq:index_transform}, is called on each index, with the resulting axis tree and index information collected together and returned.
+Pseudocode for the indexing transformation that occurs when indexing an axis tree with an index tree (\cref{eq:index_tree_apply}) is shown in \cref{alg:index_axis_tree}.
+The index tree is traversed and the function \pycode{index_handler()}, representing the transformation in \cref{eq:index_transform}, is called on each index (line~\ref{code:index_handler}), with the resulting axis tree and index information collected together and returned.
+Together these attributes are called an \emph{indexed axis tree}.
 
 \subsubsection{Mapping between axis trees}
 
 The index information returned by the indexing transformation allows one to relate the old and new axis trees.
-In particular, it enables on to take multi-indices given for the new axis tree (the \emph{source}) and map them to multi-indices for the old tree (the \emph{target}).
-These multi-index relations are represented by two mappings:
+In particular, it enables one to take multi-indices given for the new axis tree (the \emph{source}) and map them to multi-indices for the old tree (the \emph{target}).
+The index information consists of two mappings:
 \begin{description}
-  \item[Target paths] A map connecting labels of the source tree with labels of the target.
-  \item[Target expressions] A map connecting index expressions of the source tree with those of the target.
+  \item[Target path] A map connecting labels of the source tree with labels of the target tree.
+  \item[Target expressions] A map connecting index expressions of the source tree with those of the target tree.
 \end{description}
 
 With these mapping, one has sufficient information to:
-(1) select the right layout function from the target axis tree, and
-(2) substitute index expressions into the layout function, resulting in a \emph{substituted layout function} that accepts multi-indices of the source axis tree instead of the target.
+(a) select the right layout function from the target axis tree, and
+(b) substitute index expressions into the layout function, resulting in a \emph{substituted layout function} that accepts multi-indices of the source axis tree instead of the target.
 This approach allows \pyop3 to represent indexing operations symbolically as views, regardless of the indexing operation applied.
 This contrasts with \numpy{} where only `simple' indexing operations are supported without copying the array.
 
@@ -96,7 +96,7 @@ This contrasts with \numpy{} where only `simple' indexing operations are support
     \caption{
       \pyop3 indexing code.
       The syntax used to index \pycode{dat} (\pycode{[::2, 1::]}) is syntactic sugar that is expanded to a complete index tree.
-      The syntax is therefore identical to the equivalent \numpy{} code for an array with shape \pycode{(5, 3)}.
+      The syntax is identical to the equivalent \numpy{} code for an array with shape \pycode{(5, 3)}.
     }
     \label{fig:index_linear_code}
   \end{subfigure}
@@ -144,11 +144,11 @@ From the target path we know that the correct, unsubstituted, layout function is
 \begin{equation}
   \textnormal{offset}(i_a, i_b) = 3 i_a + i_b,
 \end{equation}
-which, applying the target expression substitutions, produces the substituted layout function
+which, applying the substitutions from the target expressions, produces the substituted layout function
 \begin{equation}
   \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1,
 \end{equation}
-mapping multi-indices in the source axis tree to offsets in the original array as desired.
+thus mapping multi-indices in the source axis tree to offsets in the original array as desired.
 
 \subsubsection{Example 2: Multi-component index trees}
 
@@ -230,7 +230,7 @@ Indexing the array produces the following target path and target expressions:
 \end{center}
 Unlike the linear case above, having subsets introduces index expressions like $\pycode{[0,2][?$i_d$?]}$, and the scalar index of axis $b$ means that $i_b$ is simply a constant, rather than an expression of some other axis index.
 
-With these target paths and expressions it is now straightforward to again determine appropriate substituted layouts for the indexed axis tree:
+With these target paths and expressions it is now straightforward to again determine appropriate substituted layouts for the indexed axis tree using the same process as before:
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
     \hline[1pt]
@@ -313,7 +313,6 @@ Which may now be \emph{composed} with the new indexing information to produce:
     \hline[1pt]
   \end{tblr}
 \end{center}
-
 We can now perform the same sort of layout substitution as before:
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
@@ -465,8 +464,7 @@ Indexing with loop indices is an important step towards generating expressions f
 However, they are not sufficient to produce `packed' temporaries of the sort shown in \cref{fig:scott_vogelius_element_dof_layout_packed} - for that we need \emph{maps}.
 
 In \pyop3, maps are functions that accept a single loop index as an argument (or another map, \cref{sec:indexing_map_composition}) and yield values that are parametrised by the loop index.
-The the number of values returned by the map for each iterate is called the \emph{arity}.
-For example, the map from cells to incident edges ($\cone(p)$, \cref{sec:dmplex_queries}) for a mesh with triangular cells has an arity of 3.
+The number of values returned by the map for each iterate is called the \emph{arity}; for example, the map from cells to incident edges ($\cone(p)$, \cref{sec:dmplex_queries}) for a mesh with triangular cells has an arity of 3.
 
 An example of indexing an array using a map is shown in \cref{fig:index_map}.
 We declare some `outer' loop over an axis labelled $x$ (\ref{fig:index_map_code}, line~\ref{code:make_axis_x}) as well as an arity 3 map, $f$, mapping from $x$ to $a$ (line~\ref{code:make_map}).
@@ -539,7 +537,7 @@ This is useful in cases where one approach is known to be better than another, s
   \end{subfigure}
 
   \caption{
-    Example indexing an array with a ragged map.
+    Example indexing an array with a ragged map with arity \pycode{[2, 0, 1]}.
     The resulting array has variable size depending on the value of the loop index.
   }
   \label{fig:index_ragged_map}
@@ -548,9 +546,9 @@ This is useful in cases where one approach is known to be better than another, s
 It is not always the case that maps will have a constant value arity.
 To use the same example from \cref{sec:ragged_axis_trees}, the map relating vertices in a mesh to their supported edges has variable arity because the size of this relation is different for each vertex.
 
-To represent ragged maps a simple change in the code is required: one must pass a \pycode{Dat} as the \pycode{arity} argument to the map, instead of an integer.
+To represent ragged maps a simple change in the code is required: one must pass a \pycode{Dat} instead of an integer as the \pycode{arity} argument to the map.
 This is demonstrated in \cref{fig:index_ragged_map_code} (line~\ref{code:arity_dat}).
-As a result of using a non-constant arity, the size of the indexed array is no longer constant but instead depends on the value of the loop index.
+As a result of this non-constant arity, the size of the indexed array is no longer constant but instead depends on the value of the loop index.
 This is shown in \cref{fig:index_map_data_layout} (right).
 
 A discussion of layout functions and target paths/expressions is omitted here because it is identical to the example shown in \cref{fig:index_map} above.
@@ -592,6 +590,7 @@ A discussion of layout functions and target paths/expressions is omitted here be
     \includegraphics{index_map_composition_transform.pdf}
     \caption{
       The axis tree transformation.
+      The composed map $g(f(p))$ produces the two-dimensional partial axis tree with labels $c$ and $d$.
     }
     \label{fig:index_map_composition_transform}
   \end{subfigure}
@@ -616,7 +615,7 @@ Indexing the array with the composed map gives the following index information:
     \hline[1pt]
   \end{tblr}
 \end{center}
-Where the index corresponding to axis $c$ is passed as an argument to $f$, and the one for axis $d$ passed to $g$.
+Where the index corresponding to axis $c$ ($i_c$) is passed as an argument to $f$, and the one for axis $d$ ($i_d$) passed to $g$.
 With this, the substituted layouts are then:
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
@@ -631,13 +630,13 @@ With this, the substituted layouts are then:
 \section{Indexing with alternative data layouts}
 \label{sec:indexing_data_layout_transformations}
 
-In \cref{sec:axis_tree_alternative_layouts} we introduced the concept of alternative data layouts and claimed that \pyop3 does not care about the specific ordering of axes.
+In \cref{sec:axis_tree_alternative_layouts} we introduced the concept of representing alternative data layouts using axis trees and claimed that \pyop3 does not care about the specific ordering of axes.
 Whilst this is true internally to \pyop3, more thought is required when interfacing with external code.
 In particular, the local kernels evaluated during mesh stencil calculations assume a specific ordering of the input and output DoFs.
 In other words, the global data structures do not have a prescribed layout, but the local ones do.
 
-Conveniently, \pyop3's indexing approach entirely obviates this issue.
-From \cref{alg:index_axis_tree} it can be seen that the structure of the indexed axis tree \emph{comes entirely from the \emph{index} tree, and not from the input \emph{axis} tree}.
+Conveniently, \pyop3's approach to indexing entirely obviates this issue.
+From \cref{alg:index_axis_tree} it can be seen that the structure of the new, indexed axis tree \emph{comes entirely from the \emph{index} tree, and not from the input \emph{axis} tree}.
 This means that we can prescribe the local DoF ordering through careful construction of the index tree, independent of any global data layout.
 
 \begin{figure}
@@ -681,7 +680,7 @@ This means that we can prescribe the local DoF ordering through careful construc
   }
 \end{figure}
 
-To demonstrate this behaviour we consider an identical packing transformation to that shown in \cref{fig:index_map}, but with a different axis ordering for the unindexed array: axes $a$ and $b$ have been swapped.
+To demonstrate this behaviour we consider an identical packing transformation to that shown in \cref{fig:index_map}, but with a different axis ordering for the unindexed array: swapping axes $a$ and $b$.
 All other code, including the indexing code, is unchanged.
 
 Keeping the indexing code the same produces the same axis tree and index information as \cref{fig:index_map}:

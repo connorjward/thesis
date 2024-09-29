@@ -6,7 +6,7 @@
 \label{chapter:demonstrator_applications}
 
 In order to demonstrate \pyop3's capability to replace \pyop2 inside the Firedrake framework, we now present a number of examples in detail that compare the old and new software stacks in terms of both functionality and performance.
-In particular, we consider a prototypical finite element assembly problem, that runs under \pyop3 without modification, and a more complex slope limiter computation, that \pyop3 significantly facilitates the development of.
+In particular, we consider two prototypical finite element problems, that run under \pyop3 without modification, and a more complex slope limiter computation, that \pyop3 significantly facilitates the development of.
 
 \subsubsection{Performance metrics}
 
@@ -85,6 +85,71 @@ Its details are summarised in \cref{tab:pyramus_specs}.
 % At low core counts the bandwidth is close to its maximum but the throughput is low.
 % This means that \emph{applications that are traditionally thought of as memory-bound may present as compute-bound if they are measured on few cores}.
 
+\section{Solving the Helmholtz equation}
+
+Before any investigation of performance, we first demonstrate that Firedrake remains capable of solving PDEs under \pyop3.
+To do so, we solve the Helmholtz equation on a unit square using the formulation from \cite{FiredrakeUserManual} (pp. 91-93).
+The formulation reads: find $u \in V$ such that
+\begin{equation}
+  \int \nabla u \cdot \nabla v + uv \textnormal \, {d}\Omega = \int fv\, \textnormal{d}\Omega,
+\end{equation}
+where $u$ is a trial function, $v$ a test function, and $f$ a known function.
+For this example we set
+\begin{equation}
+  f = (1 + 8 \pi^2)\cos (2\pi x)\cos(2\pi y),
+\end{equation}
+which results in a known analytic solution of
+\begin{equation}
+  u = \cos(2\pi x) \cos(2\pi y).
+\end{equation}
+
+\begin{listing}
+  \centering
+  \caption{Firedrake code for solving the Helmholtz equation using degree 3 Lagrange elements.}
+  \begin{minipage}{.9\textwidth}
+    \begin{pyalg2}
+      from firedrake import *
+
+      mesh = UnitSquareMesh(...)
+      V = FunctionSpace(mesh, "P", 3)
+
+      u = TrialFunction(V)
+      v = TestFunction(V)
+
+      f = Function(V)
+      x, y = SpatialCoordinate(mesh)
+      f.interpolate((1+8*pi*pi)*cos(x*pi*2)*cos(y*pi*2))
+
+      # bilinear and linear forms
+      a = (inner(grad(u), grad(v)) + inner(u, v)) * dx
+      L = inner(f, v) * dx
+
+      u = Function(V)  # function to hold the solution
+      solve(a == L, u)
+    \end{pyalg2}
+  \end{minipage}
+  \label{listing:helmholtz}
+\end{listing}
+
+Code to solve this system using Firedrake is also taken from \cite{FiredrakeUserManual} and is shown in \cref{listing:helmholtz}.
+
+\begin{figure}
+  \centering
+  \includegraphics{experiments/conv.pdf}
+  \caption{
+    Convergence of the $L_2$ error against refinement level for polynomial degrees ($p$) 1, 2, and 3 when solving the Helmholtz equation with Firedrake and \pyop3.
+  }
+  \label{fig:helmholtz_conv}
+\end{figure}
+
+To demonstrate correctness the $L_2$ error between the numerical and analytical solutions, given by
+\begin{equation}
+  \left( \int (u_{\textnormal{numeric}}-u_{\textnormal{analytic}}) \cdot (u_{\textnormal{numeric}}-u_{\textnormal{analytic}}) \, \textnormal{d}\Omega \right)^{1/2},
+\end{equation}
+was measured against mesh refinement level for polynomial degree 1, 2, and 3.
+The resulting convergence behaviour is plotted in \cref{fig:helmholtz_conv}.
+The results are identical to those produced by a pre-\pyop3 Firedrake and show the expected convergence of $\sim O(h^{p+1})$~\cite{brennerMathematicalTheoryFinite2008}, with $p=2$ demonstrating even better convergence.
+
 \section{One form assembly}
 \label{sec:demo_apps_one_form_assembly}
 
@@ -111,8 +176,7 @@ Its details are summarised in \cref{tab:pyramus_specs}.
   \label{listing:app1_code}
 \end{listing}
 
-As a first example of using \pyop3 in practice we consider the typical case of finite element assembly.
-In particular, we assemble the one form
+For a simpler example where the contribution of \pyop3 may be better analysed we assemble the one form
 \begin{equation}
   \label{eq:app1_form}
   \int \sum_i^N f_i v \textnormal{d}\Omega,
@@ -329,10 +393,12 @@ Regardless of this, the code achieves a reasonable fraction of theoretical peak 
 
 \section{Outlook}
 
-The performance results from these demonstrator applications are encouraging.
+This chapter demonstrates that \pyop3 has the capability to be used to solve real-world mesh stencil problems.
+Integration with Firedrake is sufficiently complete that PDEs may be solved, and one can even express new types of stencil computations not previously expressible with \pyop2.
+
+In terms of performance, we consider the results to be encouraging.
 The performance of the code that \pyop3 generates is both comparable to \pyop2 and sufficiently close to theoretical peak to suggest that the approach is sound.
 The slope limiter results additionally show that reasonable performance is attainable even for circumstances not expressible with \pyop2.
-
 Optimisations have also been identified that would enable performance parity with \pyop2, which we class as high priority future work.
 
 \end{document}
