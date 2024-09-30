@@ -242,7 +242,8 @@ In order to store data on a DMPlex, users must construct a \ccode{PetscSection},
 Code for constructing a \ccode{PetscSection} is shown in \cref{listing:section_p3}.
 
 \ccode{PetscSections} work by converting DoF counts for points into offsets that, like \numpy{}, can be used to read from an array.
-As a simple example, given the DoF count \ccode{[1, 0, 3, 2, 0, 1]} the \ccode{PetscSection} would tabulate the offsets to be \ccode{[0, 1, 1, 4, 6, 6]}.
+As a simple example, given the DoF count \ccode{[1, 0, 3, 2, 0, 1]} the \ccode{PetscSection} would tabulate the offsets to be\\
+\ccode{[0, 1, 1, 4, 6, 6]}.
 These offsets are computed when \ccode{PetscSectionSetUp()} is called using the tabulation algorithm shown in \cref{alg:petsc_section_tabulate}.
 
 Also, \ccode{PetscSections} are able to express the renumbering locality optimisations described in \cref{sec:intro_mesh_numbering}.
@@ -371,6 +372,7 @@ Observe that, since the DoFs are associated with multiple mesh entities, data ar
 \label{sec:pyop2_parallel}
 
 \begin{listing}
+  \centering
   \caption{Code to construct and execute a \pyop2 parallel loop.}
   \begin{minipage}{.9\textwidth}
     \begin{pyalg2}
