@@ -5,8 +5,8 @@
 \chapter{Demonstrator applications}
 \label{chapter:demonstrator_applications}
 
-In order to demonstrate \pyop3's capability to replace \pyop2 inside the Firedrake framework, we now present a number of examples in detail that compare the old and new software stacks in terms of both functionality and performance.
-In particular, we consider two prototypical finite element problems, that run under \pyop3 without modification, and a more complex slope limiter computation, that \pyop3 significantly facilitates the development of.
+In order to demonstrate \pyop3's capability to replace \pyop2 inside the Firedrake framework, we now present a number of examples comparing the old and new software stacks in terms of both functionality and performance.
+In particular, we consider two prototypical finite element problems, that run under \pyop3 without modification, and a more complex slope limiter computation that \pyop3 significantly facilitates the development of.
 
 \subsubsection{Performance metrics}
 
@@ -15,6 +15,7 @@ In particular, we consider two prototypical finite element problems, that run un
   \input{roofline.pgf}
   \caption{
     An example roofline plot.
+    The solid lines represent a performance `ceiling' that all computations must sit somewhere below.
     Note that additional lines for the bandwidths of the different cache levels, as well as one for vectorised instructions, have been omitted for simplicity.
   }
   \label{fig:roofline}
@@ -30,8 +31,8 @@ Shown in \cref{fig:roofline}, a roofline plot compares \emph{arithmetic intensit
   \textnormal{arithmetic intensity (FLOP/byte)} = \frac{\textnormal{operation count (FLOP)}}{\textnormal{memory volume (byte)}},
 \end{equation}
 against arithmetic throughput, measured in FLOP/s.
-Roofline plots are useful because they provide theoretical bounds for the maximum attainable performance.
-Given a computation with a high arithmetic intensity, performing many floating-point operations per byte of data loaded, the performance will be limited by the rate at which these FLOPs may be executed - we say that it is \emph{compute-bound}.
+Roofline plots are useful because they provide theoretical bounds for the maximum attainable performance for a computation.
+Given a computation with a high arithmetic intensity, performing many floating-point operations per byte of data loaded, performance is limited by the rate at which FLOPs may be executed - we say that it is \emph{compute-bound}.
 By contrast, computations with low arithmetic intensities are limited by the rate at which data may be streamed from main memory - these we call \emph{memory-bound}.
 
 \subsubsection{Hardware}
@@ -149,6 +150,7 @@ To demonstrate correctness the $L_2$ error between the numerical and analytical 
 was measured against mesh refinement level for polynomial degree 1, 2, and 3.
 The resulting convergence behaviour is plotted in \cref{fig:helmholtz_conv}.
 The results are identical to those produced by a pre-\pyop3 Firedrake and show the expected convergence of $\sim O(h^{p+1})$~\cite{brennerMathematicalTheoryFinite2008}, with $p=2$ demonstrating even better convergence.
+Thus we may safely conclude that Firedrake works as expected under \pyop3.
 
 \section{One form assembly}
 \label{sec:demo_apps_one_form_assembly}
@@ -176,30 +178,31 @@ The results are identical to those produced by a pre-\pyop3 Firedrake and show t
   \label{listing:app1_code}
 \end{listing}
 
-For a simpler example where the contribution of \pyop3 may be better analysed we assemble the one form
+For a simpler example where the contribution of \pyop3 may be better analysed we assembled the one form
 \begin{equation}
   \label{eq:app1_form}
-  \int \sum_i^N f_i v \textnormal{d}\Omega,
+  \int \sum_i^N f_i v\, \textnormal{d}\Omega,
 \end{equation}
-with $f_i$ coefficients and $v$ a test function.
+with $f_i$ known functions and $v$ a test function.
 This form was chosen because it is `simple', so the local kernel evaluation will not dominate the computation time, and to avoid invoking any sparse matrix insertion, which is often a bottleneck.
 The majority of the computation time is therefore spent performing pack/unpack operations, which is where the differences between \pyop2 and \pyop3 manifest.
-Firedrake code for assembling such a form is shown in \cref{listing:app1_code} and PETSc logging infrastructure was used to time the generated code.
+Firedrake code for assembling such a form is shown in \cref{listing:app1_code}.
 
-`Good' performance can be quantified as the generated code hitting a reasonable fraction of peak performance, according to a roofline plot, and also being close in performance to \pyop2.
-It is not expected for \pyop3 to perform equivalently to \pyop2 because the optimisations from \cref{sec:codegen_optimisation} have not yet been implemented.
-In particular the maps used in \pyop2 have already been `compressed' (\cref{sec:pyop3_expression_compression}) which improves data locality and reduces the amount of data that needs streaming from memory.
+For this case, `good' performance can be quantified as the generated code hitting a reasonable fraction of peak performance, according to a roofline plot, and also being close in performance to \pyop2.
+It is not expected for \pyop3 to perform equivalently to \pyop2 because the optimisations from \cref{sec:codegen_optimisation}, that exist naturally in \pyop2, have not yet been implemented.
+In particular the maps used in \pyop2 have already been `compressed' (\cref{sec:pyop3_expression_compression}), improving data locality and reducing the amount of data that needs streaming from memory.
 
-In order to enable roofline analysis, two approximations were used for the total amount of data streamed from main memory.
+In order to enable roofline analysis, two methods were used to approximate the total amount of data streamed from main memory.
 The first, termed \emph{optimal caching}, assumes that values are only loaded from main memory once, remaining in cache for all subsequent uses.
 The other, called \emph{pessimal caching}, does the opposite; values are never in cache so must be loaded from memory at each local kernel invocation.
 
 For optimal caching the amount of data streamed from main memory (in bytes) is given by
 \begin{equation}
-  \textnormal{dim}(V) \times (N + 1) \times 8 + n_{\textnormal{map}}
+  \label{eq:optimal_caching}
+  \textnormal{dim}(V) \times (N + 1) \times 8 + n_{\textnormal{map}},
 \end{equation}
-where $\textnormal{dim}(V)$ represents the number of DoFs associated with the function space and there are $N$ input arrays (one per coefficient) and a single output array.
-The factor of 8 is included as the values being streamed are in double precision.
+where $\textnormal{dim}(V)$ represents the number of DoFs associated with the function space and the $N+1$ term accounts for the fact that there are $N$ input arrays (one per coefficient) and a single output array.
+The factor of 8 is included as the values being streamed are in double precision (8 bytes).
 The additional term $n_{\textnormal{map}}$ accounts for the cell-node map that the packing code needs because the mesh is unstructured.
 It is given by
 \begin{equation}
@@ -208,10 +211,12 @@ It is given by
 where $n_{\textnormal{cells}}$ is the number of cells in the mesh, $n_{\textnormal{nodes}}$ is the number of nodes addressed by the map per iteration, equivalently the size of the packed temporary, and the factor of 4 is included because the map uses 4 byte integers.
 For pessimal caching, where the cache is always missed, we expect to load
 \begin{equation}
+  \label{eq:pessimal_caching}
   n_{\textnormal{cells}} \times (N + 1) \times n_{\textnormal{nodes}} \times 8 + n_{\textnormal{map}}
 \end{equation}
 bytes.
-Due to the various data locality optimisations that \pyop2 and \pyop3 perform we expect that data locality is good, and so the true arithmetic intensity should lie closer to the optimal caching approximation.
+
+Due to the various data locality optimisations that \pyop2 and \pyop3 perform we expect that data locality is good, and so optimal caching is likely a better approximation of the true arithmetic intensity.
 
 \begin{figure}
   \centering
@@ -220,7 +225,7 @@ Due to the various data locality optimisations that \pyop2 and \pyop3 perform we
     Roofline plot comparing the performance of \pyop2 (blue, diamonds) and \pyop3 (red, circles) for one form assembly (\cref{eq:app1_form}) where the polynomial degree is varied between 1 and 7.
     The top and bottom flat lines represent peak vector and scalar throughput respectively.
     As polynomial degree is increased so does arithmetic intensity, and so the points are ordered with lowest degree to the left.
-    Entries are plotted as pairs of points to show both pessimal (left) and optimal (right) caching assumptions.
+    Entries are plotted as pairs of points to show both pessimal (\cref{eq:pessimal_caching}, left) and optimal (\cref{eq:optimal_caching}, right) caching assumptions.
   }
   \label{fig:app1_roofline1}
 \end{figure}
@@ -231,32 +236,34 @@ Due to the various data locality optimisations that \pyop2 and \pyop3 perform we
   \caption{
     Roofline plot comparing \pyop2 (blue, diamonds) and \pyop3 (red, circles) performance for one form assembly (\cref{eq:app1_form}) with a varying number of coefficients between 0 and 7.
     Increasing the number of coefficients reduces the arithmetic intensity and so the left-most values are for the 7 coefficient case.
-    For the arithmetic intensity the average from the pessimal and optimal caching assumptions was used.
+    For the arithmetic intensity the average from the pessimal (\cref{eq:pessimal_caching}) and optimal (\cref{eq:optimal_caching}) caching assumptions was used.
   }
   \label{fig:app1_roofline2}
 \end{figure}
 
 \subsubsection{Performance results}
 
-To evaluate performance we performed two separate experiments.
+To evaluate the performance of this assembly routine we performed two separate experiments, both run in serial on a $200\times 200$ triangular mesh.
 First, the polynomial degree was increased between 1 and 7 for the single coefficient version of \cref{eq:app1_form} ($N=1$).
 The results are shown in \cref{fig:app1_roofline1}.
 One can see that with increasing degree (increasing arithmetic intensity) the throughput generally increases, eventually become compute-bound.
 This is because the computational payload of the local kernel is increasing and so the overhead from pack/unpack operations is amortized.
 At higher degree, some of the recorded throughput results surpass the measured scalar peak.
-This is because a sizable number of vector instructions were generated by the compiler for these kernels.
+This is because a sizeable number of vector instructions were generated by the compiler for these kernels.
 
 In \cref{fig:app1_roofline2} the polynomial degree was fixed to 1, and the number of coefficients varied between 0 and 7.
-As the number of coefficients increases a larger amount of data are loaded with relatively few floating point operations and thus the arithmetic intensity decreases.
+As the number of coefficients increases a larger volume of data are loaded with relatively few floating point operations and thus the arithmetic intensity decreases.
+Both \pyop2 and \pyop3 show the same trend where increasing the number of functions reduces the arithmetic throughput.
+We anticipate that this is caused by the larger working set needed for the computation, though more investigation would be required to validate this.
 
 Both sets of results show that at lower arithmetic intensities the throughput of \pyop3 lags \pyop2 by approximately a factor of 3.
 This corresponds with our earlier hypothesis: the additional indirections coming from not `compressing' the cell-node maps inhibits data locality.
-With such an optimisation the code generated by \pyop3 will be near-identical to that made by \pyop2 and identical performance should be achieved.
+With such an optimisation the code generated by \pyop3 will be near-identical to that made by \pyop2 and thus performance parity should be achievable.
 
 One possible source of confusion with both figures is the misleading fact that the kernels are shown to be compute-bound even at low degree.
 This only happens because we are running in serial.
-At full-node utilisation the total memory bandwidth increases by only a small amount, whilst the total throughput should increase by a factor of 32.
-Performing these experiments in parallel would therefore lead to a significantly different roofline plot: the peak throughput lines would be much higher whilst the slope of the memory bandwidth would stay approximately the same.
+At full-node utilisation the total memory bandwidth increases by only a small amount, whilst the total throughput should increase by (approximately) a factor of 32.
+Performing these experiments in parallel would therefore lead to a significantly different roofline plot: the peak throughput would be much higher whilst the slope of the memory bandwidth would stay approximately the same.
 Shifting the lines like this moves the inflection point between memory-bound and compute-bound further to the right, which would move most of the points into the memory-bound regime.
 
 \section{Vertex-based slope limiter}
@@ -291,14 +298,14 @@ Shifting the lines like this moves the inflection point between memory-bound and
   \label{alg:slope_limiter}
 \end{algorithm}
 
-For our other demonstrator application we implement part of a slope limiting algorithm.
+As a final demonstrator application we implement part of a slope limiter algorithm.
 Slope limiters are postprocessing filters that bound solutions to prevent spurious oscillations near discontinuities~\cite{biswasParallelAdaptiveFinite1994}.
 Following the explanation in \cite{kuzminVertexbasedHierarchicalSlope2010}, one applies a slope limiter by correcting some function $u$ with a scalar correction factor $\alpha_e$ to
 \begin{equation}
-  u_h(\mathbf{x}) = u_c + \alpha_e(\nabla u)_c \cdot (\mathbf{x} - \mathbf{x}_c), \quad 0 \leq \alpha_e \leq 1 ,
+  u(\mathbf{x}) = u_c + \alpha_e(\nabla u)_c \cdot (\mathbf{x} - \mathbf{x}_c), \quad 0 \leq \alpha_e \leq 1 ,
 \end{equation}
 where $(\cdot)_c$ denote cell-averaged quantities and $\mathbf{x}$ the coordinates.
-For our demonstrator application we are interested in determining the value of the correction factor $\alpha_e$, which depends on both the minimum ($u_i^{\textnormal{min}}$) and maximum ($u_i^{\textnormal{max}}$) values of $u_h$ around each vertex.
+For our demonstrator application we are interested in determining the value of the correction factor $\alpha_e$, which depends on both the minimum ($u^{\textnormal{min}}$) and maximum ($u^{\textnormal{max}}$) values of $u$ around each vertex.
 
 \begin{listing}
   \centering
@@ -328,11 +335,12 @@ For our demonstrator application we are interested in determining the value of t
   \label{listing:app2_code}
 \end{listing}
 
-If we restrict our attention to only the lowest-order discontinuous space, $P_0^{\textnormal{disc}}$, the algorithm for determining both $u_i^{\textnormal{min}}$ and $u_i^{\textnormal{max}}$ is simple.
-Shown in \cref{alg:slope_limiter,fig:slope_limiter_stencil}, one needs to visit each vertex, loop over adjacent cells, and set the vertex value, kept in a $P_1$ function space, to the minimum/maximum value from the cells.
+If we restrict our attention to only the lowest-order discontinuous space, $P_0^{\textnormal{disc}}$, the algorithm for determining both $u^{\textnormal{min}}$ and $u^{\textnormal{max}}$ is simple.
+Shown in \cref{alg:slope_limiter,fig:slope_limiter_stencil}, one needs to visit each vertex, loop over adjacent cells, and set the vertex value, kept in a $P_1$ function space, to the minimum/maximum value from the surrounding cells.
 
 Implementing the algorithm is straightforward in \pyop3 and can be done in only a few lines (\cref{listing:app2_code}, line~\ref{code:slope_limiter_expr}).
-The star of the vertex ($\plexstar(v)$, \cref{sec:dmplex_queries}) is used to identify adjacent cells with the extra keyword argument \pycode{k=2} used to ensure that the returned map only includes cells in the star, skipping the vertex and edges.
+To identify the cells surrounding the current vertex a star ($\plexstar$, \cref{sec:dmplex_queries}) map is used.
+The extra keyword argument \pycode{k=2} is passed to ensure that the map only includes the cells in the star, skipping the vertex and edges.
 
 \begin{listing}
   \centering
@@ -344,22 +352,15 @@ The star of the vertex ($\plexstar(v)$, \cref{sec:dmplex_queries}) is used to id
 \end{listing}
 
 The code that is generated from the loop expression is shown in \cref{listing:app2_codegen}.
-Notice that the inner generated loop is ragged with extent set by the variable \ccode{p_0}, drawn from an externally provided array \ccode{array_0} (line~\ref{code:ragged_cell_loop}).
-The index expression for packing the $P_0^{\textnormal{disc}}$ cell data (line~\ref{code:messy_expr})
+Notice that the inner loop is ragged (line~\ref{code:ragged_loop}) with extent set by the variable \ccode{p_0}, drawn from an externally provided array \ccode{array_0} (line~\ref{code:ragged_cell_loop}).
+We also remark that the index expression for packing the $P_0^{\textnormal{disc}}$ cell data (line~\ref{code:messy_expr})
 \begin{cinline}
   array_3[array_4[array_1[array_2[i_0] + i_1]]]
 \end{cinline}
-is fairly non-trivial and illustrates some of the power of the ability to compose index expressions and layout functions that \pyop3 has.
-The subexpression
-\begin{cinline}
-  array_1[array_2[i_0] + i_1]]
-\end{cinline}
-constitutes the ragged access of the $\plexstar$ map.
-Since the map is ragged, the strides through \pycode{array_1} are non-uniform, requiring a tabulation of steps in \ccode{array_2}.
-With this, the correct value from \ccode{array_3} can now be read through substituting the $\plexstar$ index into its layout function \ccode{array_4}.
+is relatively complex, illustrating \pyop3's ability to compose advanced index expressions.
 
 As written, \pyop2 is not capable of expressing this type of operation because the map from vertices to cells has variable arity.
-One can reframe the algorithm as a loop over cells, writing the maximum values to the vertices in the cell's closure, but that is specific to this example; more complex algorithms like vertex-centered patch smoothers~\cite{farrellPCPATCHSoftwareTopological2021} cannot be expressed.
+One can reframe the algorithm as a loop over cells, writing the maximum values to the vertices in the cell's closure, but that is specific to this example; more complex algorithms like vertex-centered patch smoothers~\cite{farrellPCPATCHSoftwareTopological2021} cannot be expressed in this way.
 \pyop3 therefore provides a more general solution.
 
 \subsection{Performance results}
@@ -380,16 +381,17 @@ One can reframe the algorithm as a loop over cells, writing the maximum values t
   \caption{
     Roofline results from running the slope limiter code (\cref{listing:app2_code}).
     The arithmetic intensity was measured by LIKWID.
+    Peak throughput was computed as the product $\textnormal{\it arithmetic intensity} \times \textnormal{\it memory bandwidth}$.
   }
   \label{tab:slope_limiter_performance}
 \end{table}
 
-Lacking independent variables to vary, the code was executed just once in serial.
+Lacking independent variables to change the code was profiled for a single configuration, again in serial.
 The roofline results are shown in \cref{tab:slope_limiter_performance}.
-The arithmetic intensity is extremely low because only a single floating point operation (a comparison) is performed, with many arrays being streamed from memory.
+The arithmetic intensity is extremely low because only one floating point operation (a comparison) is performed, with many arrays being streamed from memory.
 The calculation is therefore strongly memory-bound.
 
-Regardless of this, the code achieves a reasonable fraction of theoretical peak performance, meaning that \pyop3 is clearly generating reasonably performant code that makes effective use of the available hardware.
+Irrespective of this, the code achieves a reasonable fraction of theoretical peak performance, meaning that \pyop3 is clearly generating reasonably performant code that makes effective use of the available hardware.
 
 \section{Outlook}
 

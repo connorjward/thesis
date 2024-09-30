@@ -74,7 +74,7 @@ The index information consists of two mappings:
 With these mapping, one has sufficient information to:
 (a) select the right layout function from the target axis tree, and
 (b) substitute index expressions into the layout function, resulting in a \emph{substituted layout function} that accepts multi-indices of the source axis tree instead of the target.
-This approach allows \pyop3 to represent indexing operations symbolically as views, regardless of the indexing operation applied.
+By taking this symbolic approach to indexing, \pyop3 can represent all supported indexing operations as views, regardless of the indexing operation applied.
 This contrasts with \numpy{} where only `simple' indexing operations are supported without copying the array.
 
 \subsubsection{Example 1: Linear index trees} \label{example:linear_index_tree}
@@ -121,7 +121,7 @@ This contrasts with \numpy{} where only `simple' indexing operations are support
   \label{fig:index_linear}
 \end{figure}
 
-To illustrate axis tree indexing with a simple example, we index a linear axis tree, consisting of two axes labelled $a$ and $b$, with two slices.
+To illustrate axis tree indexing with a simple example, we index a linear axis tree, consisting of two axes labelled $a$ and $b$, using two slices, where slices have the same semantics as they do in \numpy{} (\cref{sec:numpy_indexing_arrays}).
 The resulting axis tree is smaller than the original and has new labels: $c$ and $d$.
 Code for the transformation is shown in \cref{fig:index_linear_code}, and a diagramatic representation is shown in \cref{fig:index_linear_transform}.
 
@@ -135,20 +135,19 @@ As well as creating a new axis tree, indexing the array produces the following i
     \hline[1pt]
   \end{tblr}
 \end{center}
-The target path encodes the fact that the path through the source tree $\{c,d\}$ is equivalent to the path through the target tree $\{a,b\}$.
-The target expressions capture the semantics of the slices.
-Indexing axis $a$ with the slice \pycode{[::2]}, for example, means that entries in the new axis $c$ map to even entries in $a$ - which is exactly the index expression $i_a = 2i_c$.
+The target path encodes the fact that the path through the source tree $\{c,d\}$ is equivalent to the path through the target tree $\{a,b\}$ and the target expressions capture the semantics of the slices.
+For example, indexing axis $a$ with the slice \pycode{[::2]} means that entries in the new axis $c$ map to even entries in $a$ - which is exactly the index expression $i_a = 2i_c$.
 
 Given this information, we may now construct a \emph{substituted layout function} for addressing the original array using multi-indices of the indexed axis tree.
-From the target path we know that the correct, unsubstituted, layout function is
+First, the target path tells us which layout function to use from the original array, which in this case is
 \begin{equation}
-  \textnormal{offset}(i_a, i_b) = 3 i_a + i_b,
+  \textnormal{offset}(i_a, i_b) = 3 i_a + i_b.
 \end{equation}
-which, applying the substitutions from the target expressions, produces the substituted layout function
+Then, applying the substitutions from the target expressions, this produces the substituted layout function
 \begin{equation}
   \textnormal{offset}(i_c, i_d) = 6 i_c + i_d + 1,
 \end{equation}
-thus mapping multi-indices in the source axis tree to offsets in the original array as desired.
+which maps multi-indices in the source axis tree to offsets in the original array as desired.
 
 \subsubsection{Example 2: Multi-component index trees}
 
@@ -206,14 +205,14 @@ Shown in \cref{fig:multi_component_slice}, there are a number of changes compare
   \item
     Some of the slices now include \emph{subsets}.
     Instead of providing \pycode{start}, \pycode{stop}, and \pycode{step} arguments an integer array is provided.
-    This is equivalent to `integer array indexing' for \numpy{} (\cref{sec:numpy_indexing_arrays}).
+    This is equivalent to `integer array indexing' for \numpy{} (\cref{sec:numpy_indexing_arrays})\footnote{A possible source of confusion between \pyop3 and \numpy{} slices is that in \pyop3 slices refer generically to the operation of indexing a subset of an axis, either affinely (equivalent to a regular \numpy{} slice) or using a lookup table (equivalent to \numpy{}'s integer array indexing).}.
 
   \item
     Instead of a slice, axis $b$ is indexed with a \emph{scalar index}.
-    This accesses just one of the entries in $b$ and so the index transformation does not to produce a new axis tree.
+    This accesses just one of the entries in $b$ and so the index transformation \emph{consumes} the axis and it does not appear in the indexed axis tree.
 
   \item
-    Unlike the linear case, the multi-component nature of the index tree means that it is no longer possible to hide its instantiation behind syntactic sugar and it must instead be explicitly constructed (\cref{fig:multi_component_slice_code}, line~\ref{code:multi_component_make_index_tree}).
+    Unlike the linear case, the multi-component nature of the index tree means that it is no longer possible to hide its instantiation behind syntactic sugar like in \cref{example:linear_index_tree} and it must instead be explicitly constructed (\cref{fig:multi_component_slice_code}, line~\ref{code:multi_component_make_index_tree}).
 \end{itemize}
 
 Indexing the array produces the following target path and target expressions:
@@ -228,7 +227,7 @@ Indexing the array produces the following target path and target expressions:
     \hline[1pt]
   \end{tblr}
 \end{center}
-Unlike the linear case above, having subsets introduces index expressions like $\pycode{[0,2][?$i_d$?]}$, and the scalar index of axis $b$ means that $i_b$ is simply a constant, rather than an expression of some other axis index.
+Unlike the linear case above, having subsets introduces index expressions like $\pycode{[0,2][?$i_d$?]}$, and the scalar index of axis $b$ consumes an axis, meaning that $i_b$ is simply a constant instead of an expression of some other axis index.
 
 With these target paths and expressions it is now straightforward to again determine appropriate substituted layouts for the indexed axis tree using the same process as before:
 \begin{center}
@@ -292,7 +291,6 @@ If we disregard any prior indexing information and simply treat the transformati
     \hline[1pt]
   \end{tblr}
 \end{center}
-
 From \cref{example:linear_index_tree} we know that the index information for the input (indexed) axis tree is given by:
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
@@ -303,7 +301,7 @@ From \cref{example:linear_index_tree} we know that the index information for the
     \hline[1pt]
   \end{tblr}
 \end{center}
-Which may now be \emph{composed} with the new indexing information to produce:
+Which may now be \emph{composed} with the new indexing information to produce the new set of index information:
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
     \hline[1pt]
@@ -323,6 +321,7 @@ We can now perform the same sort of layout substitution as before:
     \hline[1pt]
   \end{tblr}
 \end{center}
+Giving us a way to map from the doubly-indexed axis tree back to the original.
 
 \section{Outer loops}
 \label{sec:outer_loops}
@@ -378,15 +377,15 @@ We can now perform the same sort of layout substitution as before:
   \label{fig:loop_index_linear_tree_data_layout_all}
 \end{figure}
 
-For mesh stencil calculations it is often the case that one has `outer loops' over some set of mesh entities (commonly the cells).
-\pyop3 has full support for expressing this sort of iteration, and any axis tree is allowed to be used as the iteration set.
+For mesh stencil calculations it is often the case that one has `outer loops' over some set of mesh entities, accessing global data relative to the current iterate.
+\pyop3 has full support for expressing this sort of iteration.
 
-Information about outer loops is carried by a new type of index called a \emph{loop index}.
-These are constructed from axis trees by calling the \pycode{index()} method.
-In index expressions, they are represented symbolically by the tuple $(L^p_{x_0}, L^p_{x_1}, \dots)$, where $L^p$ is a unique identifier for the index and $x_i$ represents the set of axis labels of the axis tree getting looped over.
+In \pyop3, outer loops may be created over any axis tree via the instantiation of a \emph{loop index}, constructed by calling the \pycode{index()} method.
+Indexing axis trees with loop indices is similar to using scalar indices because the loop index consumes an axis.
+However, they differ in the fact that a scalar index sets the index expression to a scalar value, whereas loop indices pin the index to the value of the outer loop iterate.
 
 An example demonstrating loop index usage is shown in \cref{fig:loop_index_linear_tree_data_layout_all}.
-Given two axes, $a$ and $b$, the loop index is created only for axis $a$ (line~\ref{code:loop_index_init}), which is then used to index into \pycode{dat} (line~\ref{code:loop_index_apply}).
+In it one indexes a \pycode{Dat} (\pycode{dat}) with shape \pycode{(5, 3)} and labels $a$ and $b$ using a loop index over the axis $a$ (line~\ref{code:loop_index_init}), and a full slice over axis $b$.
 \numpy{} code for an equivalent operation is shown in \cref{fig:loop_index_numpy}.
 
 In order to map between source and target axes we follow the same process as before.
@@ -402,9 +401,7 @@ This time, the index information is:
 \end{center}
 Where the index expression $L^p_a$ has been introduced to represent loop index $p$'s loop over axis $a$.
 Note that axis $b$ has not been relabelled in the indexed array as a full slice was taken.
-
 Determining a substituted layout for the indexed array is then straightforward:
-
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
     \hline[1pt]
@@ -415,7 +412,7 @@ Determining a substituted layout for the indexed array is then straightforward:
   \end{tblr}
 \end{center}
 
-It is important to note that, unlike with scalar indices and slices, arrays that have been indexed with loop indices will have loop index terms (i.e. $L^p_a$) in their substituted layouts.
+It is important to note that, unlike with scalar indices and slices, arrays that have been indexed with loop indices have loop index terms (e.g. $L^p_a$) in their substituted layouts.
 Practically this means that it is not possible to evaluate offsets - and thus interpret - the array without knowing the value of these terms.
 Since the terms are provided externally, we say that arrays indexed with loop indices are \emph{context-sensitive}, as they only make sense within the context of an outer loop.
 
@@ -467,12 +464,13 @@ In \pyop3, maps are functions that accept a single loop index as an argument (or
 The number of values returned by the map for each iterate is called the \emph{arity}; for example, the map from cells to incident edges ($\cone(p)$, \cref{sec:dmplex_queries}) for a mesh with triangular cells has an arity of 3.
 
 An example of indexing an array using a map is shown in \cref{fig:index_map}.
-We declare some `outer' loop over an axis labelled $x$ (\ref{fig:index_map_code}, line~\ref{code:make_axis_x}) as well as an arity 3 map, $f$, mapping from $x$ to $a$ (line~\ref{code:make_map}).
-The array is then indexed with the \emph{called} map $f(p)$.
+We declare an outer loop over an axis labelled $x$ (\ref{fig:index_map_code}, line~\ref{code:make_axis_x}) as well as an arity 3 map, $f$, mapping from $x$ to $a$ (line~\ref{code:make_map}).
+\pycode{dat} is then indexed with $f$, which has been \emph{called} by passing it the loop index (i.e. $f(p)$).
 The resulting axis tree (\ref{fig:index_map_data_layout}, right) has lost axis $a$ but gained a new axis in its place, labelled $c$, containing the 3 entries indicated in the map for a given $p$.
+Unlike loop indices, maps contribute new axes to the indexed axis tree.
 
 The treatment of the indexing information to retain view-like semantics remain exactly the same as before.
-For the example in \cref{fig:index_map} the returned index information is:
+For this example the returned index information is:
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]c|[1pt]}
     \hline[1pt]
@@ -482,8 +480,8 @@ For the example in \cref{fig:index_map} the returned index information is:
     \hline[1pt]
   \end{tblr}
 \end{center}
-Where $f(L^p_x, i_c)$ is used to represent the map - $L^p_x$ is the outer loop index over axis $x$ and $i_c$ is an index for the new axis $c$.
-
+Where $f(L^p_x, i_c)$ is used to represent the map.
+$L^p_x$ is the outer loop index over axis $x$ and $i_c$ is an index for the new axis $c$.
 The final, substituted layout function can then be generated:
 \begin{center}
   \begin{tblr}{|[1pt]c|[1pt]l|[1pt]l|[1pt]}
@@ -495,10 +493,10 @@ The final, substituted layout function can then be generated:
   \end{tblr}
 \end{center}
 
-Note that in the example above we did not specify the form of the map function $f$.
-This is intentional as the function could either be a lookup with an indirection map, something like $f(L^p_x,i_c) \coloneq \pycode{[...][?$L^p_x$?,?$i_c$?]}$, or it could instead be some affine function of the form $f(L^p_x,i_c) \coloneq C \cdot L^p_a + i_c + D$ (for constants $C$ and $D$).
-By treating maps more generally instead of eagerly committing to a particular representation, \pyop3 should be able to work without change for all cases.
-This is useful in cases where one approach is known to be better than another, such as when dealing with structured meshes where indirections are expressible as affine maps.
+Note that we have not specified the form of the map function $f$.
+This is intentional because the function could either be a lookup with an indirection map, something like $f(L^p_x,i_c) \coloneq \pycode{[...][?$L^p_x$?,?$i_c$?]}$, or it could instead be some affine function of the form $f(L^p_x,i_c) \coloneq C \cdot L^p_x + i_c + D$ (for constants $C$ and $D$).
+By treating maps more generally instead of eagerly committing to a particular representation \pyop3 should be able to work without change for both of these cases.
+This is useful in cases where both methods would ideally be supported, such as when dealing with both structured (affine function) and unstructured (indirection map) meshes, behind a single interface.
 
 \subsection{Ragged maps}
 \label{sec:indexing_ragged_maps}
@@ -543,13 +541,15 @@ This is useful in cases where one approach is known to be better than another, s
   \label{fig:index_ragged_map}
 \end{figure}
 
-It is not always the case that maps will have a constant value arity.
+Thus far we have only considered the case where maps have a constant value arity.
+This is not always the case.
 To use the same example from \cref{sec:ragged_axis_trees}, the map relating vertices in a mesh to their supported edges has variable arity because the size of this relation is different for each vertex.
+Like with axis trees, maps that have a variable size are also called \emph{ragged}.
 
 To represent ragged maps a simple change in the code is required: one must pass a \pycode{Dat} instead of an integer as the \pycode{arity} argument to the map.
 This is demonstrated in \cref{fig:index_ragged_map_code} (line~\ref{code:arity_dat}).
-As a result of this non-constant arity, the size of the indexed array is no longer constant but instead depends on the value of the loop index.
-This is shown in \cref{fig:index_map_data_layout} (right).
+As a result of this non-constant arity, the size of the indexed array is no longer constant and instead depends on the value of the loop index.
+This is shown in \cref{fig:index_ragged_map_transform} (right).
 
 A discussion of layout functions and target paths/expressions is omitted here because it is identical to the example shown in \cref{fig:index_map} above.
 
@@ -703,16 +703,17 @@ But, since the layout functions for the unindexed object are different to before
     \hline[1pt]
   \end{tblr}
 \end{center}
-This demonstrates that even though the DoFs in the local array are exactly the same as before, \emph{they have been extracted from different parts of the input array}.
+This demonstrates that even though the packed DoFs are exactly the same and in the same order, \emph{they have been drawn from different places in the global array}.
 
 \section{Outlook}
 
-There are two essential contributions made by this chapter:
+At this point we now have all of the necessary ingredients for axis trees to be used as part of a mesh stencil package.
+In particular, this chapter establishes:
 (a) the ability to symbolically represent views of a larger array, in an analogous manner to views of \numpy{} arrays, and
 (b) the ability to express `outer loops' using loop indices.
-Put together, these additions provide the necessary ingredients to be able to express mesh stencil algorithms.
+These are both essential qualities for mesh data in a stencil computation.
 Loop indices let us declare loops over mesh entities and axis tree views (i.e. indexed axis trees) are appropriate for representing pack/unpack operations.
 
-All that remains to be done for these abstractions to be functional is to wrap them up in a library, which is the focus of the upcoming chapters.
+In the following chapters we take the new abstractions of axis trees and index trees and provide an implementation of them in the new library \pyop3.
 
 \end{document}

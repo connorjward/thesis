@@ -6,7 +6,14 @@
 \label{chapter:introduction}
 
 The numerical solution of partial differential equations (PDEs) is ubiquitous across a wide range of applications, from climate modelling to structural mechanics and manufacturing.
-In order to solve them numerically, depending on the numerical method chosen, different elements of the geometry and/or function spaces of the physical problem must be \emph{discretised} such that they may be represented on a computer.
+Naturally, it is therefore critical that scientists and engineers have access to high-productivity, high-performance libraries with which to develop simulations.
+
+For such libraries, performance portability - being able to run simulations on disparate hardware without losing efficiency - is obviously a significant concern for optimising both programmer productivity and energy efficiency.
+Achieving this portability when solving PDEs is challenging because, to best take advantage of the properties of the underlying hardware, it can be necessary to change high-level aspects of the computation such as the choice of discretisation and/or solver strategy.
+
+For hand-written codes, making these sorts of high-level changes is time-consuming and difficult, and so many libraries implement high-level, mathematical \emph{abstractions} to streamline development.
+Abstractions hide low-level details of a program behind intuitive interfaces, thus making it easier to write applications, and, in particular, to apply the sorts of transformations necessary for performance portability.
+We say that abstractions induce a \emph{separation of concerns} between the user, who reasons about and writes their program in terms of the abstractions, and the library developer, who implements them.
 
 \begin{figure}
   \centering
@@ -18,23 +25,18 @@ In order to solve them numerically, depending on the numerical method chosen, di
   \label{fig:mesh_stencil}
 \end{figure}
 
-For a number of numerical methods such as the finite volume, finite difference, and finite element methods, the geometry of the problem is discretised to form a \emph{mesh} composed of topological entities termed cells, with each having sub-entities such as faces, edges and vertices.
-Depending on the method and implementation choices, this mesh may be either \textit{structured}, where adjacent entities may be addressed by applying offsets, or \textit{unstructured}, where an indirection map of the form \ccode{A[B[i]]} is needed.
-To these topological entities are associated unknowns, termed degrees of freedom (DoFs), representing physical quantities in the PDE such as the pressure.
-
-For all of these methods, an integral part of their usage is the application of a computational kernel, or \emph{stencil}.
-To apply one, one loops over a particular collection of mesh entities and, for each entity, computes a contribution to some global data structure using the DoFs that lie in the neighbourhood of the current iterate.
+This thesis focusses on the development of software abstractions that encapsulate the process of applying compact computational kernels to (unstructured) meshes.
+Also known as \emph{mesh stencil calculations}, applying compact kernels to a mesh is a widespread technique underpinning many common numerical methods for solving PDEs, including the finite difference method, finite element method, and finite volume method.
+To apply one, one loops over a particular collection of mesh entities and, for each entity, computes a contribution to some global data structure using the degrees-of-freedom (DoFs) that lie in the neighbourhood of the current iterate.
 An example of a mesh stencil operation is shown in \cref{fig:mesh_stencil}.
 
-Obtaining portable performance when solving PDEs is challenging because it requires high-level modifications to algorithms and data structures so as to best take advantage of the properties of the underlying hardware.
-To hide the complexity inherent in making such changes, packages exist providing high-level \emph{abstractions} with which the necessary transformations become straightforward to express.
-This leads to a separation of concerns whereby the package user can write their program using objects that are familiar to them, and they need not concern themselves with lower-level details.
+Developing abstractions for mesh stencil calculations is challenging because mesh data structures are complex and map poorly to traditional representations of structured data (e.g. N-dimensional arrays).
+As a result, existing software either make limiting assumptions about the types of permissible data layouts, or sacrifice important structural information about them.
+Consequently, they all have limited applicability, working \emph{either} for a range of different algorithms \emph{or} a range of complex data structures, but not both.
 
-It is difficult to develop high-level abstractions for mesh stencil calculations because unstructured mesh data structures are complex and map poorly to existing representations of structured data (e.g. N-dimensional arrays).
-This means that existing abstractions for mesh stencils are limited in what they can express, either working for a range of different algorithms or a range of complex data structures, but not both.
-
-This thesis introduces a novel suite of abstractions for describing unstructured mesh data.
-Unlike existing approaches, the abstraction is fully capable of describing complex data layouts without losing essential structural information, allowing for an expressive, composable interface suitable for representing a wider range of algorithms.
+This thesis aims to bridge this divide by developing a novel suite of abstractions for describing unstructured mesh data.
+Unlike existing approaches, the abstractions are fully capable of describing complex data layouts without losing essential structural information.
+This allows for an expressive, composable interface suitable for representing a wider range of algorithms.
 
 \section{Contributions}
 
@@ -66,6 +68,9 @@ The remainder of this thesis proceeds as follows:
 
 \chapter{Background}
 \label{chapter:background}
+
+In this chapter we present the relevant background material necessary for the rest of the thesis.
+In particular, we motivate the need for mesh stencil software using the finite element method as an example, before making a case for high-level, composable abstractions and their place in mesh stencil computations.
 
 \section{The finite element method}
 \label{sec:stokes_equations}
@@ -491,9 +496,8 @@ Since the details of the abstraction are only present at compile-time, code gene
 
 Examples of continuum mechanics simulation packages where code generation is used for the mesh stencil step include the finite element libraries DUNE-FEM~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, all using the Unified Form Language (UFL)~\cite{alnaesUnifiedFormLanguage2014a} as a DSL for expressing weak forms, as well as the finite difference library Devito~\cite{devito-api,luporiniArchitecturePerformanceDevito2020} which uses SymPy~\cite{10.7717/peerj-cs.103} as a DSL.
 
-In addition to providing a zero-cost abstraction, by representing the problem at a high level, it is sometimes possible for the compiler to apply specialised optimisations that are difficult to apply by hand.
-Whilst it is always the case that any automatically generated code could also have been written by hand, compilers frequently generate code with comparable or even superior performance to hand-written implementations (e.g.~\cite{ragan-kelleyHalideLanguageCompiler2013}).
-One example of this is sum factorisation, a FLOP-reduction technique applicable to finite element simulations with tensor-product structure~\cite{homolyaExposingExploitingStructure2017}.
+In addition to providing a zero-cost abstraction, the use of domain-specific compilers can also facilitate the application of specialised optimisations that are challenging to implement by hand.
+One example of this is sum factorisation, also known as strength-reduction, a FLOP-reduction technique applicable to finite element simulations with tensor-product structure~\cite{lamReordering1997,homolyaExposingExploitingStructure2017}.
 The compiler can even sometimes perform auto-tuning, where a space of possible solutions is explored to find the fastest one.
 Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler2013}, and the Sparse Polyhedral Framework (sparse linear algebra)~\cite{stroutSparsePolyhedralFramework2018}.
 If performed at runtime with additional problem-specific information, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy} (e.g.~\cite{baxter1989run,kriegerLoopChainingProgramming2013}).
@@ -512,8 +516,7 @@ For the design of a mesh stencil abstraction there are a number of clear require
 
 Further, it is not always the case that stencil algorithms consist of a single loop and single local kernel.
 Whilst this model holds for finite element assembly, other algorithms important for solving continuum mechanics problems are not expressible.
-Examples include hybridisation~\cite{arnoldMixedNonconformingFinite1985,boffi2013mixed} and additive-Schwartz methods~\cite{arnoldPreconditioningHdivApplications1997}.
-Hybridisation requires that multiple local kernels be evaluated at each stencil iterate~\cite{gibsonSlateExtendingFiredrake2020}, and additive-Schwartz methods need to execute extra nested loops~\cite{farrellPCPATCHSoftwareTopological2021}.
+Examples include hybridisation~\cite{arnoldMixedNonconformingFinite1985,boffi2013mixed}, where multiple local kernels need to be evaluated at each stencil iterate~\cite{gibsonSlateExtendingFiredrake2020}, and additive-Schwartz methods~\cite{arnoldPreconditioningHdivApplications1997}, where extra nested loops are needed~\cite{farrellPCPATCHSoftwareTopological2021}.
 For the abstraction to be able to express these algorithms it is thus important that it has a flexible and composable interface, in effect, a DSL.
 
 \subsection{Desirable characteristics for a mesh stencil package}
@@ -644,12 +647,12 @@ OP2 is an \emph{active library} that provides source-to-source translation from 
 By using code generation, \pyop2 is easier to integrate with other code generation packages and in particular it is a core component of the Firedrake finite element framework~\cite{FiredrakeUserManual}.
 
 Of the packages that support distributed memory parallelism, OP2 and \pyop2 differ from Liszt in that their abstractions have no native mesh type, they instead deal in more abstract \emph{sets} and \emph{mappings} between sets.
-Being able to do this is convenient as building a mature unstructured mesh package is difficult, making the development and maintenance of the stencil package harder.
+Taking a set-centric approach is beneficial as it allows one to interface with arbitrary mesh packages (e.g. PETSc DMPlex~\cref{sec:foundations_dmplex}) instead of a custom implementation, and thus delegate difficult to implement and unrelated operations like parallel partitioning and refinement.
 Further, by dealing with sets instead of topological entities, OP2 and \pyop2 have the freedom to store data for function spaces where the DoFs are tied to multiple types of topological entity.
 This makes mesh renumbering optimisations possible.
 
 Regarding data layout flexibility, Liszt, Simit, Ebb, and \pyop2 all eagerly commit to a particular data layout which cannot be changed.
-MeshTaichi inherits some of the data layout flexibility from Taichi but this only applies to fields per topological entity. Higher levels of partitioning, such as the \pycode{"space"} partitioning in \cref{fig:scott_vogelius_element_dof_layout_packed}, are not possible.
+MeshTaichi inherits some of the data layout flexibility from Taichi but this only applies to fields per topological entity, which are always considered separately.
 OP2 alternates between AoS and SoA layouts depending on the target backend and whether or not the data are addressed directly or indirectly.
 
 \subsection{The missing abstraction}

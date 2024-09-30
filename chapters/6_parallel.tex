@@ -19,17 +19,16 @@ As described in \cref{sec:intro_parallelism,sec:dmplex_parallel}, the usual way 
 Since mesh stencils typically require DoFs from adjacent entities in order to be computable, a small number of \emph{ghost} DoFs must also be kept in the local array.
 
 Whilst essential for the stencil computation, ghost points can be inconvenient for other operations occurring during a simulation.
-Using the finite element method as an example, to solve the assembled linear system ghost DoFs need to be discarded so as not to appear in the global vector/matrix.
+Using the finite element method as an example, having assembled the linear system, ghost DoFs need to be discarded so as not to appear in the global vector/matrix during solving.
 To avoid copying data between ghost-inclusive and ghost-free representations of an array, \pyop3 follows the example of \pyop2 (\cref{sec:pyop2_interleave}) and reorders the DoFs so that ghost entries are always stored after owned ones.
 This allows one to transform between the different representations without needing to copy data - the ghost-free version is simply a truncated slice of the full, ghost-inclusive array.
 
-In order to represent distributed parallel data layouts using axis trees, axis components are passed an additional \pycode{StarForest} object (\cref{sec:dmplex_parallel}) that encodes the point-to-point equivalence between processes:
+In order to represent distributed parallel data layouts using axis trees, axis components are passed an additional \pycode{StarForest} object - simply a thin wrapper around a PETSc star forest (\cref{sec:dmplex_parallel}) - that encodes the point-to-point equivalence between processes:
 \begin{pyinline}
   star_forest = StarForest(...)
   parallel_component = AxisComponent(size, sf=star_forest)
   parallel_axis = Axis(parallel_component)
 \end{pyinline}
-\pyop3 \pycode{StarForests} are simply thin wrappers around PETSc ones.
 The ghost points are then stored at the end of the resulting data layout, giving a layout like the following:
 \begin{center}
   \includegraphics{parallel_partition_mesh_axis.pdf}
@@ -38,7 +37,7 @@ where ghost points are denoted by the hatching pattern.
 
 \subsection{Parallel layout functions}
 
-Whilst straightforward for the linear case, partitioning ghost points to the end of the array becomes more difficult in a multi-component setting.
+Whilst straightforward for linear axis trees, partitioning ghost points to the end of the array becomes more difficult in a multi-component setting.
 As an example, consider the ghost/non-ghost partitioning for the nested axis tree:
 \begin{center}
   \includegraphics{parallel_partition_mixed.pdf}
@@ -53,12 +52,13 @@ Whereas the desired layout should instead look like:
 \end{center}
 
 The need for the latter layout suggests some limitations in our existing layout tabulation algorithms (\cref{sec:axis_tree_layouts}).
-The layout functions for $V_h$ and $Q_h$ both now have discontinuous jumps in the location of their points and so can no longer be expressed as affine functions of the form `$\textnormal{index} \times \textnormal{step} + \textnormal{start}$', and must instead tabulate offsets into an array in a similar manner to the approach used for ragged axis trees.
+First, the layout functions for $V_h$ and $Q_h$ both now have discontinuous jumps in the location of their points and so can no longer be expressed as affine functions of the form $\textnormal{\it index} \times \textnormal{\it step} + \textnormal{\it start}$, and must instead tabulate offsets into an array in a similar manner to the approach used for ragged axis trees.
 Further, tabulating layouts for the ghost portions of $V_h$ and $Q_h$ now requires that \emph{the layouts for both their owned portions be tabulated first}.
-This is because the offset for the ghost section of $V_h$ depends on the size of the owned section of $Q_h$, and equivalently for $Q_h$.
+This is because the offset for the ghost section of $V_h$ depends on the size of the owned section of $Q_h$, and vice versa for $Q_h$.
+This differs from the existing approach where different axis components may be visited independently.
 
 To address these new conditions, we introduce the concept of \emph{axis component regions}.
-Regions replace the existing concept of an axis component having a size with a collection of $(\textnormal{label}, \textnormal{size})$ 2-tuples.
+Instead of giving axis components a single size attribute, we instead stipulate that they have a collection of $(\textnormal{\it label}, \textnormal{\it size})$ 2-tuples representing the different classes of point.
 For the owned/ghost point classification this means that distributed axis components would represent their extents with the regions:
 \begin{pyinline}
   [("owned", num_owned), ("ghost", num_ghost)]
@@ -78,7 +78,7 @@ For the owned/ghost point classification this means that distributed axis compon
           offset = 0?\label{code:region_offset}?
           # loop over owned and then ghost points
           for region in axis_tree.regions:?\label{code:region_loop}?
-            # call the layout function from ?\cref{sec:axis_tree_layouts}?, but pass
+            # call the layout collection function from ?\cref{sec:axis_tree_layouts}?, but pass
             # in an extra offset counter and existing layout functions
             size = collect_layouts_inner(axis_tree.root, layouts,
                                          region, offset)
@@ -97,13 +97,12 @@ Shown in \cref{alg:collect_layouts_parallel}, the core differences are:
     There is now an additional outer loop over the different regions (line~\ref{code:region_loop}).
   \item
     To account for offset contributions from other axis components a further \pycode{offset} variable is used (line~\ref{code:region_offset}).
-    It indicates the initial offset from which offset tabulation should start from.
+    It indicates the initial offset from which offset tabulation should start.
 \end{itemize}
 
-As an additional benefit of this approach, the general purpose abstraction of regions means that the same partitioning approach can be taken for other circumstances where this separation is desirable.
+Axis regions are a generic concept and so can be applied to other settings where a DoF partitioning is desirable.
 One example of where this occurs is with Dirichlet boundary conditions, where values on the boundary are constrained to a particular value.
-It can be desirable to store these values in the array but still be able to discard them when solving the assembled system.
-This is the approach taken in~\cite{rothwellImplementingRestrictedFunction2024}.
+Like ghost DoFs, it can be desirable to store these values in the array but still be able to discard them when solving the assembled system, and hence the constrained DoFs should also be collected towards the end of the array~\cite{rothwellImplementingRestrictedFunction2024}.
 This can be expressed in \pyop3 by adding additional regions to the axis components:
 \begin{pyinline}
   [("owned", num_owned),
@@ -119,7 +118,7 @@ This results in a data layout that looks like:
 \begin{center}
   \includegraphics{parallel_partition_mixed_flat_pyop2.pdf}
 \end{center}
-Constructing a global vector from this layout therefore requires copying the owned portions of each array into contiguous storage, which can be expensive on certain hardware.
+Constructing a monolithic global vector from this layout therefore requires copying the owned portions of each array into contiguous storage, which can be expensive on certain hardware.
 \pyop3, by using regions to partition the ghost data to the end of the array regardless of the field structure, is able to avoid this copy.
 
 \subsection{DoF star forests}
@@ -186,8 +185,7 @@ In order to make sure that the data held by each \pycode{Dat} are valid, two att
     If \pycode{pending_reduction} is \pycode{None} then root values are considered up-to-date.
 \end{description}
 
-The reason that these attributes are tracked by \pyop3 is that they enable communication to occur lazily.
-This means that under certain circumstances the exchanges may be skipped entirely.
+The reason that these attributes are tracked by \pyop3 is that they enable communication to occur lazily, meaning that under certain circumstances the exchanges may be skipped entirely.
 Examples include:
 \begin{itemize}
   \item If the array is being read from and all values are already up-to-date, no exchange is necessary.
@@ -197,7 +195,7 @@ Examples include:
 \end{itemize}
 
 This approach is similar to that of \pyop2 with the exception of \pycode{pending_reduction}, which is a novel contribution.
-Instead \pyop2 performs leaf-to-root reductions eagerly, which was found to be a bottleneck in certain finite element simulations with multiple assembly loops executed in sequence.
+Instead \pyop2 performs leaf-to-root reductions eagerly, which has been found to be a bottleneck in certain finite element simulations with multiple assembly loops executed in sequence.
 
 \subsection{Overlapping communication with computation}
 \label{sec:parallel_overlap_computation_communication}
@@ -307,6 +305,7 @@ If so then the iterate is marked as \rootiter{} or \leafiter{} as appropriate.
 In this chapter we have presented the modifications necessary to extend the heretofore serial-only version of \pyop3 to work in a distributed memory parallel environment.
 For this to work, additional care must be taken to ensure that data are stored correctly on a single process, and that they are correctly mapped between processes.
 Further consideration is also given to minimise the impact of any communication that may take place.
+
 Matrices were not discussed because their parallel implementation is entirely provided by PETSc.
 
 Now having a parallel implementation, all of the fundamental features of \pyop3 have been established and we may now consider integrating it into existing PDE-solving frameworks.

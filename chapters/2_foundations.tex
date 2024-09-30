@@ -5,8 +5,8 @@
 \chapter{Existing abstractions for arrays and stencils}
 \label{chapter:foundations}
 
-Before introducing any new abstractions for mesh data, it is instructive to review some `foundations', that is, pieces of software that have inspired their design.
-In order these are: \numpy{}, PETSc DMPlex and \pyop2.
+In this chapter we review three pieces of existing software: \numpy{}, PETSc DMPlex, and \pyop2, whose designs have served as inspiration for the contributions of this thesis.
+In particular, \numpy{} provides an intuitive language for describing hierarchically structured data, PETSc DMPlex provides an abstraction for reasoning about data stored on meshes, and \pyop2 is an existing mesh stencil library that is the precursor to the new stencil library introduced by this thesis, \pyop3.
 
 \section{\numpy{}} \label{sec:numpy}
 
@@ -51,6 +51,9 @@ In addition to considering implementation details, elements of \numpy{}'s interf
 In \numpy{}, hierarchical data structures are represented by \emph{N-dimensional arrays}.
 These have a multi-level \emph{shape}, with each level called an \emph{axis} (e.g. \cref{fig:numpy_ndarray}, left).
 
+To represent arrays, \numpy{} internally combines a memory buffer, containing the actual values, with additional \emph{metadata} that is used to interpret the buffer.
+In particular, the metadata includes the shape of the array, how to stride through it, and its data type (e.g. \cref{fig:numpy_ndarray}, right).
+
 In order to access a value from the array a \emph{multi-index} - a list of integers, one per axis - must be provided.
 Given a multi-index, the correct value may be read from the array by first computing an offset, and then reading a value at that offset.
 The function used to compute this offset is a function of each multi-index.
@@ -61,9 +64,7 @@ As an example, for the array shown in \cref{fig:numpy_ndarray}, the offset is gi
 where $i_0$, $i_1$, and $i_2$ are the values of the multi-index for axes 0, 1, and 2 respectively.
 The Python syntax for performing this access would be \pycode{array[i0, i1, i2]}.
 
-To represent arrays, \numpy{} internally combines a memory buffer, containing the actual values, with additional \emph{metadata} used to interpret the buffer.
-In particular, the metadata includes the shape of the array, how to stride through it, and its data type (e.g. \cref{fig:numpy_ndarray}, right).
-Representing data in this way allows array transformations to be expressed without needing to copy data.
+Representing data in this way also enables array transformations to be expressed without needing to copy data.
 Arrays can be reshaped or transposed just by constructing a new metadata struct with alternative shape and/or stride information.
 These alternative representations for the same array are termed \emph{views}.
 
@@ -441,7 +442,7 @@ The partitioning of \ghostiter{}/non-\ghostiter{} points comes from the star for
 It therefore makes sense to embed this information in the data layout.
 By contrast, \ownediter{} points are defined as being points that need ghost data in order to be executable.
 \emph{This is dependent upon the stencil}.
-Larger stencils touch more adjacent points and hence the partitioning of \coreiter{}/\ownediter{} should be modified.
+Differently sized stencils touch different numbers of adjacent points, changing the \coreiter{}/\ownediter{} partitioning.
 \pyop2 will therefore not work correctly in parallel for programs that use several different stencil sizes acting on the same data.
 
 Further, the partitioning of \coreiter{}/\ownediter{} points is associated with the \emph{iteration set}, instead of the data structures.
@@ -506,14 +507,15 @@ Given its high level of abstraction, loopy is a convenient target for \pyop2 for
 
 As an abstraction for mesh stencil computations, \pyop2 is limited because of its inflexible interface.
 Not all mesh operations are expressible as a single kernel executed within a single loop.
-Algorithms for physics-based preconditioners such as hybridisation~\cite{gibsonSlateExtendingFiredrake2020} and additive Schwartz methods~\cite{farrellPCPATCHSoftwareTopological2021} involve multiple kernels and nested loops.
+For instance, algorithms for physics-based preconditioners such as hybridisation~\cite{gibsonSlateExtendingFiredrake2020} and additive Schwartz methods~\cite{farrellPCPATCHSoftwareTopological2021} involve multiple kernels and nested loops.
 Though each has been implemented with \pyop2 and Firedrake, sui-generis code has been needed making the resulting software harder to compose.
 
-This limitation exists because \pyop2 associates unknowns with node sets instead of mesh entities and hence \emph{discards topological information}, making composition harder.
+One of the main reasons for this limiting interface is the fact that set-based approaches for describing mesh data \emph{discard important topological information}.
+This makes it harder to build a composable interface because it creates a divide between the natural language for expressing mesh stencil algorithms - the mesh entities - and the description of how data are stored - on the nodes.
 
 \section{Outlook}
 
-In this chapter we introduced three existing pieces of software: \numpy{}, PETSc DMPlex, and \pyop2.
+In this chapter we introduced three existing pieces of software: \pyop2, \numpy{}, and PETSc DMPlex.
 \pyop2 is a powerful library for automating mesh stencil calculations but weaknesses in its ability to describe mesh data limit its expressivity and hence certain mesh stencil algorithms cannot be described.
 \numpy{} and DMPlex both provide abstractions for describing different types of structured data: \numpy{} describing fully structured, hierarchical N-dimensional arrays and DMPlex describing fully unstructured mesh data.
 

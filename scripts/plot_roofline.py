@@ -20,11 +20,18 @@ MIN_THROUGHPUT = 1/100
 MAX_THROUGHPUT = 80
 
 
-plt.style.use({
+MPL_PARAMS = {
     "font.family": "serif",
     "font.size": 10,
     "text.usetex": True,
-})
+}
+
+FIGURE_PARAMS = {
+    # "figsize": (6, 3.5),
+    "layout": "tight",
+}
+
+plt.style.use(MPL_PARAMS)
 
 
 def inches_to_pts(inches):
@@ -61,6 +68,7 @@ def main(
 ):
     fig, ax = plt.subplots(
         1, 1,
+        **FIGURE_PARAMS,
         figsize=(pts_to_inches(width), pts_to_inches(height))
     )
 
@@ -119,12 +127,11 @@ def main(
         linewidth=1,
     )
 
-    ax.annotate(r"\textit{memory-bound}", (0.01, 0.01), (-20, 30), textcoords="offset points")
-    ax.annotate(r"\textit{compute-bound}", (0.01, 0.01), (110, 30), textcoords="offset points")
-
+    ax.annotate("memory-bound", (0.2, 0.15), xycoords="axes fraction", horizontalalignment="center", fontstyle="italic")
+    ax.annotate("compute-bound", (0.8, 0.15), xycoords="axes fraction", horizontalalignment="center", fontstyle="italic")
 
     if outfile:
-        fig.savefig(outfile, backend="pgf")
+        fig.savefig(outfile, backend="pgf", dpi=200)
     else:
         plt.show()
 
