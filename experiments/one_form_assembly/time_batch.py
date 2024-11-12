@@ -1,6 +1,7 @@
 import argparse
 import itertools
 import os
+import sys
 
 import pandas as pd
 
@@ -28,7 +29,7 @@ degrees = tuple(map(int, args.degree.split(",")))
 ncellss = tuple(map(int, args.ncells.split(",")))
 
 for nfuncs, degree, ncells in itertools.product(nfuncss, degrees, ncellss):
-    cmd = f"python -m {__package__}.run --nfuncs {nfuncs} --degree {degree} --mode {args.mode} --ncells {ncells}"
+    cmd = f"{sys.executable} -m {__package__}.run --nfuncs {nfuncs} --degree {degree} --mode {args.mode} --ncells {ncells}"
     print("Running\n", cmd)
     events = utils.petsclog.profile_script(cmd, "Experiment")
     loop_event, = (ev for ev in events if ev.name == "pyop3_loop")
