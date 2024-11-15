@@ -9,7 +9,7 @@ dir = pathlib.Path(__file__).parent
 plot_roofline(
     "pyramus",
     f"{dir}/batch-pyramus-pyop2-20241112-143718.csv",
-    f"{dir}/batch-pyramus-pyop3-20241112-142154.csv",
+    f"{dir}/batch-pyramus-pyop3-20241115-164836.csv",
     experiment=1,
 )
-plt.savefig(f"{dir}/roofline1.pdf", dpi=200, backend="pgf")
+plt.savefig(f"{dir}/roofline1_new.pdf", dpi=200, backend="pgf")
