@@ -9,6 +9,14 @@ import experiments.common as utils
 from experiments.one_form_assembly.run import make_function_space
 
 
+def num_cells(fs, mode):
+    if mode == "pyop2":
+        return fs.ufl_domain().num_cells()
+    else:
+        assert mode == "pyop3"
+        return fs.ufl_domain().num_cells
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--machine-name", required=True)
 parser.add_argument("--mode", required=True)
@@ -36,15 +44,15 @@ for nfuncs, degree, ncells in itertools.product(nfuncss, degrees, ncellss):
 
 
     fs = make_function_space(ncells, degree)
-    mapdata = fs.ufl_domain().num_cells * fs.finat_element.space_dimension() * 4
+    mapdata = num_cells(fs, args.mode) * fs.finat_element.space_dimension() * 4
 
     optimal_memory = fs.dim() * (nfuncs + 1) * 8 + mapdata
     # if we miss cache every time
-    pessimal_memory = (nfuncs + 1) * fs.ufl_domain().num_cells * fs.finat_element.space_dimension() * 8 + mapdata
+    pessimal_memory = (nfuncs + 1) * num_cells(fs, args.mode) * fs.finat_element.space_dimension() * 8 + mapdata
 
     flop_data_single = flop_data[(flop_data["nfuncs"] == nfuncs) & (flop_data["degree"] == degree)]
     nflops = int(flop_data_single["flops_per_cell"].iloc[0])
-    nflops *= fs.ufl_domain().num_cells
+    nflops *= num_cells(fs, args.mode)
 
     ndofs = fs.dim()
 

@@ -8,7 +8,7 @@ args = parser.parse_args()
 
 nfuncs = 1
 degree = "1,2,3,4,5,6,7"
-ncells = 250
+ncells = 200
 cmd = (
     f"python -m {__package__}.time_batch "
     f"--machine-name {args.machine_name} "
