@@ -6,7 +6,7 @@
 \label{chapter:demonstrator_applications}
 
 In order to demonstrate \pyop3's capability to replace \pyop2 inside the Firedrake framework, we now present a number of examples comparing the old and new software stacks in terms of both functionality and performance.
-In particular, we consider two prototypical finite element problems, that run under \pyop3 without modification, and a more complex slope limiter computation that \pyop3 significantly facilitates the development of.
+In particular, we consider two prototypical finite element problems, that run under \pyop3 without modification, and a more complex slope limiter computation for which \pyop3 significantly facilitates the development of.
 
 \subsubsection{Performance metrics}
 
@@ -63,6 +63,7 @@ By contrast, computations with low arithmetic intensities are limited by the rat
   \caption{
     Details of the hardware used to run the experiments.
     Memory bandwidth and arithmetic throughput were measured with LIKWID~\cite{psti}.
+    Note that, since the experiments in this chapter were all run on a single core, only single core metrics are included.
   }
   \label{tab:pyramus_specs}
 \end{table}

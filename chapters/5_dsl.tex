@@ -121,7 +121,7 @@ To generate code from the \pycode{write} node we do the following:
 
 The full loopy kernel generated for this expression is shown in \cref{listing:codegen_example1_loopy_kernel}, and the subsequently generated C code in \cref{listing:codegen_example1_c_code}.
 Note that \pycode{dat} has been passed through as an argument in the generated code but that it has been given a new name: \pycode{array_0}.
-This is because kernel arguments are renamed during code generation to avoid unnecessary cache misses.
+This is because kernel arguments are renamed during code generation to avoid unnecessary code cache misses.
 
 \subsection{Example 2: Outer loops and maps}
 \label{sec:example2_outer_loops}

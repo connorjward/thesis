@@ -26,7 +26,7 @@ When constructing an axis tree there are a number of important constraints to co
   \item
     Along each possible \emph{path} from root to leaf, axes in a tree are not allowed to have the same label.
   \item
-    All of the labels of the axis components for an axis must be unique.
+    All of the labels of the axis components for an axis must be distinct.
 \end{itemize}
 
 Axis trees are analogous to the metadata of a \numpy{} array, or a \pyop2 \pycode{DataSet}: they exist alongside a block of memory and provide the information necessary to interpret it.
@@ -158,7 +158,7 @@ In the mesh stencil library \pyop3, where axis trees have been implemented, actu
 Reusing terminology from \pyop2, \pyop3 has \pycode{Globals} (scalars), \pycode{Dats} (vectors), and \pycode{Mats} (matrices).
 \pycode{Globals}, being scalar-valued, need no axis trees, \pycode{Dats} require one, and \pycode{Mats} require two (one each for the rows and columns).
 
-Being the most widely used, we will mostly focus of \pycode{Dats} during this thesis.
+Being the most widely used, we will mostly focus on \pycode{Dats} during this thesis.
 \pycode{Mats} are more complicated and a discussion of their implementation is deferred to \cref{sec:impl_matrices}.
 
 \section{Alternative data layouts}
@@ -635,7 +635,7 @@ If the axis component's steps are found to be non-uniform then, instead of makin
 
 \begin{algorithm}
   \caption{
-    Code that tabulates the offsets for an axis with non-uniform strides.
+    Algorithm tabulating the offsets for an axis with non-uniform strides.
   }
 
   \begin{flushright}

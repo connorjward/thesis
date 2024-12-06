@@ -6,7 +6,7 @@
 \label{chapter:indexing}
 
 Just like \numpy{} (\cref{sec:numpy_indexing_arrays}), data structures in \pyop3 can be indexed, extracting portions of the full structure and returning them as a new object.
-However, unlike \numpy{} where indexing is accomplished with a list of index-like objects, one for each axis, \pyop3 needs a more complicated solution to accomodate for the fact that data structures are now tree-like.
+However, unlike \numpy{} where indexing is accomplished with a list of index-like objects, one for each axis, \pyop3 needs a more complicated solution to accommodate for the fact that data structures are now tree-like.
 Instead of lists of indices, \pyop3 instead uses \emph{index trees}.
 
 \section{Index trees}
@@ -544,7 +544,7 @@ This is useful in cases where both methods would ideally be supported, such as w
 Thus far we have only considered the case where maps have a constant value arity.
 This is not always the case.
 To use the same example from \cref{sec:ragged_axis_trees}, the map relating vertices in a mesh to their supported edges has variable arity because the size of this relation is different for each vertex.
-Like with axis trees, maps that have a variable size are also called \emph{ragged}.
+As with axis trees, maps that have a variable size are also called \emph{ragged}.
 
 To represent ragged maps a simple change in the code is required: one must pass a \pycode{Dat} instead of an integer as the \pycode{arity} argument to the map.
 This is demonstrated in \cref{fig:index_ragged_map_code} (line~\ref{code:arity_dat}).

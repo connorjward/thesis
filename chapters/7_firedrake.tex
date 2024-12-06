@@ -292,7 +292,7 @@ This means that DoFs associated with edges and vertices will be close in memory 
 To further improve locality, the outer loop over cells is ordered with an reverse Cuthill-McKee numbering~\cite{cuthillReducingBandwidthSparse1969} (\pycode{cell_order} in \cref{alg:plex_renumbering}).
 This ensures that nearby cell closures are kept close in memory, improving data reuse for shared entities between adjacent cells.
 
-The algorithm is very similar to that already used by Firedrake and \pyop2 (algorithm 3 in~\cite{langeEfficientMeshManagement2016}) except, due to reasons explained in \cref{sec:communication_optimisations}, points are partitioned only into \ownediter{} and \ghostiter{} groups, instead of \coreiter{}, \ownediter{}, and \ghostiter{}.
+The algorithm is very similar to that already used by Firedrake and \pyop2 (algorithm 3 in~\cite{langeEfficientMeshManagement2016}) except, for reasons explained in \cref{sec:communication_optimisations}, points are partitioned only into \ownediter{} and \ghostiter{} groups, instead of \coreiter{}, \ownediter{}, and \ghostiter{}.
 
 The integer arrays \pycode{icell}, \pycode{iedge}, and \pycode{ivert} are then all derived from this flat numbering.
 
@@ -342,7 +342,7 @@ This is shown in \cref{fig:firedrake_index_tree}.
   \caption{The index tree and resulting indexed data layout that are produced when an axis tree representing a Scott-Vogelius function space (\cref{fig:firedrake_axis_tree}) is indexed with \pycode{closure(cell)}.}
 \end{figure}
 
-From this loop expression, \pyop3 is able to generate and execute code for finite element assembly in parallel using the processes established in \cref{chapter:pyop3,chapter:parallel}.
+From this loop expression, \pyop3 is able to generate and execute distributed-memory parallel code for finite element assembly using the processes established in \cref{chapter:pyop3,chapter:parallel}.
 Nothing more is required.
 
 \subsection{More integral types}
