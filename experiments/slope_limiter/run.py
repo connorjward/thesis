@@ -19,6 +19,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--validate", action="store_true")
     parser.add_argument("--memory", action="store_true")
+    parser.add_argument("--likwid", action="store_true")
     parser.add_argument("--degree", type=int, default=1)
     return parser.parse_known_args()[0]
 
@@ -56,11 +57,9 @@ def make_loop_expr(mesh, cg, dg):
     return op3.loop(
         v := mesh.vertices.index(),
         op3.loop(
-            c := mesh.star(v, k=2).index(),
+            c := mesh.star(v, k=2).iter(),
             max_(dg.dat[c], cg.dat[v]),
         ),
-        # compiler_parameters={"add_petsc_event": True, "add_likwid_markers": True},
-        compiler_parameters={"add_likwid_markers": True},
     )
 
 
@@ -72,7 +71,7 @@ def num_cells_visited(mesh, cg, dg):
     op3.do_loop(
         v := mesh.vertices.index(),
         op3.loop(
-            mesh.star(v, k=2).index(),
+            mesh.star(v, k=2).iter(),
             inc(cg.dat[v]),
         ),
     )
@@ -83,7 +82,7 @@ def pessimal_memory(mesh, cg, dg):
     # We can safely assume that cg is only visited nverts times as it will always
     # remain in cache for the inner loop. Therefore the pessimal memory is
     # 2*nverts (for cg, load+store) + total number of cells visited (including dups.)
-    return (2*mesh.num_vertices() + num_cells_visited(mesh, cg, dg)) * 8
+    return (2*mesh.num_vertices + num_cells_visited(mesh, cg, dg)) * 8
 
 
 def optimal_memory(cg, dg):
@@ -99,9 +98,10 @@ if __name__ == "__main__":
 
     if args.validate:
         mesh = UnitSquareMesh(1, 1)
+    elif args.likwid:
+        mesh = UnitSquareMesh(10, 10)
     else:
-        # mesh = UnitSquareMesh(200, 200)
-        mesh = UnitSquareMesh(50, 50)
+        mesh = UnitSquareMesh(200, 200, reorder=False)
 
     V_cg = FunctionSpace(mesh, "CG", 1)
     V_dg = FunctionSpace(mesh, "DG", 0)
@@ -132,11 +132,13 @@ if __name__ == "__main__":
 
     elif args.memory:
         print(flop_count(mesh, cg, dg), optimal_memory(cg, dg), pessimal_memory(mesh, cg, dg))
+    elif args.likwid:
+        loop_expr(compiler_parameters={"add_likwid_markers": True, "optimize": True})
     else:
         # warm start
-        loop_expr()
+        loop_expr(compiler_parameters={"add_petsc_event": True, "optimize": True})
 
         with PETSc.Log.Stage("Experiment"):
             # increasing this will not make things better
             for _ in range(NREPEATS):
-                loop_expr()
+                loop_expr(compiler_parameters={"add_petsc_event": True, "optimize": True})
