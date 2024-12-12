@@ -370,13 +370,13 @@ One can reframe the algorithm as a loop over cells, writing the maximum values t
   \centering
   \begin{tblr}{|[1pt]l|[1pt]l|[1pt]}
     \hline[1pt]
-    \textbf{Arithmetic throughput} & $6.3 \times 10^8$ FLOP/s \\
+    \textbf{Arithmetic throughput} & $1.9 \times 10^9$ FLOP/s \\
     \hline[1pt]
-    \textbf{Arithmetic intensity} & 0.052 FLOP/byte \\
+    \textbf{Arithmetic intensity} & 0.072 FLOP/byte \\
     \hline[1pt]
-    \textbf{Peak throughput} & $1.6 \times 10^9$ FLOP/s \\
+    \textbf{Peak throughput} & $2.2 \times 10^9$ FLOP/s \\
     \hline[1pt]
-    \textbf{Percentage of peak throughput} & 39\% \\
+    \textbf{Percentage of peak throughput} & 85\% \\
     \hline[1pt]
   \end{tblr}
   \caption{
@@ -387,11 +387,12 @@ One can reframe the algorithm as a loop over cells, writing the maximum values t
   \label{tab:slope_limiter_performance}
 \end{table}
 
-Lacking independent variables to change the code was profiled for a single configuration, again in serial.
+Lacking independent variables to change, the code was profiled for a single configuration, again in serial.
 The roofline results are shown in \cref{tab:slope_limiter_performance}.
 The arithmetic intensity is extremely low because only one floating point operation (a comparison) is performed, with many arrays being streamed from memory.
 The calculation is therefore strongly memory-bound.
 
+% redo!
 Irrespective of this, the code achieves a reasonable fraction of theoretical peak performance, meaning that \pyop3 is clearly generating reasonably performant code that makes effective use of the available hardware.
 
 \section{Outlook}
