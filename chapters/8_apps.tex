@@ -221,7 +221,7 @@ Due to the various data locality optimisations that \pyop2 and \pyop3 perform we
 
 \begin{figure}
   \centering
-  \includegraphics{experiments/one_form_assembly/roofline1.pdf}
+  \includegraphics{experiments/one_form_assembly/roofline1_new.pdf}
   \caption{
     Roofline plot comparing the performance of \pyop2 (blue, diamonds) and \pyop3 (red, circles) for one form assembly (\cref{eq:app1_form}) where the polynomial degree is varied between 1 and 7.
     The top and bottom flat lines represent peak vector and scalar throughput respectively.
@@ -233,7 +233,7 @@ Due to the various data locality optimisations that \pyop2 and \pyop3 perform we
 
 \begin{figure}
   \centering
-  \includegraphics{experiments/one_form_assembly/roofline2.pdf}
+  \includegraphics{experiments/one_form_assembly/roofline2_new.pdf}
   \caption{
     Roofline plot comparing \pyop2 (blue, diamonds) and \pyop3 (red, circles) performance for one form assembly (\cref{eq:app1_form}) with a varying number of coefficients between 0 and 7.
     Increasing the number of coefficients reduces the arithmetic intensity and so the left-most values are for the 7 coefficient case.
