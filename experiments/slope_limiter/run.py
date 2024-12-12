@@ -15,6 +15,10 @@ from pyop3.ir import LOOPY_LANG_VERSION, LOOPY_TARGET
 NREPEATS = 10
 
 
+# if run with likwid
+# likwid-perfctr -C S0:1 -g MEM_DP -m -- python -m experiments.slope_limiter.run --likwid
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--validate", action="store_true")
@@ -98,8 +102,6 @@ if __name__ == "__main__":
 
     if args.validate:
         mesh = UnitSquareMesh(1, 1)
-    elif args.likwid:
-        mesh = UnitSquareMesh(10, 10)
     else:
         mesh = UnitSquareMesh(200, 200, reorder=False)
 
