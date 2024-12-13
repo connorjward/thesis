@@ -416,7 +416,7 @@ Both \pycode{Dats} associate data with some \pycode{target_set} and hence are ad
 \end{algorithm}
 
 By keeping careful track of the parallel decomposition of sets, \pyop2 is capable of interleaving computation and communication when executing parallel loops.
-To do so each set is split into 3 parts:
+To do so each set is split, by the user, into 3 parts:
 \begin{description}
   \item[\coreiter{}]
     Set elements that do not require any data from other processes during a parallel loop.
@@ -490,6 +490,7 @@ Given its high level of abstraction, loopy is a convenient target for \pyop2 for
   \end{minipage}
   \caption{
     Abbreviated textual representation of the loopy kernel generated for the example parallel loop in \cref{listing:pyop2_parloop_demo}.
+    The pack and unpack instructions are shown on lines 29 and 33 respectively.
   }
   \label{listing:pyop2_example_loopy_kernel}
 \end{listing}
@@ -501,6 +502,7 @@ Given its high level of abstraction, loopy is a convenient target for \pyop2 for
   \end{minipage}
   \caption{
     The C code generated from the loopy kernel in \cref{listing:pyop2_example_loopy_kernel}.
+    The pack and unpack instructions are shown on lines 13 and 20 respectively.
   }
   \label{listing:pyop2_example_c_code}
 \end{listing}
@@ -519,7 +521,7 @@ This makes it harder to build a composable interface because it creates a divide
 
 In this chapter we introduced three existing pieces of software: \pyop2, \numpy{}, and PETSc DMPlex.
 \pyop2 is a powerful library for automating mesh stencil calculations but weaknesses in its ability to describe mesh data limit its expressivity and hence certain mesh stencil algorithms cannot be described.
-\numpy{} and DMPlex both provide abstractions for describing different types of structured data: \numpy{} describing fully structured, hierarchical N-dimensional arrays and DMPlex describing fully unstructured mesh data.
+\numpy{} and DMPlex both provide abstractions for describing different types of data: \numpy{} describing fully structured, hierarchical N-dimensional arrays and DMPlex describing fully unstructured mesh data.
 
 In this thesis we seek a unifying abstraction for mesh data, combining elements of \numpy{} and DMPlex, which may then be implemented in a mesh stencil package reusing concepts from \pyop2.
 The new abstractions, called \emph{axis trees} and \emph{index trees} are discussed in \cref{chapter:axis_trees,chapter:indexing}, and the new mesh stencil package, called \pyop3, is introduced in \cref{chapter:pyop3}.

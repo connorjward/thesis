@@ -27,7 +27,7 @@ We say that abstractions induce a \emph{separation of concerns} between the user
 
 This thesis focusses on the development of software abstractions that encapsulate the process of applying compact computational kernels to (unstructured) meshes.
 Also known as \emph{mesh stencil calculations}, applying compact kernels to a mesh is a widespread technique underpinning many common numerical methods for solving PDEs, including the finite difference method, finite element method, and finite volume method.
-To apply one, one loops over a particular collection of mesh entities and, for each entity, computes a contribution to some global data structure using the degrees-of-freedom (DoFs) that lie in the neighbourhood of the current iterate.
+To apply a mesh stencil calculation, one loops over a particular collection of mesh entities and, for each entity, computes a contribution to some global data structure using the degrees-of-freedom (DoFs) that lie in the neighbourhood of the current iterate.
 An example of a mesh stencil operation is shown in \cref{fig:mesh_stencil}.
 
 Developing abstractions for mesh stencil calculations is challenging because mesh data structures are complex and map poorly to traditional representations of structured data (e.g. N-dimensional arrays).
@@ -302,7 +302,7 @@ Given this definition, one can determine a basis, $\psi_j$, for $P$ by imposing 
 \begin{equation}
   l_i(\psi_j) = \delta_{ij} \quad i, j = 0, 1, \dots, 5
 \end{equation}
-which for the $P_2$ element yields the basis functions:
+which for the $P_2$ element yields the basis functions on the reference triangle:
 \begin{align*}
   % see https://defelement.com/elements/examples/triangle-lagrange-equispaced-2.html
   &\psi_0 = 2x^2 + 4xy - 3x + 2y^2-3y+1,
@@ -410,6 +410,7 @@ This process is called \emph{global assembly}.
 
 Since the local kernel operates at the level of a single cell, it expects data to be provided to it as a small dense array, containing only those DoFs necessary for the calculation.
 However, the global data structures store DoFs differently, and so preparing the data for the local kernel requires an explicit transformation between the representations.
+This transformation usually involves copying data from the global structure to a local temporary array, though this is not necessary in cases where the required data is contiguous in memory (e.g.~with discontinuous function spaces).
 Transforming from global to local representations is called \emph{packing}, and from local to global \emph{unpacking}.
 
 A diagram showing the global assembly loop process, including explicit pack/unpack steps, is shown in \cref{fig:fem_assembly} and an algorithm for its execution in \cref{alg:fem_assembly}.
@@ -417,6 +418,7 @@ In the algorithm there is a single pack instruction, \textsc{Read} (line~\ref{co
 Both instructions take the current iterate, \textit{cell}, as an argument because the data that is packed/unpacked is dependent upon it.
 
 Finite element assembly is a classic example of a mesh stencil calculation: one loops over entities in the mesh (the cells), accesses data that are `close' to the current iterate, and performs a local computation.
+Further examples of mesh stencil calculations are discussed in \cref{sec:more_stencils}.
 
 \subsection{Finite element data structures}
 
@@ -515,8 +517,8 @@ For the design of a mesh stencil abstraction there are a number of clear require
 \end{itemize}
 
 Further, it is not always the case that stencil algorithms consist of a single loop and single local kernel.
-Whilst this model holds for finite element assembly, other algorithms important for solving continuum mechanics problems are not expressible.
-Examples include hybridisation~\cite{arnoldMixedNonconformingFinite1985,boffi2013mixed}, where multiple local kernels need to be evaluated at each stencil iterate~\cite{gibsonSlateExtendingFiredrake2020}, and additive-Schwartz methods~\cite{arnoldPreconditioningHdivApplications1997}, where extra nested loops are needed~\cite{farrellPCPATCHSoftwareTopological2021}.
+Whilst this model holds for finite element assembly, other algorithms important for solving continuum mechanics problems are not expressible in this form.
+Examples include hybridisation~\cite{arnoldMixedNonconformingFinite1985,boffi2013mixed}, where multiple local kernels need to be evaluated at each stencil iterate~\cite{gibsonSlateExtendingFiredrake2020}, and additive-Schwartz methods~\cite{arnoldPreconditioningHdivApplications1997}, which operate on small patches of cells and hence two nested loops: one over the patches and another over the cells in each patch~\cite{farrellPCPATCHSoftwareTopological2021}.
 For the abstraction to be able to express these algorithms it is thus important that it has a flexible and composable interface, in effect, a DSL.
 
 \subsection{Desirable characteristics for a mesh stencil package}
@@ -551,6 +553,10 @@ Ghost DoFs are shown as existing on both processes which ensures that all of the
 For matrices, the DoF partitioning process is less straightforward.
 Rather than implementing a parallel matrix type by-hand it is common to use existing library implementations instead.
 PETSc, for example, provides a parallel matrix type that has routines for accessing values that hide the complexities of reading off-process DoFs.
+
+It is important to note that the focus here is solely on \emph{distributed} memory parallelism.
+\emph{Shared} memory approaches to parallelism using tools such as OpenMP~\cite{openmparchitecturereviewboardOpenMPAPISpecification2024} are not considered because they cannot scale past a single node of a supercomputer and hence have limited applicability.
+It is possible to employ \emph{hybrid} memory models that combine both paradigms (e.g.~\cite{langeAchievingEfficientStrong2013}), but that is considered out of scope for this work.
 
 \begin{figure}
   \centering
@@ -619,7 +625,7 @@ Liszt has support for shared-memory, distributed-parallel, and GPU backends wher
     \hline[1pt]
     & \textbf{Liszt} & \textbf{Simit} & \textbf{Ebb} & \textbf{MeshTaichi} & \textbf{OP2} & \textbf{\pyop2} & \textbf{\pyop3} \\
     \hline[1pt]
-    Flexible DSL & \mytick & \mytick & \mytick & \mytick & \mycross & \mycross & \mytick \\
+    Composable DSL & \mytick & \mytick & \mytick & \mytick & \mycross & \mycross & \mytick \\
     \hline[1pt]
     Distributed parallelism & \mytick & \mycross & \mycross & \mycross & \mytick & \mytick & \mytick \\
     \hline[1pt]

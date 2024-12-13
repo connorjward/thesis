@@ -406,30 +406,20 @@ which cannot be passed as an argument to \ccode{MatGetValues()}.
 
 To get around this, prior to generating code for matrix insertion, \pyop3 has to pre-tabulate the layout function to produce \ccode{map0}:
 \begin{pyinline}
-  for ?$Lp$? in range(...):
+  for ?$L^p$? in range(...):
     for ?$i_c$? in range(...):
       for ?$i_b$? in range(...):
         map0[?$L^p$?,?$i_c$?,?$i_b$?] = ?$3 f(L^p_x,i_c) + i_b$?
 \end{pyinline}
 which can then be used in the generated code.
 
-This extra step is not needed in \pyop2 because the `compressed' maps are always passed in as input.
-
-\section{Future performance optimisations}
+\section{Optimising index expressions}
 \label{sec:codegen_optimisation}
 
-In the same way that loopy provides a convenient abstraction level for expressing loop-level optimisations, \pyop3 provides a good level of abstraction for reasoning about higher-level optimisations.
-Notably, by having access to both the symbolics of the computation \emph{and} the input data, inspector-executor optimisations (\cref{sec:intro_software_codegen}) become expressible.
+As demonstrated for the specific case of matrices above, by performing code generation at run-time \pyop3 is able to examine and manipulate the access patterns for the provided data structures.
+This constitutes an inspector-executor optimisation (\cref{sec:intro_software_codegen}) similar to~\cite{dasSlicingAnalysisIndirect1994}.
 
-None of the listed optimisations have yet been implemented, but they are included in this thesis to demonstrate the potential of the new abstractions.
-
-\subsection{Expression compression}
-\label{sec:pyop3_expression_compression}
-
-In \cref{sec:impl_matrices_codegen} we saw that we needed to `compress' the layout functions for matrices into a flat map between the iteration set and the row/column DoFs.
-Generalising this operation to other settings constitutes a performance optimisation (similar to~\cite{dasSlicingAnalysisIndirect1994}).
-
-Consider, for example, a \pycode{Dat} indexed with the composed map $g(f(p))$ with $p$ some outer loop and $f$ and $g$ maps tabulated with arrays \pycode{map_f} and \pycode{map_g} respectively.
+To give an example, consider a \pycode{Dat} indexed with the composed map $g(f(p))$ with $p$ some outer loop and $f$ and $g$ maps tabulated with arrays \pycode{map_f} and \pycode{map_g} respectively.
 With these, the indexed \pycode{Dat} would have the substituted layout function
 \begin{equation}
   \textnormal{offset}(L^p,i_f,i_g) = \pycode{map_g[map_f[?$L^p$?,?$i_f$?],?$i_g$?]}.
@@ -441,7 +431,7 @@ Which, if we further stipulate $g$ to have arity 1, simplifies to
 
 Since these maps are available at compile-time, \pyop3 can pack the results into a new array, \pycode{map_fg}:
 \begin{pyinline}
-  for ?$Lp$? in range(...):
+  for ?$L^p$? in range(...):
     for ?$i_f$? in range(...):
       map_fg[?$L^p$?, ?$i_f$?] = map_g[map_f[?$L^p$?,?$i_f$?]]
 \end{pyinline}
@@ -464,24 +454,6 @@ Compared with the uncompressed version, using this new layout is advantageous fo
 
 Note that this optimisation does not need to be implemented in \pyop2 because the `compressed' maps are provided at parallel loop construction.
 It therefore provides a way to reproduce existing \pyop2 performance.
-
-\subsection{Runtime data layout transformations}
-
-As described in \cref{sec:intro_data_layout_flex}, it is desirable for mesh stencil codes to have support for expressing the same data in a variety of layouts, so as to take advantage of the performance characteristics of different hardware.
-In sections~\ref{sec:axis_tree_alternative_layouts} and~\ref{sec:indexing_data_layout_transformations} we established that this is entirely possible within \pyop3.
-However, we have assumed thus far that any data layout is immutable for the duration of a program.
-This is not always correct since there are circumstances where one data layout may be optimal for one loop and another layout be optimal for another, for example if one is executed on a GPU and another on the CPU.
-At present \pyop3 requires that the user commit to one layout or the other, potentially sacrificing performance.
-
-As an alternative to this, \pyop3 \pycode{Dats} could internally store a number of arrays, each with a different data layout.
-The optimal layout for different loops could then be used, transparently to the user.
-To ensure data consistency between the arrays, the \pycode{Dat} would need to employ state-tracking to lazily copy between them, similarly to how packages ensure consistency between data on a CPU and GPU (e.g.~\cite{millsPerformancePortablePETScGPUbased2020}).
-
-Despite the differing layouts, axis trees make performing this copy trivial.
-For example, given two arrays, \pycode{dat_soa} and \pycode{dat_aos}, with axis trees representing different-but-equivalent data layouts, copying one to the other is as simple as executing:
-\begin{pyinline}
-  dat_soa.assign(dat_aos)
-\end{pyinline}
 
 \section{Outlook}
 
