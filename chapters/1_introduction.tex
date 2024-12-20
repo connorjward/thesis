@@ -39,6 +39,7 @@ Unlike existing approaches, the abstractions are fully capable of describing com
 This allows for an expressive, composable interface suitable for representing a wider range of algorithms.
 
 \section{Contributions}
+\label{sec:intro_contributions}
 
 The core contributions presented in this thesis are:
 \begin{itemize}
@@ -58,7 +59,7 @@ Through these abstractions, \pyop3 improves upon its predecessor, \pyop2, in the
   \item
     By better preserving the complex structure of mesh-based data structures, \pyop3's domain-specific language for expressing computations (\cref{chapter:pyop3}) has far greater composability than \pyop2, allowing it to express algorithms more complex than just those with a single-loop and single-kernel.
   \item
-    \pyop3 can inspect the access patterns of the data structures in a computation and optimise the indirection expressions to improve data locality.
+    \pyop3 can inspect the access patterns of the data structures in a computation and optimise the indirection expressions to improve data locality (\cref{sec:codegen_optimisation}).
   \item \pyop3 further addresses a number of limitations of \pyop2 when run in a distributed-memory parallel environment (\cref{chapter:parallel}):
     \begin{itemize}
       \item
