@@ -46,6 +46,30 @@ The core contributions presented in this thesis are:
   \item The implementation of these abstractions as part of the new mesh stencil library \pyop3, which has been integrated into the finite element library Firedrake~\cite{FiredrakeUserManual}.
 \end{itemize}
 
+Through these abstractions, \pyop3 improves upon its predecessor, \pyop2, in the following ways:
+\begin{itemize}
+  \item
+    Unlike \pyop2, \pyop3 data structure can store hierarchical data with variable-sized inner dimension (sometimes referred to as \emph{ragged} data structures) (\cref{sec:ragged_axis_trees})
+  \item
+    Through \emph{indexing}, \pyop3 is able to describe much more complex data access patterns inside loops that compose arbitrarily without causing any data to be copied (\cref{chapter:indexing}).
+  \item
+    By using axis trees and index trees together \pyop3 can describe data layout transformations that generalise the classical array-of-structs/struct-of-arrays optimisation (\cref{sec:intro_data_layout_flex}) through only modifying the specification of the data layout (\cref{sec:axis_tree_alternative_layouts,sec:indexing_data_layout_transformations}).
+    This is a single line change and no other modifications are required.
+  \item
+    By better preserving the complex structure of mesh-based data structures, \pyop3's domain-specific language for expressing computations (\cref{chapter:pyop3}) has far greater composability than \pyop2, allowing it to express algorithms more complex than just those with a single-loop and single-kernel.
+  \item
+    \pyop3 can inspect the access patterns of the data structures in a computation and optimise the indirection expressions to improve data locality.
+  \item \pyop3 further addresses a number of limitations of \pyop2 when run in a distributed-memory parallel environment (\cref{chapter:parallel}):
+    \begin{itemize}
+      \item
+        The iteration set is no longer conflated with the data layout (\cref{sec:pyop2_parallel_limitation}), enabling \pyop3 to work correctly when using different stencil sizes in a single simulation (\cref{sec:parallel_overlap_computation_communication}) and hence suitable for applications beyond the finite element method (\cref{sec:more_stencils}).
+      \item
+        Arrays storing data for multiple fields always partition ghost DoFs at the end of the array, enabling no-copy transformations between global and local views of the data (\cref{sec:parallel_data_layouts}).
+      \item
+        To reduce parallel communication, additional state tracking is employed to minimise ghost DoF exchange (\cref{sec:parallel_minimising_communication}).
+    \end{itemize}
+\end{itemize}
+
 \section{Dissemination}
 
 The work described in this thesis has been presented at the following workshops and conferences:
