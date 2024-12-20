@@ -80,13 +80,27 @@ Once finite element assembly on a GPU is supported, Firedrake should be able to 
 PETSc efforts to support solving linear and non-linear problems on a GPU are becoming increasingly mature~\cite{millsPerformancePortablePETScGPUbased2020,millsPETScTAODevelopments2024}
 and the rest of the Firedrake software stack (e.g. TSFC) exist at an abstraction level where the CPU/GPU consideration is not relevant.
 
-\subsubsection{More stencil algorithms}
+\subsubsection{Beyond finite elements}
 \label{sec:more_stencils}
 
 One of the original inspirations for \pyop3's development was the fact that a number of algorithms, specifically additive-Schwartz methods~\cite{farrellPCPATCHSoftwareTopological2021} and hybridisation~\cite{gibsonSlateExtendingFiredrake2020}, did not fit into the single-loop, single-kernel paradigm enforced by \pyop2 and so sui generis changes were needed to implement them.
 \pyop3, with its much more flexible interface, will enable these algorithms to be rewritten in a more general way.
-Furthermore, it should also become possible to implement other mesh stencil algorithms that until now have been inexpressible.
-Examples of such algorithms include Weighted Essentially Non-Oscillatory (WENO) slope limiters~\cite{liuWeightedEssentiallyNonoscillatory1994} and finite volume schemes.
+
+Furthermore, it should also become possible to implement other mesh stencil algorithms outside of a finite element setting.
+Examples of such algorithms include:
+%TODO: cleanup
+\begin{description}
+  \item[Graph neural networks]
+    mumble mumble
+    Graph neural networks operate by...
+    % simplex neural networks
+  \item[Particle methods]
+    ...
+    % will saunders
+  \item[Slope limiters]
+    Weighted Essentially Non-Oscillatory (WENO) slope limiters~\cite{liuWeightedEssentiallyNonoscillatory1994}
+  \item[Finite volume methods]
+\end{description}
 
 \begin{figure}
   \centering
