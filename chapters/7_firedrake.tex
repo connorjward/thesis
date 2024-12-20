@@ -406,7 +406,6 @@ If these orientations do not agree then the local assembly kernel is passed mang
   \label{fig:element_orientation_flip}
 \end{figure}
 
-
 Two simple examples of where orientations have an impact are shown in \cref{fig:element_orientation_permute,fig:element_orientation_flip}.
 Both show the impact of packing data for a finite element calculation for a triangle where one of the edges has been flipped.
 In both cases the packed data would be mangled.
@@ -427,6 +426,7 @@ This operation cannot be done in advance and must be done as part of the packing
 \pyop2 has no support for runtime transformations and so non-Lagrange elements are not supported on hexahedral meshes in Firedrake.
 
 \subsubsection{Expressing transformations with \pyop3}
+\label{sec:firedrake_orientations_pyop3}
 
 Unlike \pyop2, expressing DoF transformations of this sort is relatively straightforward to do with \pyop3.
 Since DoF packing is expressed simply as an indexing operation taking, say, a \pycode{Dat} and returning another \pycode{Dat}, further transformations can be applied to the packed object:
