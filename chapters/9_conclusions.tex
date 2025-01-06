@@ -87,7 +87,7 @@ One of the original inspirations for \pyop3's development was the fact that a nu
 \pyop3, with its much more flexible interface, will enable these algorithms to be rewritten in a more general way.
 
 Furthermore, it should also become possible to implement other mesh stencil algorithms outside of a finite element setting.
-Examples of such algorithms include:
+Examples of such applications include:
 \begin{description}
   \item[Graph neural networks]
     Graph neural networks (GNNs) are a type of neural network that operates on graphs~\cite{scarselliGraphNeuralNetwork2009}.
@@ -101,25 +101,27 @@ Examples of such algorithms include:
     where $\mathbf{x}_{(\cdot)}$ are the current node states and $\mathcal{N}_u$ is the set of nodes sharing an edge with $u$ (its neighbourhood)~\cite{bronsteinGeometricDeepLearning2021}.
     The update is computed by applying a non-parametrised aggregation function $\bigoplus$ (e.g. addition) to the result of a \emph{message function} $\psi$ inside an \emph{update function} $\phi$.
     Both $\psi$ and $\phi$ can be learned by the network.
-    This operation, where local updates are computed using local unknowns, \emph{is a stencil operation} - and thus can be computed using \pyop3.
+    This operation, where local updates are computed using local unknowns, is a stencil operation and thus can be computed using \pyop3.
 
     Further, there is ongoing research in the machine learning community regarding whether more higher-dimensional data structures such as simplices~\cite{hwangMultiorderSimplexBasedGraph2024} and hypergraphs~\cite{fengHypergraphNeuralNetworks2019} have advantages over graphs due to their ability to express relations between more than two vertices at once.
     These data structures are very similar in nature to unstructured meshes, again suggesting that \pyop3 would be effective.
   \item[Molecular dynamics]
-    % what are they and why are they useful?
-    %   model forces between particles to model their movement
-    %   used for:
-    %     astrophysics (file:///home/connor/Downloads/1109.5095v1.pdf) horowitzNeutronStarCrust2011
-    %     nuclear (file:///home/connor/Downloads/1-s2.0-S0022311514009271-main.pdf) williamsAtomisticInvestigationStructure2015
-    %     biology (file:///home/connor/Downloads/PIIS0896627318306846.pdf) hollingsworthMolecularDynamicsSimulation2018
+    Molecular dynamics (MD) codes simulate physical phenomena by using a very large number of particles and evolving them in time according to computed forces between them.
+    Such codes are applicable to a wide range of domains including astrophysics~\cite{horowitzNeutronStarCrust2011}, nuclear physics~\cite{williamsAtomisticInvestigationStructure2015}, and molecular biology~\cite{hollingsworthMolecularDynamicsSimulation2018}.
 
-    % how do they constitute a stencil method?
-    %   only consider local-ish particles? within cutoff distance
-    %   bin in cells at least as large as the cutoff radius - helps with parallelisation
-    %   then loop over the particles in these cells
-    %   need codegen because of "inner loop" considerations
-    % \cite{saundersDomainSpecificLanguage2018,saundersDevelopmentPerformancePortableFramework2019}
-    % not possible to use PyOP2 because of raggedness, pyop3 would be suitable
+    One of the core operations performed by an MD code is the evaluation of the interactions between each possible pair of particles.
+    To improve on the naive $O(n^2)$ complexity of this operation it is common to separate the interactions of nearby particles, which must be handled individually, with those of more distant particles, which may be handled using agglomeration strategies such as the Ewald summation method or Fast Multipole Method (\cite{saundersDevelopmentPerformancePortableFramework2019}, ch.~4), or disregarded altogether.
+
+    To classify particles as nearby or distant, a common approach is to partition the simulation domain into a mesh.
+    With appropriately sized cells one can then identify nearby particles as those that lie within the stencil of cells adjacent to that containing the current particle.
+    Since particles are free to migrate, the number of them within each cell is not fixed and so the resulting stencil operation is \emph{ragged}.
+
+    \pyop3 is fully capable of describing stencil loops over ragged data structures and thus should be able to express this type of computation.
+    In fact, the value of such an abstraction for MD codes is demonstrated by the fact that a very similar piece of software already exists.
+    PPMD~\cite{saundersDomainSpecificLanguage2018} is an MD code that performs computations by applying local kernels to either individual particles or pairs of particles using a \pyop2-like interface.
+    Like \pyop2 and \pyop3, performance portability is achieved with code generation and the code is transparently parallel.
+    Despite obvious similarities between PPMD and \pyop2, the codes exist independently because limitations in \pyop2's design - specifically the lack of support for ragged data structures - made it unsuitable for MD simulations.
+    The abstraction provided by \pyop3 is sufficiently general that it should now be possible to unify these domains.
 \end{description}
 
 \begin{figure}
