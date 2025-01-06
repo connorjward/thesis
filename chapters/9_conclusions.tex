@@ -88,18 +88,38 @@ One of the original inspirations for \pyop3's development was the fact that a nu
 
 Furthermore, it should also become possible to implement other mesh stencil algorithms outside of a finite element setting.
 Examples of such algorithms include:
-%TODO: cleanup
 \begin{description}
   \item[Graph neural networks]
-    mumble mumble
-    Graph neural networks operate by...
-    % simplex neural networks
-  \item[Particle methods]
-    ...
-    % will saunders
-  \item[Slope limiters]
-    Weighted Essentially Non-Oscillatory (WENO) slope limiters~\cite{liuWeightedEssentiallyNonoscillatory1994}
-  \item[Finite volume methods]
+    Graph neural networks (GNNs) are a type of neural network that operates on graphs~\cite{scarselliGraphNeuralNetwork2009}.
+    They are valuable for modelling objects with complex structures across a wide range of disciplines including molecular chemistry~\cite{stokesDeepLearningApproach2020} and social networks~\cite{montiFAKENEWSDETECTION2019} where graphs are a natural way of representing the given input.
+
+    One of the core operations needed by a GNN is \emph{message passing}, where nodes exchange information with their neighbours.
+    Mathematically, this operation can be represented as the node-wise update
+    \begin{equation}
+      \mathbf{h}_u = \phi \left( \mathbf{x}_u, \bigoplus_{v \in \mathcal{N}_u} \psi(\mathbf{x}_u, \mathbf{x}_v) \right),
+    \end{equation}
+    where $\mathbf{x}_{(\cdot)}$ are the current node states and $\mathcal{N}_u$ is the set of nodes sharing an edge with $u$ (its neighbourhood)~\cite{bronsteinGeometricDeepLearning2021}.
+    The update is computed by applying a non-parametrised aggregation function $\bigoplus$ (e.g. addition) to the result of a \emph{message function} $\psi$ inside an \emph{update function} $\phi$.
+    Both $\psi$ and $\phi$ can be learned by the network.
+    This operation, where local updates are computed using local unknowns, \emph{is a stencil operation} - and thus can be computed using \pyop3.
+
+    Further, there is ongoing research in the machine learning community regarding whether more higher-dimensional data structures such as simplices~\cite{hwangMultiorderSimplexBasedGraph2024} and hypergraphs~\cite{fengHypergraphNeuralNetworks2019} have advantages over graphs due to their ability to express relations between more than two vertices at once.
+    These data structures are very similar in nature to unstructured meshes, again suggesting that \pyop3 would be effective.
+  \item[Molecular dynamics]
+    % what are they and why are they useful?
+    %   model forces between particles to model their movement
+    %   used for:
+    %     astrophysics (file:///home/connor/Downloads/1109.5095v1.pdf) horowitzNeutronStarCrust2011
+    %     nuclear (file:///home/connor/Downloads/1-s2.0-S0022311514009271-main.pdf) williamsAtomisticInvestigationStructure2015
+    %     biology (file:///home/connor/Downloads/PIIS0896627318306846.pdf) hollingsworthMolecularDynamicsSimulation2018
+
+    % how do they constitute a stencil method?
+    %   only consider local-ish particles? within cutoff distance
+    %   bin in cells at least as large as the cutoff radius - helps with parallelisation
+    %   then loop over the particles in these cells
+    %   need codegen because of "inner loop" considerations
+    % \cite{saundersDomainSpecificLanguage2018,saundersDevelopmentPerformancePortableFramework2019}
+    % not possible to use PyOP2 because of raggedness, pyop3 would be suitable
 \end{description}
 
 \begin{figure}
