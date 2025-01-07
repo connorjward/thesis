@@ -75,7 +75,7 @@ With these mapping, one has sufficient information to:
 (a) select the right layout function from the target axis tree, and
 (b) substitute index expressions into the layout function, resulting in a \emph{substituted layout function} that accepts multi-indices of the source axis tree instead of the target.
 By taking this symbolic approach to indexing, \pyop3 can represent all supported indexing operations as views, regardless of the indexing operation applied.
-This contrasts with \numpy{} where only `simple' indexing operations are supported without copying the array.
+This contrasts with \numpy{} where only `simple' indexing operations produce views, with more complex operations like integer array indexing incurring a copy (\cref{sec:numpy_indexing_arrays}).
 
 \subsubsection{Example 1: Linear index trees} \label{example:linear_index_tree}
 
@@ -387,6 +387,8 @@ However, they differ in the fact that a scalar index sets the index expression t
 An example demonstrating loop index usage is shown in \cref{fig:loop_index_linear_tree_data_layout_all}.
 In it one indexes a \pycode{Dat} (\pycode{dat}) with shape \pycode{(5, 3)} and labels $a$ and $b$ using a loop index over the axis $a$ (line~\ref{code:loop_index_init}), and a full slice over axis $b$.
 \numpy{} code for an equivalent operation is shown in \cref{fig:loop_index_numpy}.
+Note that this example only demonstrates the way in which data are indexed using loop indices.
+A complete example demonstrating how to perform computations with them is deferred until \cref{sec:example2_outer_loops}.
 
 In order to map between source and target axes we follow the same process as before.
 This time, the index information is:
@@ -436,7 +438,7 @@ Since the terms are provided externally, we say that arrays indexed with loop in
       # prepare a mapping from axis "x" to "a"
       f = Map({"x": [MapComponent("a", arity=3, ...)]})?\label{code:make_map}?
 
-      # index the array
+      # index axis "a" with the map and take a full slice of axis "b"
       indexed_dat = dat[f(p), :]
     \end{pyalg2}
 
@@ -467,7 +469,6 @@ An example of indexing an array using a map is shown in \cref{fig:index_map}.
 We declare an outer loop over an axis labelled $x$ (\ref{fig:index_map_code}, line~\ref{code:make_axis_x}) as well as an arity 3 map, $f$, mapping from $x$ to $a$ (line~\ref{code:make_map}).
 \pycode{dat} is then indexed with $f$, which has been \emph{called} by passing it the loop index (i.e. $f(p)$).
 The resulting axis tree (\ref{fig:index_map_data_layout}, right) has lost axis $a$ but gained a new axis in its place, labelled $c$, containing the 3 entries indicated in the map for a given $p$.
-Unlike loop indices, maps contribute new axes to the indexed axis tree.
 
 The treatment of the indexing information to retain view-like semantics remain exactly the same as before.
 For this example the returned index information is:

@@ -143,7 +143,7 @@ This is because kernel arguments are renamed during code generation to avoid unn
     \end{pyalg2}
   \end{minipage}
   \caption{
-    \pyop3 code evaluating a local kernel (\pycode{kernel}) within a loop over the entries of axis $a$.
+    \pyop3 code evaluating a local kernel (\pycode{kernel}) with intents \pycode{READ} and \pycode{INC} within a loop over the entries of axis $a$.
     The array \pycode{dat0} is accessed indirectly using an arity-2 map.
   }
   \label{listing:codegen_example2_py_code}
@@ -377,7 +377,7 @@ Generating code from these nodes follows an identical process to that described 
 \ccode{write(t0, mat[(f(ix),:), (f(ix),:)])}.
 Since the data are stored in a PETSc \ccode{Mat} instead of a \numpy{} array, its values must be accessed using the PETSc C API, instead of directly addressing offsets in a memory buffer.
 
-In order to read from and write to a PETSc \ccode{Mat}, the functions \ccode{MatGetValues()} and \ccode{MatSetValues()} must be used.
+In order to read from and write to a PETSc \ccode{Mat}, the functions \ccode{MatGetValues()} and \ccode{MatSetValues()} must be used\footnote{The scalar operations \ccode{MatGetValue()} and \ccode{MatSetValue} do exist but they are much less efficient.}.
 They have near-identical function signatures, with that for \ccode{MatGetValues()} being:
 \begin{cinline}
   MatGetValues(Mat mat,

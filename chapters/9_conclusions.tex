@@ -216,7 +216,7 @@ In order to fix this, one needs to have \emph{per-loop} parallel exchange behavi
 This is possible to represent in \pyop3 because it is aware of the parallel communication patterns.
 Using an algorithm similar to \cref{alg:partition_iterset}, \pyop3 could inspect the mesh stencils to construct per-loop star forests that only exchange the needed data.
 
-\subsubsection{Compiler optimisations}
+\subsubsection{Temporal locality optimisations}
 
 As well as the optimisations listed above, it may be valuable to pursue implementing more traditional compiler optimisations within \pyop3.
 As an example, one could consider performing a \emph{sparse tiling} transformation to DG finite element assembly loops.
@@ -225,7 +225,7 @@ It is usual for DG methods to have assembly loops over both the cells and interi
   loop(c := mesh.cells.index(), cell_kernel(...))
   loop(f := mesh.interior_facets.index(), facet_kernel(...))
 \end{pyinline}
-However, this approach exhibits poor data locality because each loop will load a lot of the same data from memory.
+However, this approach exhibits poor data locality because each loop will load much of the same data from memory.
 To improve performance we could therefore partition the mesh into small \emph{tiles}, and then perform both assembly loops on each tile in turn:
 \begin{pyinline}
   loop(tile := mesh.tiles().index(), [
@@ -237,6 +237,6 @@ This will improve data locality since data for the second loop will not yet have
 \pyop3 should have enough information to represent and perform this transformation.
 
 Note that this is a simplified approach not accounting for complications such as different access descriptors.
-More general sparse tiling approaches (e.g.~\cite{kriegerLoopChainingProgramming2013,stroutGeneralizingRunTimeTiling2014,luporiniAutomatedTilingUnstructured2019}) could also be pursued.
+More general sparse tiling approaches (e.g.~\cite{kriegerLoopChainingProgramming2013,stroutGeneralizingRunTimeTiling2014,luporiniAutomatedTilingUnstructured2019}) could also be pursued and may benefit from the improved access to topological information exposed by \pyop3's abstractions.
 
 \end{document}

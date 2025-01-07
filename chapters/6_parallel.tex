@@ -278,7 +278,7 @@ Larger stencils would result in more points being classified as \rootiter{} and 
           \State \textbf{continue}
         \EndIf
 
-        \For{\textit{stencil point} \textbf{in} \Call{CollectStencil}{\textit{point}}}
+        \For{\textit{stencil point} \textbf{in} \Call{CollectStencil}{\textit{array}, \textit{point}}}
           \If {\textit{stencil point} \textbf{in} \textit{array.star forest}}
             \State \textit{star forest label} $\gets$ \Call{GetStarForestLabel}{\textit{stencil point}}
             \If {\textit{star forest label} = \leafiter{}}
@@ -296,7 +296,7 @@ Larger stencils would result in more points being classified as \rootiter{} and 
 \end{algorithm}
 
 The algorithm to partition the iteration set into \coreiter{}, \rootiter{}, and \leafiter{} subsets is straightforward.
-Shown in \cref{alg:partition_iterset}, one simulates the stencil operation and inspects the points touched at each iterate to see whether they are a shared point (i.e. whether they are present in the DoF star forest).
+Shown in \cref{alg:partition_iterset}, one simulates the stencil operation and, for each array, inspects the points touched at each iterate (line 6) to see whether they are a shared point (i.e. whether they are present in the DoF star forest).
 If so then the iterate is marked as \rootiter{} or \leafiter{} as appropriate.
 \leafiter{}, as the most restrictive condition, takes precendence over \rootiter{}.
 

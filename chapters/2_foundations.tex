@@ -447,9 +447,26 @@ By contrast, \ownediter{} points are defined as being points that need ghost dat
 Differently sized stencils touch different numbers of adjacent points, changing the \coreiter{}/\ownediter{} partitioning.
 \pyop2 will therefore not work correctly in parallel for programs that use several different stencil sizes acting on the same data.
 
+\begin{figure}
+  \centering
+  \includegraphics[scale=2]{pyop2_issue.pdf}
+  \caption{
+    Example illustrating the issues that occur when assigning \coreiter{}/\ownediter{} labels based solely upon the iteration set.
+    In this example one loops over the cells of a partitioned quadrilateral mesh (black) and accesses data defined on a mesh of disconnected vertices (blue), which has a different parallel distribution.
+    Ghost edges and vertices are marked with dashes and hollow circles respectively.
+    Cells with the label \coreiter{} are marked with a \textbf{C} and those with \ownediter{} are marked with a \textbf{O}.
+    The problematic cells, which would be erroneously labelled as \coreiter{} instead of \ownediter{}, are marked with a \textbf{?}.
+  }
+  \label{fig:pyop2_issue}
+\end{figure}
+
 Further, the partitioning of \coreiter{}/\ownediter{} points is associated with the \emph{iteration set}, instead of the data structures.
 This means that \pyop2 cannot do the right thing for cases where data structures do not share the same parallel decomposition (e.g. when transferring data between meshes).
-  Stencils may touch only non-\ghostiter{} points on one mesh, leading to the iterate being classified as \coreiter{}, but they may be \ghostiter{} on the other mesh, and hence the iterate ought to be labelled \ownediter{}.
+Stencils may touch only non-\ghostiter{} points on one mesh, leading to the iterate being classified as \coreiter{}, but they may be \ghostiter{} on the other mesh, and hence the iterate ought to be labelled \ownediter{}.
+
+This issue is demonstrated in \cref{fig:pyop2_issue}.
+Given two meshes, one a quadrilateral mesh (black) and the other a mesh of disconnected vertices (blue), with differing parallel distributions, and assuming a loop over cells, it can be seen that it is possible for the \coreiter{}/\ownediter{} labels to be erroneously applied.
+Specifically, the cells marked with \textbf{?} would be considered \coreiter{} by \pyop2 despite needing to access ghost DoFs from the vertex-only mesh.
 
 \subsection{Code generation}
 \label{sec:pyop2_codegen}

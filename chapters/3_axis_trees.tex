@@ -278,9 +278,10 @@ Ragged axis trees are created by passing a \pycode{Dat} as the size of the axis 
 This is shown in \cref{fig:ragged_axis_tree}.
 Here, the axis tree has 3 axes labelled $a$, $b$, and $c$.
 Axes $a$ and $b$ both have a constant size of 2 but $c$, the innermost axis, has a variable size given by a linear \pycode{Dat} with shape \pycode{(2, 2)} and axis labels $a$ and $b$ (line~\ref{code:ragged_size_dat}).
+The values of this \pycode{Dat} can be written as \pycode{[[1,0],[2,1]][?$i_a$?,?$i_b$?]}, meaning that the size of $c$ is determined from the indices $i_a$ and $i_b$ as shown in \cref{tab:ragged_sizes}.
 
-The values of this \pycode{Dat} can be written as \pycode{[[1,0],[2,1]][?$i_a$?,?$i_b$?]}, meaning that the size of $c$ is determined by the table:
-\begin{center}
+\begin{table}
+  \centering
   \begin{tblr}{|[1pt] X[1.2cm,c] |[1pt] X[1.2cm,c] |[1pt] c |[1pt]}
     \hline[1pt]
     \boldmath${i_a}$ & \boldmath$i_b$ & \boldmath$\textnormal{\bf size}(i_a, i_b)$ \\
@@ -294,7 +295,9 @@ The values of this \pycode{Dat} can be written as \pycode{[[1,0],[2,1]][?$i_a$?,
     1 & 1 & 1 \\
     \hline[1pt]
   \end{tblr}
-\end{center}
+  \caption{Lookup table illustrating how to interpret the size array \pycode{[[1,0],[2,1]][?$i_a$?,?$i_b$?]} from \cref{fig:ragged_axis_tree}.}
+  \label{tab:ragged_sizes}
+\end{table}
 
 \section{Computing offsets}
 \label{sec:axis_tree_layouts}

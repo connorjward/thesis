@@ -1,0 +1,152 @@
+\documentclass[tikz]{standalone}
+
+\input{figures/common/preamble}
+
+\begin{document}
+\begin{tikzpicture}[y=-1cm]
+
+\input{figures/common/dof_colors.tikz}
+\input{figures/common/split_mesh.tikz}
+
+\tikzstyle {vert} = [minimum size=1.5pt,line width=0.5pt,draw=black];
+\tikzstyle {vert_owned} = [vert,fill=black];
+\tikzstyle {vert_ghost} = [vert,fill=white];
+
+\tikzstyle {edge} = [line width=.6pt,draw=black];
+\tikzstyle {edge_owned} = [edge];
+\tikzstyle {edge_ghost} = [edge,dotted];
+
+\tikzstyle {celldof} = [minimum size=2pt,line width=.5pt,draw=celldofcolor,fill=celldofcolor];
+
+\newcommand{\defmesh}{
+  \tkzDefPoint(0,0){v00}
+  \tkzDefPoint(0,1){v01}
+  \tkzDefPoint(0,2){v02}
+  \tkzDefPoint(1,0){v10}
+  \tkzDefPoint(1,1){v11}
+  \tkzDefPoint(1,2){v12}
+  \tkzDefPoint(2,0){v20}
+  \tkzDefPoint(2,1){v21}
+  \tkzDefPoint(2,2){v22}
+  \tkzDefPoint(3,0){v30}
+  \tkzDefPoint(3,1){v31}
+  \tkzDefPoint(3,2){v32}
+
+  \tkzDefBarycentricPoint(v00=1,v01=1,v11=1,v10=1) \tkzGetPoint{c0}
+  \tkzDefBarycentricPoint(v10=1,v11=1,v21=1,v20=1) \tkzGetPoint{c1}
+  \tkzDefBarycentricPoint(v20=1,v21=1,v31=1,v30=1) \tkzGetPoint{c2}
+  \tkzDefBarycentricPoint(v01=1,v02=1,v12=1,v11=1) \tkzGetPoint{c3}
+  \tkzDefBarycentricPoint(v11=1,v12=1,v22=1,v21=1) \tkzGetPoint{c4}
+  \tkzDefBarycentricPoint(v21=1,v22=1,v32=1,v31=1) \tkzGetPoint{c5}
+}
+
+\newcommand{\drawstencil}[4]{
+  \tkzDefShiftPoint[#1](-0.15,-0.15){stencil0}
+  \tkzDefShiftPoint[#2]( 0.15,-0.15){stencil1}
+  \tkzDefShiftPoint[#3]( 0.15, 0.15){stencil2}
+  \tkzDefShiftPoint[#4](-0.15, 0.15){stencil3}
+  \filldraw[patch] (stencil0) -- (stencil1) -- (stencil2) -- (stencil3) -- cycle;
+}
+
+\newcommand{\drawCellDof}[1]{
+  \tkzDrawPoint[celldof](#1)
+}
+
+\newcommand{\drawGhostCellDof}[1]{
+  \tkzDrawPoint[celldof,fill=white](#1)
+}
+
+% rank 0
+\begin{scope}
+  \defmesh
+
+  % vertical edges
+  \tkzDrawSegments[edge_owned](v00,v01 v01,v02)
+  \tkzDrawSegments[edge_owned](v10,v11 v11,v12)
+  \tkzDrawSegments[edge_owned](v20,v21 v21,v22)
+  \tkzDrawSegments[edge_ghost](v30,v31 v31,v32)
+
+  % horizontal edges
+  \tkzDrawSegments[edge_owned](v00,v10 v10,v20)
+  \tkzDrawSegments[edge_ghost](v20,v30)
+  \tkzDrawSegments[edge_owned](v01,v11 v11,v21)
+  \tkzDrawSegments[edge_ghost](v21,v31)
+  \tkzDrawSegments[edge_owned](v02,v12 v12,v22)
+  \tkzDrawSegments[edge_ghost](v22,v32)
+
+  % vertices
+  \tkzDrawPoints[vert_owned](v00,v01,v02)
+  \tkzDrawPoints[vert_owned](v10,v11,v12)
+  \tkzDrawPoints[vert_owned](v20,v21,v22)
+  \tkzDrawPoints[vert_ghost](v30,v31,v32)
+
+  % iterset labels
+  \markCore{c0}
+  \markCell{c1}{?}
+  \markCore{c3}
+  \markCell{c4}{?}
+
+  % dofs
+  \tkzDefShiftPoint[v00](0.3,0.3){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v01](0.3,0.3){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v11](0.1,0.7){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v11](0.9,0.3){mypoint} \drawGhostCellDof{mypoint}
+  \tkzDefShiftPoint[v10](0.2,0.4){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v10](0.8,0.6){mypoint} \drawGhostCellDof{mypoint}
+  \tkzDefShiftPoint[v20](0.5,0.2){mypoint} \drawGhostCellDof{mypoint}
+  \tkzDefShiftPoint[v21](0.8,0.8){mypoint} \drawGhostCellDof{mypoint}
+
+  % % stencils
+  \drawstencil{v10}{v20}{v21}{v11};
+\end{scope}
+
+% rank 1
+\begin{scope}[xshift=2cm,yshift=2.5cm]
+  \defmesh
+
+  % vertical edges
+  \tkzDrawSegments[edge_ghost](v00,v01 v01,v02)
+  \tkzDrawSegments[edge_owned](v10,v11 v11,v12)
+  \tkzDrawSegments[edge_owned](v20,v21 v21,v22)
+  \tkzDrawSegments[edge_owned](v30,v31 v31,v32)
+
+  % horizontal edges
+  \tkzDrawSegments[edge_owned](v00,v10 v10,v20 v20,v30)
+  \tkzDrawSegments[edge_owned](v01,v11 v11,v21 v21,v31)
+  \tkzDrawSegments[edge_owned](v02,v12 v12,v22 v22,v32)
+
+  % vertices
+  \tkzDrawPoints[vert_ghost](v00,v01,v02)
+  \tkzDrawPoints[vert_owned](v10,v11,v12)
+  \tkzDrawPoints[vert_owned](v20,v21,v22)
+  \tkzDrawPoints[vert_owned](v30,v31,v32)
+
+  % iterset labels
+  \markCell{c0}{O}
+  \markCore{c1}
+  \markCore{c2}
+  \markCell{c3}{O}
+  \markCore{c4}
+  \markCore{c5}
+
+  % dofs
+  \tkzDefShiftPoint[v00](-0.2,0.6){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v01](-0.1,0.3){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v00](0.5,0.2){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v01](0.8,0.8){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v11](0.1,0.7){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v10](0.2,0.4){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v21](0.1,0.3){mypoint} \drawCellDof{mypoint}
+  \tkzDefShiftPoint[v20](0.8,0.7){mypoint} \drawCellDof{mypoint}
+
+  % stencils
+  \drawstencil{v00}{v10}{v11}{v01};
+\end{scope}
+
+% divider
+%\tkzDefPoint(2.15, 2.3){top}
+%\tkzDefPoint(2.15, -2.8){bottom}
+%\tkzDrawSegment[dashed,line width=.4pt](top,bottom)
+
+\end{tikzpicture}
+\end{document}

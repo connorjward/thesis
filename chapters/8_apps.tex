@@ -90,13 +90,13 @@ Its details are summarised in \cref{tab:pyramus_specs}.
 \section{Solving the Helmholtz equation}
 
 Before any investigation of performance, we first demonstrate that Firedrake remains capable of solving PDEs under \pyop3.
-To do so, we solve the Helmholtz equation on a unit square using the formulation from \cite{FiredrakeUserManual} (pp. 91-93).
-The formulation reads: find $u \in V$ such that
+To do so, we solve the sign-positive Helmholtz equation on a unit square using the formulation from \cite{FiredrakeUserManual} (pp. 91-93).
+The formulation reads: find $u \in V$ where $V \subset H^1(\Omega)$ such that
 \begin{equation}
   \int \nabla u \cdot \nabla v + uv \textnormal \, {d}\Omega = \int fv\, \textnormal{d}\Omega,
 \end{equation}
 where $u$ is a trial function, $v$ a test function, and $f$ a known function.
-For this example we set
+For this example we do not prescribe any boundary conditions and set
 \begin{equation}
   f = (1 + 8 \pi^2)\cos (2\pi x)\cos(2\pi y),
 \end{equation}
@@ -150,7 +150,7 @@ To demonstrate correctness the $L_2$ error between the numerical and analytical 
 \end{equation}
 was measured against mesh refinement level for polynomial degree 1, 2, and 3.
 The resulting convergence behaviour is plotted in \cref{fig:helmholtz_conv}.
-The results are identical to those produced by a pre-\pyop3 Firedrake and show the expected convergence of $\sim O(h^{p+1})$~\cite{brennerMathematicalTheoryFinite2008}, with $p=2$ demonstrating even better convergence.
+The results are bitwise identical to those produced by a pre-\pyop3 Firedrake and show the expected convergence of at least $\sim O(h^{p+1})$~\cite{brennerMathematicalTheoryFinite2008}.
 Thus we may safely conclude that Firedrake works as expected under \pyop3.
 
 \section{One form assembly}
@@ -361,7 +361,7 @@ We also remark that the index expression for packing the $P_0^{\textnormal{disc}
 is relatively complex, illustrating \pyop3's ability to compose advanced index expressions.
 
 As written, \pyop2 is not capable of expressing this type of operation because the map from vertices to cells has variable arity.
-One can reframe the algorithm as a loop over cells, writing the maximum values to the vertices in the cell's closure, but that is specific to this example; more complex algorithms like vertex-centered patch smoothers~\cite{farrellPCPATCHSoftwareTopological2021} cannot be expressed in this way.
+One can reframe the algorithm as a loop over cells, writing the maximum values to the vertices in the cell's closure, but that is specific to this example; more complex algorithms like vertex-centered patch smoothers~\cite{farrellPCPATCHSoftwareTopological2021}, where one solves a small finite element problem on each patch of cells, cannot be expressed in this way.
 \pyop3 therefore provides a more general solution.
 
 \subsection{Performance results}

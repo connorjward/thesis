@@ -195,7 +195,7 @@ Constructing a \pycode{"mesh"} axis naively as above leads to a \emph{non-interl
 This clearly does not work as an approach for constructing \emph{interleaved} layouts.
 
 To resolve this we take a two step approach.
-First, instead of constructing a multi-component \pycode{"mesh"} axis from the start, we instead construct a single component axis with the component representing all points in the mesh:
+First, instead of constructing a multi-component \pycode{"mesh"} axis from the start, we instead construct a single component axis with the component representing all topological entities (points) in the mesh:
 \begin{pyinline}
   mesh_axis = Axis({"point": npoints}, "mesh")
 \end{pyinline}
@@ -421,21 +421,22 @@ Some DoF transformations, such as the one necessary for \cref{fig:element_orient
 Permutations can be handled in advance by permuting the cell-node map used to pack the temporary such that DoFs are put into the right places in the temporary array.
 This is the approach taken by Firedrake that allows it to support Lagrange elements on hexahedral meshes.
 However, some transformations require more general operations that cannot be computed in advance~\cite{scroggsBasixRuntimeFinite2022,scroggsConstructionArbitraryOrder2021}.
-For example, to un-mangle the DoFs for \cref{fig:element_orientation_flip} the offending DoF must be flipped by multiplying by $-1$.
+For example, to un-mangle the DoFs for \cref{fig:element_orientation_flip} the offending DoF must be flipped by multiplying it by $-1$.
 This operation cannot be done in advance and must be done as part of the packing transformation.
-\pyop2 has no support for runtime transformations and so non-Lagrange elements are not supported on hexahedral meshes in Firedrake.
+\pyop2 has no support for runtime transformations and so non-Lagrange elements (e.g. Raviart-Thomas) are not supported on hexahedral meshes in Firedrake.
 
 \subsubsection{Expressing transformations with \pyop3}
 \label{sec:firedrake_orientations_pyop3}
 
 Unlike \pyop2, expressing DoF transformations of this sort is relatively straightforward to do with \pyop3.
-Since DoF packing is expressed simply as an indexing operation taking, say, a \pycode{Dat} and returning another \pycode{Dat}, further transformations can be applied to the packed object:
+Since DoF packing is expressed simply as an indexing operation taking, say, a \pycode{Dat} and returning another \pycode{Dat}, further transformations can be applied to the packed object.
+For example, one can write repeated permutations of a packed \pycode{Dat} as follows:
 \begin{pyinline}
   packed0 = dat[closure(cell)]
   packed1 = packed0[transform1]
   packed2 = packed1[transform2]
 \end{pyinline}
-This is not expressible in \pyop2 because packed temporaries are represented by a different type, preventing repeated indexing.
+This is not expressible in \pyop2 because packed temporaries are represented by a different type, called an \pycode{Arg}, which prevents repeated indexing.
 
 To give an example of this working in practice we consider packing the edge DoFs for the case shown in \cref{fig:element_orientation_permute}, omitting cell and vertex DoFs for simplicity.
 We want to permute the DoFs for a single edge, so the transformation that we want to express can be visualised as:
@@ -476,6 +477,12 @@ This gives us a general expression for permuting DoFs that applies to meshes wit
 
 By being able to encode the transformation symbolically, \pyop3 is able to generate code for performing them as part of the assembly loop, a necessary step towards enabling run-time transformations like that required for \cref{fig:element_orientation_flip}.
 At present only permutation transformations have been implemented, to allow the \pyop3 version of Firedrake to assemble Lagrange elements on hexahedra, but extending the approach to support more general transformations should be straightforward.
+For instance, to implement the sign flip transformation shown in \cref{fig:element_orientation_flip} one could write:
+\begin{pyinline}
+  packed0 = dat[closure(cell)]
+  flip(packed0, orientations[cell])
+\end{pyinline}
+with \pycode{flip()} an automatically generated local kernel that conditionally applies the sign flip depending upon the provided orientation.
 
 \section{Outlook}
 
