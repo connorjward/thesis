@@ -180,9 +180,10 @@ The function space of the test function $v$ is similar, but, since the values of
 Unlike $u$ and $v$, $p$ and $q$ are scalar-valued and need no derivatives.
 Since no boundary conditions are applied to the space of $p$, we can draw $p$ and $q$ from the same space
 \begin{equation}
-  Q = \{ \ q \in L^2(\Omega) \ \}.
+  Q = \{ \ q \in L^2(\Omega) : \int q \, \textrm{d}\Omega = 0 \ \},
   \label{eq:stokes_pressure_space}
 \end{equation}
+where the additional constraint $\int q \, \textrm{d}\Omega = 0$ has been added to ensure well-posedness as, since only the gradient of $p$ appears in \cref{eq:strong_stokes}, $p$ is otherwise only determined up to an arbitrary constant.
 
 Given the definition of these spaces and in particular the fact that $v$ is defined to vanish on the boundary, which allows us to drop the surface integrals, we may restate the problem posed in \cref{eq:weak_stokes_full} as follows: find $(u, p) \in V \times Q$ such that
 \begin{equation} \label{eq:weak_stokes_no_surface_terms}
@@ -392,7 +393,7 @@ That is, they are only non-zero in a small region around their associated entiti
 \end{figure}
 
 The choice of finite element has significant implications for the convergence and stability of the method.
-For the two-dimensional Stokes equations, a common choice of element pair, or \emph{mixed element}, with properties matching the constraints given in \cref{eq:vspace} and \cref{eq:stokes_pressure_space} is the Scott-Vogelius element~\cite{scottNormEstimatesMaximal1985}.
+For the two-dimensional Stokes equations, a common choice of element pair, or \emph{mixed element}, that is inf-sup stable and has properties matching the constraints given in \cref{eq:vspace} and \cref{eq:stokes_pressure_space} is the Scott-Vogelius element~\cite{scottNormEstimatesMaximal1985}.
 The element consists of a continuous vector-valued degree $k$ Lagrange element for the velocity space, written $[P_k]^d$, and a discontinuous Lagrange element of degree $k-1$ for the pressure space, written $P_{k-1}^{\textnormal{disc}}$.
 These\footnotemark are shown in \cref{fig:scott_vogelius_element} for $k = 3$.
 
@@ -508,7 +509,7 @@ This limitation is obvious in some cases, for example CPU-only applications cann
 
 Many continuum mechanics software packages commit eagerly to particular implementation choices and `bake them in' to the software stack, making backing out such changes at a later date very difficult.
 Nowhere is this more obvious than with the recent ongoing transition from CPUs to GPUs as the dominant architecture on HPC systems.
-Many popular simulation packages still do not support GPUs and those that do are only able to because of an immense community effort involving large numbers of developers (e.g.~\cite{millsPETScTAODevelopments2024,millsPerformancePortablePETScGPUbased2020,brownLibCEEDFastAlgebra2021,abdelfattahGPUAlgorithmsEfficient2021}).
+Many popular simulation packages still do not support GPUs and those that do are only able to because of an immense community effort involving large numbers of developers (e.g.~\cite{millsPETScTAODevelopments2024,MILLS2021102831,brownLibCEEDFastAlgebra2021,abdelfattahGPUAlgorithmsEfficient2021}).
 
 In order to avoid this sort of huge re-engineering effort, developers can use libraries with interfaces that exist at a high level of \emph{abstraction}.
 Dealing with abstract interfaces allow low-level details to be hidden, resulting in a unified codebase where support for different implementation choices is delegated to the library.
@@ -543,13 +544,13 @@ Code generation can be used to solve this problem.
 Instead of hiding implementation details behind abstract operations at run-time, a \emph{compiler} can be used to take a symbolic representation of the problem and convert it into fast code.
 Since the details of the abstraction are only present at compile-time, code generation can be thought of as a `zero-cost' abstraction.
 
-Examples of continuum mechanics simulation packages where code generation is used for the mesh stencil step include the finite element libraries DUNE-FEM~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, all using the Unified Form Language (UFL)~\cite{alnaesUnifiedFormLanguage2014a} as a DSL for expressing weak forms, as well as the finite difference library Devito~\cite{devito-api,luporiniArchitecturePerformanceDevito2020} which uses SymPy~\cite{10.7717/peerj-cs.103} as a DSL.
+Examples of continuum mechanics simulation packages where code generation is used for the mesh stencil step include the finite element libraries DUNE-FEM~\cite{dednerGenericInterfaceParallel2010}, FEniCSx~\cite{barattaDOLFINxNextGeneration2023}, and Firedrake~\cite{FiredrakeUserManual}, all using the Unified Form Language (UFL)~\cite{alnaesUnifiedFormLanguage2014a} as a DSL for expressing weak forms, as well as the finite difference library Devito~\cite{devito-api,10.1145/3374916} which uses SymPy~\cite{10.7717/peerj-cs.103} as a DSL.
 
 In addition to providing a zero-cost abstraction, the use of domain-specific compilers can also facilitate the application of specialised optimisations that are challenging to implement by hand.
 One example of this is sum factorisation, also known as strength-reduction, a FLOP-reduction technique applicable to finite element simulations with tensor-product structure~\cite{lamReordering1997,homolyaExposingExploitingStructure2017}.
 The compiler can even sometimes perform auto-tuning, where a space of possible solutions is explored to find the fastest one.
-Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler2013}, and the Sparse Polyhedral Framework (sparse linear algebra)~\cite{stroutSparsePolyhedralFramework2018}.
-If performed at runtime with additional problem-specific information, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy} (e.g.~\cite{baxter1989run,kriegerLoopChainingProgramming2013}).
+Examples include ATLAS (dense linear algebra)~\cite{whaleyAutomatedEmpiricalOptimizations2001}, SPIRAL (signal processing)~\cite{puschelSPIRALCodeGeneration2005}, FFTW (discrete Fourier transforms)~\cite{frigoDesignImplementationFFTW32005}, and Halide (image processing)~\cite{ragan-kelleyHalideLanguageCompiler2013}.
+If performed at runtime with additional problem-specific information, auto-tuning is also sometimes referred to as an \emph{inspector-executor strategy} (e.g.~\cite{baxter1989run,kriegerLoopChainingProgramming2013,stroutSparsePolyhedralFramework2018}).
 
 \subsubsection{Mesh stencil abstraction design}
 
@@ -603,7 +604,7 @@ PETSc, for example, provides a parallel matrix type that has routines for access
 
 It is important to note that the focus here is solely on \emph{distributed} memory parallelism.
 \emph{Shared} memory approaches to parallelism using tools such as OpenMP~\cite{openmparchitecturereviewboardOpenMPAPISpecification2024} are not considered because they cannot scale past a single node of a supercomputer and hence have limited applicability.
-It is possible to employ \emph{hybrid} memory models that combine both paradigms (e.g.~\cite{langeAchievingEfficientStrong2013}), but that is considered out of scope for this work.
+It is possible to employ \emph{hybrid} memory models that combine both paradigms (e.g.~\cite{10.1007/978-3-642-38750-0_8}), but that is considered out of scope for this work.
 
 \begin{figure}
   \centering

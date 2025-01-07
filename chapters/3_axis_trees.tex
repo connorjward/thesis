@@ -8,6 +8,11 @@
 As we have seen thus far, existing software abstractions for mesh-like data layouts are limited by their ability to flexibly describe complex layouts without discarding important topological information.
 We address this by introducing a new abstraction for describing data layouts: \emph{axis trees}.
 
+Axis trees are analogous to the metadata of a \numpy{} array, or a \pyop2 \pycode{DataSet}: they exist alongside a block of memory and provide the information necessary to interpret it.
+Axis trees are especially similar to \numpy{} arrays in that they both describe multi-dimensional data and accept multi-indices that are transformed into offsets.
+Indeed, single-component axes are equivalent to the axes of a \numpy{} array, hence the choice of name.
+The core difference to these existing abstractions that axis trees bring is the ability to describe more heterogeneous data layouts since axes can \emph{branch}.
+
 The fundamental objects making up an axis tree are as follows:
 \begin{itemize}
   \item
@@ -28,11 +33,6 @@ When constructing an axis tree there are a number of important constraints to co
   \item
     All of the labels of the axis components for an axis must be distinct.
 \end{itemize}
-
-Axis trees are analogous to the metadata of a \numpy{} array, or a \pyop2 \pycode{DataSet}: they exist alongside a block of memory and provide the information necessary to interpret it.
-Axis trees are especially similar to \numpy{} arrays in that they both describe multi-dimensional data and accept multi-indices that are transformed into offsets.
-Indeed, single-component axes are equivalent to the axes of a \numpy{} array, hence the choice of name.
-The core difference to these existing abstractions that axis trees bring is the ability to describe more heterogeneous data layouts since axes can \emph{branch}.
 
 \subsubsection{Example 1: Linear axis trees}
 

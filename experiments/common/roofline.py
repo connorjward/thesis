@@ -85,8 +85,11 @@ def plot_roofline(machine_name, pyop2_batchfile, pyop3_batchfile, experiment):
     )
     # peak throughput (scalar)
     plt.plot([roofline_corner_scalar, XMAX], [peak_flops_scalar, peak_flops_scalar], **ROOFLINE_LINE_STYLE)
+    plt.annotate("Scalar peak", (XMAX, peak_flops_scalar), xytext=(-70, 5), textcoords="offset points", size=9)
+
     # peak throughput (vector)
     plt.plot([roofline_corner_avx, XMAX], [peak_flops_avx, peak_flops_avx], **ROOFLINE_LINE_STYLE)
+    plt.annotate("Vector peak", (XMAX, peak_flops_avx), xytext=(-70, 5), textcoords="offset points", size=9)
 
     plot_roofline_points(pyop2_data, mode="pyop2", experiment=experiment)
     plot_roofline_points(pyop3_data, mode="pyop3", experiment=experiment)

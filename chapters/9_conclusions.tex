@@ -17,7 +17,7 @@ They are valuable for creating \emph{views} of arrays: new versions of arrays th
 Views are essential for stencil calculations as they enable large, global arrays to be \emph{packed} and \emph{unpacked} into small local temporaries at each iteration.
 
 By better capturing the structure that underlies mesh data, these abstractions allow for far more expressive ways of describing how the data are accessed during mesh stencil algorithms, thus enabling one to program computations intuitively from a high level of abstraction with a DSL (\cref{chapter:pyop3}).
-Axis trees and index trees therefore together form a powerful abstraction that `bridges the gap' between the different limitations of existing stencil codes (\cref{???}), allowing one to solve problems with \emph{both} complex data structures \emph{and} complex algorithms.
+Axis trees and index trees therefore together form a powerful abstraction that `bridges the gap' between the different limitations of existing stencil codes (\cref{sec:intro_existing_software}), allowing one to solve problems with \emph{both} complex data structures \emph{and} complex algorithms.
 
 This thesis is also accompanied by a new Python library, \pyop3, that provides an implementation of these new abstractions (\cref{chapter:pyop3}).
 From a high-level specification of the algorithm \pyop3 is able to generate high-performance, low-level code that efficiently evaluates the computation, even in parallel (\cref{chapter:parallel}).
@@ -77,7 +77,7 @@ It consists of two parts:
 Of these, (2) is straightforward to do, a very similar lazy-transfer process already exists to minimise ghost exchanges (\cref{sec:parallel_minimising_communication}); and functionality for (1) has already been implemented in loopy and \pyop2~\cite{fenics2021-kulkarni}, it must simply be ported over to \pyop3.
 
 Once finite element assembly on a GPU is supported, Firedrake should be able to offload entire solves.
-PETSc efforts to support solving linear and non-linear problems on a GPU are becoming increasingly mature~\cite{millsPerformancePortablePETScGPUbased2020,millsPETScTAODevelopments2024}
+PETSc efforts to support solving linear and non-linear problems on a GPU are becoming increasingly mature~\cite{MILLS2021102831,millsPETScTAODevelopments2024}
 and the rest of the Firedrake software stack (e.g. TSFC) exist at an abstraction level where the CPU/GPU consideration is not relevant.
 
 \subsubsection{Beyond finite elements}
@@ -173,7 +173,7 @@ By committing to one layout over another \pyop3 is sacrificing performance.
 
 To remedy this, \pyop3 data structures could internally store a number of arrays, each with a different data layout.
 The optimal layout for different loops could then be used, transparently to the user.
-To ensure data consistency between the arrays, the \pyop3 would need to employ state-tracking to lazily copy between them, similarly to how packages ensure consistency between data on a CPU and GPU (e.g.~\cite{millsPerformancePortablePETScGPUbased2020}).
+To ensure data consistency between the arrays, the \pyop3 would need to employ state-tracking to lazily copy between them, similarly to how packages ensure consistency between data on a CPU and GPU (e.g.~\cite{MILLS2021102831}).
 
 Despite the differing layouts, axis trees make performing this copy trivial.
 For example, given two arrays, \pycode{dat_soa} and \pycode{dat_aos}, with axis trees representing different-but-equivalent data layouts, copying one to the other is as simple as executing:
@@ -237,6 +237,6 @@ This will improve data locality since data for the second loop will not yet have
 \pyop3 should have enough information to represent and perform this transformation.
 
 Note that this is a simplified approach not accounting for complications such as different access descriptors.
-More general sparse tiling approaches (e.g.~\cite{kriegerLoopChainingProgramming2013,stroutGeneralizingRunTimeTiling2014,luporiniAutomatedTilingUnstructured2019}) could also be pursued and may benefit from the improved access to topological information exposed by \pyop3's abstractions.
+More general sparse tiling approaches (e.g.~\cite{kriegerLoopChainingProgramming2013,stroutGeneralizingRunTimeTiling2014,10.1145/3302256}) could also be pursued and may benefit from the improved access to topological information exposed by \pyop3's abstractions.
 
 \end{document}

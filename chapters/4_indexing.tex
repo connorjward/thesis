@@ -711,9 +711,11 @@ This demonstrates that even though the packed DoFs are exactly the same and in t
 At this point we now have all of the necessary ingredients for axis trees to be used as part of a mesh stencil package.
 In particular, this chapter establishes:
 (a) the ability to symbolically represent views of a larger array, in an analogous manner to views of \numpy{} arrays, and
-(b) the ability to express `outer loops' using loop indices.
-These are both essential qualities for mesh data in a stencil computation.
-Loop indices let us declare loops over mesh entities and axis tree views (i.e. indexed axis trees) are appropriate for representing pack/unpack operations.
+(b) the ability to express `outer loops' using loop indices and parametrised indirections with maps.
+These are both essential qualities for mesh data in a stencil computation: loop indices let us declare loops over mesh entities and axis tree views (i.e. indexed axis trees) with maps are appropriate for representing pack/unpack operations.
+
+The abstractions presented are very flexible and enable a wide range of non-trivial transformations.
+In particular, it is possible to: arbitrarily compose indexing operations without ever incurring a copy, compose maps such that the output of one feeds into another, and transparently support alternative layouts for a data structure.
 
 In the following chapters we take the new abstractions of axis trees and index trees and provide an implementation of them in the new library \pyop3.
 

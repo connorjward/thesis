@@ -289,7 +289,7 @@ By indexing the \pycode{"mesh"} axis in this way we make it such that the result
 Our explanation so far has omitted how the full point numbering, used to interleave DoFs from different entity types, is produced.
 Shown in \cref{alg:plex_renumbering}, one loops over the cells of the mesh and packs entities in their closure together.
 This means that DoFs associated with edges and vertices will be close in memory to their incident cell, improving performance for finite element assembly loops where one accesses all DoFs in a cell's closure together.
-To further improve locality, the outer loop over cells is ordered with an reverse Cuthill-McKee numbering~\cite{cuthillReducingBandwidthSparse1969} (\pycode{cell_order} in \cref{alg:plex_renumbering}).
+To further improve locality, the outer loop over cells is ordered with an reverse Cuthill-McKee numbering~\cite{10.1145/800195.805928} (\pycode{cell_order} in \cref{alg:plex_renumbering}).
 This ensures that nearby cell closures are kept close in memory, improving data reuse for shared entities between adjacent cells.
 
 The algorithm is very similar to that already used by Firedrake and \pyop2 (algorithm 3 in~\cite{langeEfficientMeshManagement2016}) except, for reasons explained in \cref{sec:communication_optimisations}, points are partitioned only into \ownediter{} and \ghostiter{} groups, instead of \coreiter{}, \ownediter{}, and \ghostiter{}.
