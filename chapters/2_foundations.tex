@@ -455,7 +455,7 @@ Differently sized stencils touch different numbers of adjacent points, changing 
     In this example one loops over the cells of a partitioned quadrilateral mesh (black) and accesses data defined on a mesh of disconnected vertices (blue), which has a different parallel distribution.
     Ghost edges and vertices are marked with dashes and hollow circles respectively.
     Cells with the label \coreiter{} are marked with a \textbf{C} and those with \ownediter{} are marked with a \textbf{O}.
-    The problematic cells, which would be erroneously labelled as \coreiter{} instead of \ownediter{}, are marked with a \textbf{?}.
+    The problematic cells, erroneously labelled as either \coreiter{} or \ownediter{}, are shown in red.
   }
   \label{fig:pyop2_issue}
 \end{figure}
@@ -465,8 +465,9 @@ This means that \pyop2 cannot do the right thing for cases where data structures
 Stencils may touch only non-\ghostiter{} points on one mesh, leading to the iterate being classified as \coreiter{}, but they may be \ghostiter{} on the other mesh, and hence the iterate ought to be labelled \ownediter{}.
 
 This issue is demonstrated in \cref{fig:pyop2_issue}.
-Given two meshes, one a quadrilateral mesh (black) and the other a mesh of disconnected vertices (blue), with differing parallel distributions, and assuming a loop over cells, it can be seen that it is possible for the \coreiter{}/\ownediter{} labels to be erroneously applied.
-Specifically, the cells marked with \textbf{?} would be considered \coreiter{} by \pyop2 despite needing to access ghost DoFs from the vertex-only mesh.
+Given two meshes, one a quadrilateral mesh (black) and the other a mesh of disconnected vertices (blue), with differing parallel distributions, and assuming a loop over the cells of the quadrilateral mesh, it can be seen that it is possible for the \coreiter{}/\ownediter{} labels to be erroneously applied.
+Specifically, the cells labelled with a red \textbf{\textcolor{red}{C}} would be considered \coreiter{} by \pyop2 despite needing to access \ghostiter{} DoFs from the vertex-only mesh, and hence should really be marked as \ownediter{}.
+Similarly, the cells labelled with a red \textbf{\textcolor{red}{O}} are considered \ownediter{} even though they do not touch any \ghostiter{} DoFs, and thus could safely be labelled \coreiter{}.
 
 \subsection{Code generation}
 \label{sec:pyop2_codegen}

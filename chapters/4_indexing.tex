@@ -105,7 +105,7 @@ This contrasts with \numpy{} where only `simple' indexing operations produce vie
 
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{index_linear_tree_data_layout.pdf}
+    \includegraphics[max width=\textwidth]{index_linear_tree_data_layout.pdf}
     \caption{
       The axis tree transformation.
       The relation between old and new axis indices are indicated by the labels on the indexed axis tree (right).
@@ -182,7 +182,7 @@ which maps multi-indices in the source axis tree to offsets in the original arra
 
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics[scale=.9]{multi_component_slice_transform.pdf}
+    \includegraphics[max width=\textwidth]{multi_component_slice_transform.pdf}
     \caption{
       The axis tree transformation.
     }
@@ -352,7 +352,7 @@ Giving us a way to map from the doubly-indexed axis tree back to the original.
 
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics{loop_index_linear_tree_data_layout.pdf}
+    \includegraphics[max width=\textwidth]{loop_index_linear_tree_data_layout.pdf}
     \caption{
       The axis tree transformation.
     }
@@ -450,7 +450,7 @@ Since the terms are provided externally, we say that arrays indexed with loop in
 
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics{index_map_data_layout.pdf}
+    \includegraphics[max width=\textwidth]{index_map_data_layout.pdf}
     \caption{The axis tree transformation.}
     \label{fig:index_map_data_layout}
   \end{subfigure}
@@ -530,7 +530,7 @@ This is useful in cases where both methods would ideally be supported, such as w
 
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics{index_ragged_map_transform.pdf}
+    \includegraphics[max width=\textwidth]{index_ragged_map_transform.pdf}
     \caption{The axis tree transformation.}
     \label{fig:index_ragged_map_transform}
   \end{subfigure}
@@ -588,7 +588,7 @@ A discussion of layout functions and target paths/expressions is omitted here be
 
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics{index_map_composition_transform.pdf}
+    \includegraphics[max width=\textwidth]{index_map_composition_transform.pdf}
     \caption{
       The axis tree transformation.
       The composed map $g(f(p))$ produces the two-dimensional partial axis tree with labels $c$ and $d$.
@@ -667,7 +667,7 @@ This means that we can prescribe the local DoF ordering through careful construc
 
   \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics{index_map_swap_transform.pdf}
+    \includegraphics[max width=\textwidth]{index_map_swap_transform.pdf}
     \caption{
       The axis tree transformation.
       Note that the ordering of the indexed axis tree (right) is the same as \cref{fig:index_map_data_layout} even though the input data layouts are different.
@@ -715,7 +715,7 @@ In particular, this chapter establishes:
 These are both essential qualities for mesh data in a stencil computation: loop indices let us declare loops over mesh entities and axis tree views (i.e. indexed axis trees) with maps are appropriate for representing pack/unpack operations.
 
 The abstractions presented are very flexible and enable a wide range of non-trivial transformations.
-In particular, it is possible to: arbitrarily compose indexing operations without ever incurring a copy, compose maps such that the output of one feeds into another, and transparently support alternative layouts for a data structure.
+In particular, it is possible to arbitrarily compose indexing operations without ever incurring a copy, compose maps such that the output of one feeds into another, and transparently support alternative layouts for a data structure.
 
 In the following chapters we take the new abstractions of axis trees and index trees and provide an implementation of them in the new library \pyop3.
 

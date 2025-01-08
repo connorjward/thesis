@@ -6,7 +6,7 @@
 \usepackage{mymacros}
 
 \begin{document}
-\begin{tikzpicture}[xscale=1.1,remember picture]
+\begin{tikzpicture}[remember picture]
 
 \input{figures/common/tree.tikz}
 \input{figures/common/data_layout.tikz}
@@ -14,8 +14,8 @@
 \coordinate (origin) at (11.5,0);
 
 % top
-\drawWhiteDof{(origin)}{\scriptsize$c_0/f_0(p)$};
-\drawWhiteDof{($(origin)+(1,0)$)}{\scriptsize$c_1/f_1(p)$};
+\drawWhiteDof{(origin)}{$c_0$};
+\drawWhiteDof{($(origin)+(1,0)$)}{$c_1$};
 
 \coordinate (aleft) at ($(origin)+(0,0)$);
 \coordinate (aright) at ($(origin)+(1,0)$);

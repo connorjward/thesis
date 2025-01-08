@@ -82,9 +82,9 @@
 
   % iterset labels
   \markCore{c0}
-  \markCell{c1}{?}
+  \node [circle,fill=white,text=red,draw=red,font=\tiny,minimum width=10pt,inner sep=0pt] at (c1) {\textbf{C}};
   \markCore{c3}
-  \markCell{c4}{?}
+  \node [circle,fill=white,text=red,draw=red,font=\tiny,minimum width=10pt,inner sep=0pt] at (c4) {\textbf{C}};
 
   % dofs
   \tkzDefShiftPoint[v00](0.3,0.3){mypoint} \drawCellDof{mypoint}
@@ -104,28 +104,35 @@
 \begin{scope}[xshift=2cm,yshift=2.5cm]
   \defmesh
 
+  \tkzDefPoint(-1,0){vX0}
+  \tkzDefPoint(-1,1){vX1}
+  \tkzDefPoint(-1,2){vX2}
+
   % vertical edges
+  \tkzDrawSegments[edge_ghost](vX0,vX1 vX1,vX2)
   \tkzDrawSegments[edge_ghost](v00,v01 v01,v02)
   \tkzDrawSegments[edge_owned](v10,v11 v11,v12)
   \tkzDrawSegments[edge_owned](v20,v21 v21,v22)
   \tkzDrawSegments[edge_owned](v30,v31 v31,v32)
 
   % horizontal edges
+  \tkzDrawSegments[edge_ghost](vX0,v00 vX1,v01 vX2,v02)
   \tkzDrawSegments[edge_owned](v00,v10 v10,v20 v20,v30)
   \tkzDrawSegments[edge_owned](v01,v11 v11,v21 v21,v31)
   \tkzDrawSegments[edge_owned](v02,v12 v12,v22 v22,v32)
 
   % vertices
+  \tkzDrawPoints[vert_ghost](vX0,vX1,vX2)
   \tkzDrawPoints[vert_ghost](v00,v01,v02)
   \tkzDrawPoints[vert_owned](v10,v11,v12)
   \tkzDrawPoints[vert_owned](v20,v21,v22)
   \tkzDrawPoints[vert_owned](v30,v31,v32)
 
   % iterset labels
-  \markCell{c0}{O}
+  \node [circle,fill=white,text=red,draw=red,font=\tiny,minimum width=10pt,inner sep=0pt] at (c0) {\textbf{O}};
   \markCore{c1}
   \markCore{c2}
-  \markCell{c3}{O}
+  \node [circle,fill=white,text=red,draw=red,font=\tiny,minimum width=10pt,inner sep=0pt] at (c3) {\textbf{O}};
   \markCore{c4}
   \markCore{c5}
 
@@ -138,6 +145,9 @@
   \tkzDefShiftPoint[v10](0.2,0.4){mypoint} \drawCellDof{mypoint}
   \tkzDefShiftPoint[v21](0.1,0.3){mypoint} \drawCellDof{mypoint}
   \tkzDefShiftPoint[v20](0.8,0.7){mypoint} \drawCellDof{mypoint}
+
+  \tkzDefShiftPoint[vX1](0.1,0.7){mypoint} \drawGhostCellDof{mypoint}
+  \tkzDefShiftPoint[vX0](0.2,0.4){mypoint} \drawGhostCellDof{mypoint}
 
   % stencils
   \drawstencil{v00}{v10}{v11}{v01};

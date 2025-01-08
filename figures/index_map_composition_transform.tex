@@ -53,7 +53,7 @@
 
 % --- INDEXED ---
 
-\coordinate (origin) at (11,1);
+\coordinate (origin) at (10.2,1);
 
 % top
 \drawWhiteDof{(origin)}{$c_0$};
@@ -73,6 +73,10 @@
 
 \coordinate (aleft) at (origin);
 \coordinate (aright) at ($(origin)+(1,0)$);
+
+% map function
+\draw[decoration={brace,raise=5pt},decorate,line width=.7pt]
+  (13.15,2.03) -- node[right=7pt] {$g_{i_d}(f_{i_c}(p))$} (13.15,-1.03);
 
 % bottom
 \coordinate (origin) at ($(aleft)+(-1,-2)$);

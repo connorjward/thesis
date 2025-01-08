@@ -6,7 +6,7 @@
 \usepackage{mymacros}
 
 \begin{document}
-\begin{tikzpicture}[remember picture]
+\begin{tikzpicture}[remember picture,xscale=1.1]
 
 \input{figures/common/tree.tikz}
 \input{figures/common/data_layout.tikz}
@@ -35,13 +35,13 @@
 % --- ARROW ---
 
 \coordinate (xshift) at ($(xshift)+(3,0)$);
-\bigArrow{($(xshift)+(0,.5)$)};
+\bigArrow{($(xshift)+(-.1,.5)$)};
 
 % --- INDEXED 0 ---
 
 \coordinate (xshift) at ($(xshift)+(1.2,0)$);
-\drawWhiteDof{(xshift)}{$b_0$};
-\drawWhiteDof{($(xshift)+(1,0)$)}{$b_1$};
+  \drawWhiteDof{(xshift)}{\scriptsize$b_0/f_0(p)$};
+  \drawWhiteDof{($(xshift)+(1,0)$)}{\scriptsize$b_1/f_1(p)$};
 
 \drawComma{($(xshift)+(2.4,0)$)};
 
@@ -55,7 +55,7 @@
 % --- INDEXED 2 ---
 
 \coordinate (xshift) at ($(xshift)+(1,0)$);
-\drawWhiteDof{(xshift)}{$b_0$};
+  \drawWhiteDof{(xshift)}{\scriptsize$b_0/f_0(p)$};
 
 \end{tikzpicture}
 \end{document}

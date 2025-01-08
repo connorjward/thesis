@@ -5,7 +5,7 @@
 \usepackage{mymacros}
 
 \begin{document}
-\begin{tikzpicture}[remember picture]
+\begin{tikzpicture}[xscale=1.1][remember picture]
 
 \input{figures/common/data_layout.tikz}
 \input{figures/common/tree.tikz}
@@ -53,8 +53,8 @@
 \coordinate (origin) at (8.5,-1);
 
 % top
-\drawWhiteDofSmall{(origin)}{$e_0/a_2$};
-\drawWhiteDofSmall{($(origin)+(1,0)$)}{$e_1/a_4$};
+\drawWhiteDofSmall{(origin)}{\makecell{\scriptsize$e_0/c_1/a_2$\\\scriptsize$(d_1/b_2)$}};
+\drawWhiteDofSmall{($(origin)+(1,0)$)}{\makecell{\scriptsize$e_1/c_2/a_4$\\\scriptsize$(d_1/b_2)$}};
 
 \end{tikzpicture}
 \end{document}

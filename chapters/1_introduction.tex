@@ -252,12 +252,12 @@ If we substitute these discrete spaces into \cref{eq:weak_stokes}, and discard t
     &=
     - \int \nu \nabla u_\Gamma : \nabla \psi^{V_{0,h}} \, \textrm{d}\Omega
     \quad
-    &\forall \psi^{V_{0,h}}, \\
+    &&\forall \psi^{V_{0,h}}, \\
     %
     \int \psi^{Q_h} \, \hat u \nabla \cdot \psi^{V_{0,h}} \, \textrm{d}\Omega
     &= 0
     \quad
-    &\forall \psi^{Q_h}.
+    &&\forall \psi^{Q_h}.
   \end{aligned}
 \end{equation}
 \normalsize
@@ -319,6 +319,7 @@ Solving the Stokes equations using the finite element method therefore boils dow
     \caption{
       The basis functions.
       The images were sourced from \href{https://defelement.com}{defelement.com}~\cite{defelement}.
+      \vspace{\baselineskip}
     }
     \label{fig:lagrange_element_2_basis}
   \end{subfigure}

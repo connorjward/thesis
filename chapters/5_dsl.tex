@@ -229,7 +229,7 @@ Where new temporary arrays \ccode{t0} and \ccode{t1} have been created to carry 
 \ccode{t0} and \ccode{t1} are the same shape as their indexed equivalents but are unindexed; they do not carry any indexing information and do not have substituted layouts.
 For \ccode{t0} this means that it has an axis tree identical to the indexed expression \pycode{dat0[map0(ia), :]}
 \begin{center}
-  \includegraphics{codegen_example2_axis_tree.pdf}
+  \includegraphics{codegen_example2_axis_tree_temp.pdf}
 \end{center}
 But with the simpler layout function:
 \begin{equation}
@@ -365,7 +365,7 @@ As an illustrative example consider \cref{listing:mat_packing}.
 In it, we execute a loop expression (line~\ref{code:mat_loop_expr_init}) that reads values from a $15 \times 15$ matrix (\pycode{mat}, line~\ref{code:mat_init}) and increments the result into a vector (\pycode{dat}, line~\ref{code:mat_dat_init}).
 The two axis trees of \pycode{mat} are identical and are indexed with the same map, slice combination such that the index transformations are:
 \begin{center}
-  \includegraphics{index_map_data_layout.pdf}
+  \includegraphics[max width=\textwidth]{index_map_data_layout.pdf}
 \end{center}
 The indexed matrix therefore has size $9 \times 9$ as both the row and column axis trees contain 9 entries.
 
@@ -377,7 +377,7 @@ Generating code from these nodes follows an identical process to that described 
 \ccode{write(t0, mat[(f(ix),:), (f(ix),:)])}.
 Since the data are stored in a PETSc \ccode{Mat} instead of a \numpy{} array, its values must be accessed using the PETSc C API, instead of directly addressing offsets in a memory buffer.
 
-In order to read from and write to a PETSc \ccode{Mat}, the functions \ccode{MatGetValues()} and \ccode{MatSetValues()} must be used\footnote{The scalar operations \ccode{MatGetValue()} and \ccode{MatSetValue} do exist but they are much less efficient.}.
+In order to read from and write to a PETSc \ccode{Mat}, the functions \ccode{MatGetValues()} and \ccode{MatSetValues()} must be used\footnote{The scalar operations \ccode{MatGetValue()} and \ccode{MatSetValue()} do exist but they are much less efficient.}.
 They have near-identical function signatures, with that for \ccode{MatGetValues()} being:
 \begin{cinline}
   MatGetValues(Mat mat,
