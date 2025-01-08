@@ -299,7 +299,7 @@ The algorithm to partition the iteration set into \coreiter{}, \rootiter{}, and 
 Shown in \cref{alg:partition_iterset}, one simulates the stencil operation and, for each array, inspects the points touched at each iterate (line 6) to see whether they are a shared point (i.e. whether they are present in the DoF star forest).
 If so then the iterate is marked as \rootiter{} or \leafiter{} as appropriate.
 \leafiter{}, as the most restrictive condition, takes precendence over \rootiter{}.
-The algorithm is very similar to the approach taken by \pyop2 except the loop over arrays (line 2) is omitted and the function \textsc{CollectStencil} is hard-coded as the point's closure (\cref{sec:dmplex_queries}).
+The algorithm is very similar to the approach taken by \pyop2 except the loop over arrays (line 2) is omitted, and the function \textsc{CollectStencil} is hard-coded as the point's closure (\cref{sec:dmplex_queries}), meaning that other stencil sizes are not supported.
 
 \section{Outlook}
 

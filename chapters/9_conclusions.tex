@@ -34,7 +34,7 @@ Compared with existing frameworks, in particular its predecessor \pyop2, \pyop3 
     In particular, it has support for \emph{ragged} data layouts (\cref{sec:ragged_axis_trees}), which \pyop2 has no capability to handle.
   \item
     Indexing operations may be composed arbitrarily without incurring any copying of data.
-    This, among other things, allows \pyop3 to represent complex transformations \emph{symbolically} and hence evaluate them at run-time (e.g. \cref{sec:firedrake_orientations_pyop3}).
+    This facilitates the writing of complex \emph{symbolic} transformations that can be evaluated at run-time (e.g. \cref{sec:firedrake_orientations_pyop3}).
   \item
     By decoupling the data \emph{layout} specification (axis trees) from the data \emph{access} specification (index trees), \pyop3 has transparent support for different semantically-equivalent data layouts (\cref{sec:axis_tree_alternative_layouts,sec:indexing_data_layout_transformations}).
   \item
@@ -46,12 +46,12 @@ Compared with existing frameworks, in particular its predecessor \pyop2, \pyop3 
     In particular:
     \begin{itemize}
       \item
-        The \coreiter{}/\ownediter{}/\ghostiter{} set partitioning has been broken up into \ownediter{}/\ghostiter{} for parallel data layouts and \coreiter{}/\rootiter{}/\leafiter{} for iteration sets (\cref{sec:parallel_data_layouts,sec:parallel_overlap_computation_communication}).
-        This decouples the specification of the data layout from the specification of the parallel loop, enabling support for stencils of different sizes.
+        The \coreiter{}/\ownediter{}/\ghostiter{} set partitioning of \pyop2 has been broken up into \ownediter{}/\ghostiter{} for parallel data layouts and \coreiter{}/\rootiter{}/\leafiter{} for iteration sets (\cref{sec:parallel_data_layouts,sec:parallel_overlap_computation_communication}).
+        This decouples the specification of the data layout from the specification of the parallel loop, enabling support for stencils of different sizes and for arrays with mismatching parallel distributions.
       \item
         Ghost DoFs for multi-field data structures are always stored at the end of the array, allowing for no-copy transformations between local and global representations (\cref{sec:parallel_data_layouts}).
       \item
-        The status of \rootiter{} points is tracked along with \leafiter{} to further reduce the amount of communication that is needed between loop invocations (\cref{sec:parallel_minimising_communication}).
+        The statuses of both \rootiter{} and \leafiter{} points are tracked to reduce the amount of communication that is needed between loop invocations (\cref{sec:parallel_minimising_communication}).
     \end{itemize}
 \end{itemize}
 
@@ -91,17 +91,17 @@ Examples of such applications include:
 \begin{description}
   \item[Graph neural networks]
     Graph neural networks (GNNs) are a type of neural network that operates on graphs~\cite{scarselliGraphNeuralNetwork2009}.
-    They are valuable for modelling objects with complex structures across a wide range of disciplines including molecular chemistry~\cite{stokesDeepLearningApproach2020} and social networks~\cite{montiFakeNewsDetection2019} where graphs are a natural way of representing the given input.
+    They are valuable for modelling objects with complex structures across a wide range of disciplines including molecular chemistry~\cite{stokesDeepLearningApproach2020} and social networks~\cite{montiFakeNewsDetection2019} where graphs are a natural way of representing the problem input.
 
     One of the core operations needed by a GNN is \emph{message passing}, where nodes exchange information with their neighbours.
     Mathematically, this operation can be represented as the node-wise update
     \begin{equation}
       \mathbf{h}_u = \phi \left( \mathbf{x}_u, \bigoplus_{v \in \mathcal{N}_u} \psi(\mathbf{x}_u, \mathbf{x}_v) \right),
     \end{equation}
-    where $\mathbf{x}_{(\cdot)}$ are the current node states and $\mathcal{N}_u$ is the set of nodes sharing an edge with $u$ (its neighbourhood)~\cite{bronsteinGeometricDeepLearning2021}.
+    where $\mathbf{x}_{(\cdot)}$ are the current node states and $\mathcal{N}_u$ is the set of nodes sharing an edge with $u$~\cite{bronsteinGeometricDeepLearning2021}.
     The update is computed by applying a non-parametrised aggregation function $\bigoplus$ (e.g. addition) to the result of a \emph{message function} $\psi$ inside an \emph{update function} $\phi$.
     Both $\psi$ and $\phi$ can be learned by the network.
-    This operation, where local updates are computed using local unknowns, is a stencil operation and thus can be computed using \pyop3.
+    This operation, where local updates are computed using local unknowns, is a stencil operation and thus could be computed using \pyop3.
 
     Further, there is ongoing research in the machine learning community regarding whether more higher-dimensional data structures such as simplices~\cite{hwangMultiorderSimplexBasedGraph2024} and hypergraphs~\cite{fengHypergraphNeuralNetworks2019} have advantages over graphs due to their ability to express relations between more than two vertices at once.
     These data structures are very similar in nature to unstructured meshes, again suggesting that \pyop3 would be effective.
@@ -121,7 +121,7 @@ Examples of such applications include:
     PPMD~\cite{saundersDomainSpecificLanguage2018} is an MD code that performs computations by applying local kernels to either individual particles or pairs of particles using a \pyop2-like interface.
     Like \pyop2 and \pyop3, performance portability is achieved with code generation and the code is transparently parallel.
     Despite obvious similarities between PPMD and \pyop2, the codes exist independently because limitations in \pyop2's design - specifically the lack of support for ragged data structures - made it unsuitable for MD simulations.
-    The abstraction provided by \pyop3 is sufficiently general that it should now be possible to unify these domains.
+    The abstraction provided by \pyop3 is sufficiently general that it could enable a unified approach.
 \end{description}
 
 \begin{figure}
@@ -171,9 +171,9 @@ However, at present data layouts are considered immutable for the duration of a 
 This is not always correct since there are circumstances where one data layout may be optimal for one loop and another layout be optimal for another, for example if one is executed on a GPU and another on the CPU.
 By committing to one layout over another \pyop3 is sacrificing performance.
 
-To remedy this, \pyop3 data structures could internally store a number of arrays, each with a different data layout.
+To remedy this, \pyop3 data structures could internally store multiple equivalent arrays, each with a different data layout.
 The optimal layout for different loops could then be used, transparently to the user.
-To ensure data consistency between the arrays, the \pyop3 would need to employ state-tracking to lazily copy between them, similarly to how packages ensure consistency between data on a CPU and GPU (e.g.~\cite{MILLS2021102831}).
+To ensure data consistency between the arrays, \pyop3 would need to employ state-tracking to lazily copy between them, similarly to how packages ensure consistency between data on a CPU and GPU (e.g.~\cite{MILLS2021102831}).
 
 Despite the differing layouts, axis trees make performing this copy trivial.
 For example, given two arrays, \pycode{dat_soa} and \pycode{dat_aos}, with axis trees representing different-but-equivalent data layouts, copying one to the other is as simple as executing:
