@@ -107,7 +107,7 @@ Examples of such applications include:
     These data structures are very similar in nature to unstructured meshes, again suggesting that \pyop3 would be effective.
   \item[Molecular dynamics]
     Molecular dynamics (MD) codes simulate physical phenomena by using a very large number of particles and evolving them in time according to computed forces between them.
-    Such codes are applicable to a wide range of domains including astrophysics~\cite{horowitzNeutronStarCrust2011}, nuclear physics~\cite{williamsAtomisticInvestigationStructure2015}, and molecular biology~\cite{hollingsworthMolecularDynamicsSimulation2018}.
+    Such codes are applicable to a wide range of domains including computational chemistry~\cite{vangunsterenComputerSimulationMolecular1990}, material modelling~\cite{LAMMPS}, astrophysics~\cite{horowitzNeutronStarCrust2011}, nuclear physics~\cite{williamsAtomisticInvestigationStructure2015}, and molecular biology~\cite{hollingsworthMolecularDynamicsSimulation2018}.
 
     One of the core operations performed by an MD code is the evaluation of the interactions between each possible pair of particles.
     To improve on the naive $O(n^2)$ complexity of this operation it is common to separate the interactions of nearby particles, which must be handled individually, with those of more distant particles, which may be handled using agglomeration strategies such as the Ewald summation method or Fast Multipole Method (\cite{saundersDevelopmentPerformancePortableFramework2019}, ch.~4), or disregarded altogether.

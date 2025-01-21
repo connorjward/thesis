@@ -485,7 +485,7 @@ This process is summarised in \cref{fig:pyop2_codegen}.
 
 \subsubsection{Loopy}
 
-Loopy~\cite{klocknerLooPyTransformationbased2014}, a polyhedral-model-inspired code generation library written in Python, is the primary intermediate representation of \pyop2.
+Loopy~\cite{klocknerLoopyTransformationbasedCode2014}, a polyhedral-model-inspired code generation library written in Python, is the primary intermediate representation of \pyop2.
 Given a parallel loop, \pyop2 generates a loopy \pycode{LoopKernel} which is then lowered to C code and compiled.
 
 In order to construct a \pycode{LoopKernel} the user needs to provide \emph{domains} (loops), \emph{instructions}, and \emph{arguments} (data passed into the kernel).

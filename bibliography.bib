@@ -2798,22 +2798,15 @@
   file = {/home/connor/Obsidian/30 Literature notes/klocknerLooPyFortran2015 - Extracted Annotations (26052021, 113712)One salient feature of Loo.py is that programs written in it necessarily co.md;/home/connor/Obsidian/30 Literature notes/klocknerLooPyFortran2015 - Summary.md;/home/connor/Obsidian/30 Literature notes/klocknerLooPyFortran2015-zotero.md;/home/connor/Obsidian/30 Literature notes/klocknerLooPyFortran2015.md;/home/connor/Obsidian/30 Literature notes/Zotero/klocknerLooPyFortran2015 - Extracted Annotations (26052021, 113712)One salient feature of Loo.py is that programs written in it necessarily co.md;/home/connor/Obsidian/30 Literature notes/Zotero/klocknerLooPyFortran2015 - Summary.md;/home/connor/Obsidian/30 Literature notes/Zotero/klocknerLooPyFortran2015-zotero.md;/home/connor/OneDrive/AppData/Zotero/Klöckner_2015_Loo.pdf}
 }
 
-@article{klocknerLooPyTransformationbased2014,
+@inproceedings{klocknerLoopyTransformationbasedCode2014,
   title = {Loo.Py: Transformation-Based Code Generation for {{GPUs}} and {{CPUs}}},
-  shorttitle = {Loo.Py},
+  booktitle = {Proceedings of {{ARRAY}} `14: {{ACM SIGPLAN}} Workshop on Libraries, Languages, and Compilers for Array Programming},
   author = {Klöckner, Andreas},
   date = {2014},
-  journaltitle = {Proceedings of ACM SIGPLAN International Workshop on Libraries, Languages, and Compilers for Array Programming - ARRAY'14},
-  eprint = {1405.7470},
-  eprinttype = {arXiv},
-  pages = {82--87},
+  publisher = {Association for Computing Machinery},
+  location = {Edinburgh, Scotland.},
   doi = {10.1145/2627373.2627387},
-  url = {http://arxiv.org/abs/1405.7470},
-  urldate = {2020-10-14},
-  abstract = {Today’s highly heterogeneous computing landscape places a burden on programmers wanting to achieve high performance on a reasonably broad cross-section of machines. To do so, computations need to be expressed in many different but mathematically equivalent ways, with, in the worst case, one variant per target machine.},
-  langid = {english},
-  keywords = {gpu,loopy,opencl},
-  file = {/home/connor/Obsidian/30 Literature notes/klocknerLooPyTransformationbased2014 - Summary.md;/home/connor/Obsidian/30 Literature notes/klocknerLooPyTransformationbased2014-zotero.md;/home/connor/Obsidian/30 Literature notes/klocknerLooPyTransformationbased2014.md;/home/connor/Obsidian/30 Literature notes/Zotero/klocknerLooPyTransformationbased2014 - Summary.md;/home/connor/Obsidian/30 Literature notes/Zotero/klocknerLooPyTransformationbased2014-zotero.md;/home/connor/OneDrive/AppData/Zotero/Klöckner_2014_Loo.pdf}
+  file = {/home/connor/OneDrive/AppData/Zotero/Klöckner_2014_Loo.pdf}
 }
 
 @article{klocknerPyCUDAPyOpenCLScriptingbased2012,
@@ -3092,6 +3085,16 @@
   abstract = {The magnetohydrodynamics (MHD) equations are generally known to be difficult to solve numerically, due to their highly nonlinear structure and the strong coupling between the electromagnetic and hydrodynamic variables, especially for high Reynolds and coupling numbers. In this work, we present a scalable augmented Lagrangian preconditioner for a finite element discretization of the \$\textbackslash mathbf\{B\}\$-\$\textbackslash mathbf\{E\}\$ formulation of the incompressible viscoresistive MHD equations. For stationary problems, our solver achieves robust performance with respect to the Reynolds and coupling numbers in two dimensions and good results in three dimensions. We extend our method to fully implicit methods for time-dependent problems which we solve robustly in both two and three dimensions. Our approach relies on specialized parameter-robust multigrid methods for the hydrodynamic and electromagnetic blocks. The scheme ensures exactly divergence-free approximations of both the velocity and the magnetic field up to solver tolerances. We confirm the robustness of our solver by numerical experiments in which we consider fluid and magnetic Reynolds numbers and coupling numbers up to 10,000 for stationary problems and up to 100,000 for transient problems in two and three dimensions.},
   keywords = {Mathematics - Numerical Analysis},
   file = {/home/connor/OneDrive/AppData/Zotero/Laakmann et al_2021_An augmented Lagrangian preconditioner for the magnetohydrodynamics equations.pdf;/home/connor/.local/share/zotero/storage/2CAN4B87/2104.html}
+}
+
+@article{LAMMPS,
+  title = {{{LAMMPS}} - a Flexible Simulation Tool for Particle-Based Materials Modeling at the Atomic, Meso, and Continuum Scales},
+  author = {Thompson, A. P. and Aktulga, H. M. and Berger, R. and Bolintineanu, D. S. and Brown, W. M. and Crozier, P. S. and family=Veld, given=P. J., prefix=in 't, useprefix=true and Kohlmeyer, A. and Moore, S. G. and Nguyen, T. D. and Shan, R. and Stevens, M. J. and Tranchida, J. and Trott, C. and Plimpton, S. J.},
+  date = {2022},
+  journaltitle = {Comp. Phys. Comm.},
+  volume = {271},
+  pages = {108171},
+  doi = {10.1016/j.cpc.2021.108171}
 }
 
 @inproceedings{lamReordering1997,
@@ -4389,18 +4392,15 @@
   file = {/home/connor/.local/share/zotero/storage/BSPWSQEU/Scroggs et al. - 2022 - Basix a runtime finite element basis evaluationli.pdf}
 }
 
-@unpublished{scroggsConstructionArbitraryOrder2021,
+@article{scroggsConstructionArbitraryOrder2021,
   title = {Construction of Arbitrary Order Finite Element Degree-of-Freedom Maps on Polygonal and Polyhedral Cell Meshes},
-  author = {Scroggs, Matthew W. and Dokken, Jørgen S. and Richardson, Chris N. and Wells, Garth N.},
-  date = {2021-03-23},
-  eprint = {2102.11901},
-  eprinttype = {arXiv},
-  eprintclass = {cs, math},
-  url = {http://arxiv.org/abs/2102.11901},
-  urldate = {2021-06-29},
-  abstract = {We develop an approach to generating degree-of-freedom maps for arbitrary order finite element spaces for any cell shape. The approach is based on the composition of permutations and transformations by cell sub-entity. Current approaches to generating degree-of-freedom maps for arbitrary order problems typically rely on a consistent orientation of cell entities that permits the definition of a common local coordinate system on shared edges and faces. However, while orientation of a mesh is straightforward for simplex cells and is a local operation, it is not a strictly local operation for quadrilateral cells and in the case of hexahedral cells not all meshes are orientable. The permutation and transformation approach is developed for a range of element types, including Lagrange, and divergence- and curl-conforming elements, and for a range of cell shapes. The approach is local and can be applied to cells of any shape, including general polytopes and meshes with mixed cell types. A number of examples are presented and the developed approach has been implemented in an open-source finite element library.},
-  langid = {english},
-  keywords = {basix,orientation},
+  author = {Scroggs, Matthew W and Dokken, Jørgen S and Richardson, Chris N and Wells, Garth N},
+  date = {2022},
+  journaltitle = {ACM Transactions on Mathematical Software (TOMS)},
+  volume = {48},
+  number = {2},
+  pages = {1--23},
+  publisher = {ACM New York, NY},
   file = {/home/connor/.local/share/zotero/storage/Q88KF2MX/Scroggs et al. - 2021 - Construction of arbitrary order finite element deg.pdf}
 }
 
@@ -4723,6 +4723,24 @@
   pages = {227},
   langid = {english},
   file = {/home/connor/.local/share/zotero/storage/7PTEBG2Y/Uphoff - Flexible model extension and optimisation for eart.pdf}
+}
+
+@article{vangunsterenComputerSimulationMolecular1990,
+  title = {Computer {{Simulation}} of {{Molecular Dynamics}}: {{Methodology}}, {{Applications}}, and {{Perspectives}} in {{Chemistry}}},
+  shorttitle = {Computer {{Simulation}} of {{Molecular Dynamics}}},
+  author = {Van Gunsteren, Wilfred F. and Berendsen, Herman J. C.},
+  date = {1990-09},
+  journaltitle = {Angewandte Chemie International Edition in English},
+  shortjournal = {Angew. Chem. Int. Ed. Engl.},
+  volume = {29},
+  number = {9},
+  pages = {992--1023},
+  issn = {0570-0833},
+  doi = {10.1002/anie.199009921},
+  url = {https://onlinelibrary.wiley.com/doi/10.1002/anie.199009921},
+  urldate = {2025-01-21},
+  abstract = {Abstract                            During recent decades it has become feasible to simulate the dynamics of molecular systems on a computer. The method of molecular dynamics (MD) solves               Newton's               equations of motion for a molecular system, which results in trajectories for all atoms in the system. From these atomic trajectories a variety of properties can be calculated. The aim of computer simulations of molecular systems is to compute               macroscopic               behavior from               microscopic               interactions. The main contributions a microscopic consideration can offer are (1) the understanding and (2) interpretation of experimental results, (3) semiquantitative estimates of experimental results, and (4) the capability to interpolate or extrapolate experimental data into regions that are only difficultly accessible in the laboratory. One of the two basic problems in the field of molecular modeling and simulation is how to efficiently search the vast configuration space which is spanned by all possible molecular conformations for the global low (free) energy regions which will be populated by a molecular system in thermal equilibrium. The other basic problem is the derivation of a sufficiently accurate interaction energy function or force field for the molecular system of interest. An important part of the art of computer simulation is to choose the unavoidable assumptions, approximations and simplifications of the molecular model and computational procedure such that their contributions to the overall inaccuracy are of comparable size, without affecting significantly the property of interest. Methodology and some practical applications of computer simulation in the field of (bio)chemistry will be reviewed.                        ,                                              At least 10                 9                 hours of computing time on a powerful computer                              would be required to perform an exact computer simulation of protein folding over one‐tenth of a second. Despite this discouraging fact, molecular dynamics (MD) simulations have proved extremely useful over the past years, especially when it was necessary to calculate the macroscopic behavior of microscopic/molecular interactions. A fundamental problem in the simulation of molecular systems involves the vast conformational space spanned by all molecular conformations. It is extremely difficult to carry out an efficient search for those regions of global low free energy that are populated at thermal equilibrium. The methodological basis of MD simulations is explained in detail and several (bio)chemical applications are discussed.},
+  langid = {english}
 }
 
 @article{vankaBlockimplicitMultigridSolution1986,
