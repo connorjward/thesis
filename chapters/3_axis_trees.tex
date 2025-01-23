@@ -36,6 +36,14 @@ When constructing an axis tree there are a number of important constraints to co
 
 \subsubsection{Example 1: Linear axis trees}
 
+As a first example to demonstrate axis trees we consider the simplest case: \emph{linear} axis trees.
+Linear axis trees are defined as being axis trees where all of the axes have a single component.
+They are equivalent to N-dimensional arrays in \numpy{}.
+
+An example of a linear axis tree is shown in \cref{fig:linear_axis_tree}.
+Consisting of 3 axes labelled $a$, $b$, and $c$, it is equivalent to a \numpy{} array with shape \pycode{(2, 3, 2)} with axis $a$ of the axis tree matching axis 0 of the \numpy{} array and so on.
+Each axis has a single component, all labelled $x$, with sizes 2, 3, and 2.
+
 \begin{figure}
   \centering
   \begin{subfigure}{.9\textwidth}
@@ -67,13 +75,7 @@ When constructing an axis tree there are a number of important constraints to co
   \label{fig:linear_axis_tree}
 \end{figure}
 
-As a first example to demonstrate axis trees we consider the simplest case: \emph{linear} axis trees.
-Linear axis trees are defined as being axis trees where all of the axes have a single component.
-They are equivalent to N-dimensional arrays in \numpy{}.
 
-An example of a linear axis tree is shown in \cref{fig:linear_axis_tree}.
-Consisting of 3 axes labelled $a$, $b$, and $c$, it is equivalent to a \numpy{} array with shape \pycode{(2, 3, 2)} with axis $a$ of the axis tree matching axis 0 of the \numpy{} array and so on.
-Each axis has a single component, all labelled $x$, with sizes 2, 3, and 2.
 
 Some noteworthy features of this axis tree include:
 \begin{itemize}

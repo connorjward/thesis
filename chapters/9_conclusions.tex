@@ -192,6 +192,15 @@ By providing a higher level of abstraction for data structures - \pycode{Globals
 
 \subsubsection{Communication optimisations}
 
+In some circumstances the DoF star forests encapsulating the overlap between adjacent processes (\cref{sec:parallel_star_forests}) are suboptimal.
+Depending on the stencil being applied, some or all of the ghost data may not need to be transferred.
+
+One example where this is occurs is with cell-wise assembly loops for discontinuous Galerkin (DG) finite element methods.
+Since DG methods involve integration over facets (\cref{sec:firedrake_facet_integration}), the mesh overlap between processes must be large enough for the correct macro cells to exist.
+This is suboptimal for cell-wise assembly loops because the overlap is now larger than necessary: the extra DoFs in the overlap will never be modified and so they do not need to be communicated.
+An example demonstrating this is shown in \cref{fig:dg_minimal_exchange}; the ghost DoFs (hollow circles) are never touched by the stencil and so their values do not need to be exchanged.
+This is especially a problem at high order, where the number of redundantly transferred DoFs can be very large.
+
 \begin{figure}
   \centering
   \includegraphics[scale=2]{dg_minimal_exchange.pdf}
@@ -202,15 +211,6 @@ By providing a higher level of abstraction for data structures - \pycode{Globals
   }
   \label{fig:dg_minimal_exchange}
 \end{figure}
-
-In some circumstances the DoF star forests encapsulating the overlap between adjacent processes (\cref{sec:parallel_star_forests}) are suboptimal.
-Depending on the stencil being applied, some or all of the ghost data may not need to be transferred.
-
-One example where this is occurs is with cell-wise assembly loops for discontinuous Galerkin (DG) finite element methods.
-Since DG methods involve integration over facets (\cref{sec:firedrake_facet_integration}), the mesh overlap between processes must be large enough for the correct macro cells to exist.
-This is suboptimal for cell-wise assembly loops because the overlap is now larger than necessary: the extra DoFs in the overlap will never be modified and so they do not need to be communicated.
-An example demonstrating this is shown in \cref{fig:dg_minimal_exchange}; the ghost DoFs (hollow circles) are never touched by the stencil and so their values do not need to be exchanged.
-This is especially a problem at high order, where the number of redundantly transferred DoFs can be very large.
 
 In order to fix this, one needs to have \emph{per-loop} parallel exchange behaviour.
 This is possible to represent in \pyop3 because it is aware of the parallel communication patterns.

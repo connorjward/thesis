@@ -38,6 +38,8 @@ This thesis aims to bridge this divide by developing a novel suite of abstractio
 Unlike existing approaches, the abstractions are fully capable of describing complex data layouts without losing essential structural information.
 This allows for an expressive, composable interface suitable for representing a wider range of algorithms.
 
+\pagebreak
+
 \section{Contributions}
 \label{sec:intro_contributions}
 
@@ -92,8 +94,9 @@ The work described in this thesis has been presented at the following workshops 
     Firedrake24 workshop, September 2024, Oxford, UK.
 \end{itemize}
 Seeking publication for this work in a journal is a high-priority future task.
-The article would focus on the enhanced capabilities of \pyop3 compared to existing frameworks such as \pyop2, and the sorts of new numerical methods and low-level transformations that are now available.
+The article would focus on how, compared with existing approaches, the new abstractions are better able to represent the complexity inherent in unstructured mesh data, and as such are suitable for a wider range of applications, as well as facilitate a number of non-trivial performance optimisations.
 
+\pagebreak
 
 \section{Thesis outline}
 
@@ -214,7 +217,7 @@ With this split we may then rewrite the function $u$ as the sum of the functions
 \end{equation}
 
 $u_\Gamma$ is prescribed by the boundary condition and hence known.
-This allows us to move it to the right hand side of \cref{eq:weak_stokes_no_surface_terms} giving the new formulation: find $(u_0, p) \in V_0 \times Q$ such that
+This allows us to move it to the right hand side of \cref{eq:weak_stokes_no_surface_terms} giving the new formulation: find ${(u_0, p) \in V_0 \times Q}$ such that
 \begin{equation} \label{eq:weak_stokes}
   \begin{aligned}
     \int \nu \nabla u_0 : \nabla v \, \textrm{d}\Omega
@@ -672,6 +675,7 @@ Liszt has support for shared-memory, distributed-parallel, and GPU backends wher
   \centering
 
   \small
+  \resizebox{\textwidth}{!}{
   \begin{tblr}{|[1pt]l|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]c|[1pt]}
     \hline[1pt]
     & \textbf{Liszt} & \textbf{Simit} & \textbf{Ebb} & \textbf{MeshTaichi} & \textbf{OP2} & \textbf{\pyop2} & \textbf{\pyop3} \\
@@ -686,7 +690,7 @@ Liszt has support for shared-memory, distributed-parallel, and GPU backends wher
     \hline[1pt]
     Actively maintained & \mycross & \mycross & \mycross & \mytick & \mytick & \mytick & \mytick \\
     \hline[1pt]
-  \end{tblr}
+  \end{tblr}}
   \normalsize
   \caption{
     Comparison of the features of \pyop3 with pre-existing mesh stencil packages.

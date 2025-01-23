@@ -72,9 +72,10 @@ These alternative representations for the same array are termed \emph{views}.
 \label{sec:numpy_indexing_arrays}
 
 \begin{table}
+  \resizebox{\textwidth}{!}{
   \begin{tblr}{|[1pt]l|[1pt]l|[1pt]l|[1pt]l|[1pt]}
     \hline[1pt]
-    \textbf{Index operation} & \textbf{Example} & \textbf{Return value} & \textbf{Array return type} \\
+    \textbf{Index operation} & \textbf{Example} & \textbf{Return value} & \textbf{Return type} \\
     \hline[1pt]
     Single element indexing & \pycode{array[1]} & \pycode{"B"} & N/A \\
     \hline[1pt]
@@ -82,7 +83,7 @@ These alternative representations for the same array are termed \emph{views}.
     \hline[1pt]
     Integer array indexing & \pycode{array[[0, 3, 4]]} & \pycode{["A", "D", "E"]} & Copy \\
     \hline[1pt]
-  \end{tblr}
+  \end{tblr}}
   \caption{
     Important indexing operations for \numpy{} arrays.
     The examples shown apply the index to the string array \pycode{["A", "B", "C", "D", "E", "F"]} (called \pycode{array} above).
@@ -371,6 +372,14 @@ Observe that, since the DoFs are associated with multiple mesh entities, data ar
 \subsection{Parallel loops}
 \label{sec:pyop2_parallel}
 
+In order to apply kernels to these data structures, a \emph{parallel loop} is constructed and executed.
+The loop takes as arguments a \emph{local kernel}, \emph{iteration set} and any number of \emph{arguments} that specify the pack/unpack instructions needed to prepare data for the local kernel.
+Constructing a parallel loop requires an invocation like that shown in \cref{listing:pyop2_parloop_demo}.
+\pycode{kernel} is the local kernel representing the stencil operation to be performed per iteration, \pycode{src_set} is the set that is iterated over (termed the \emph{iteration set}), and \pycode{dat0} and \pycode{dat1} are \pycode{Dat} objects that are passed through to the local kernel.
+\pycode{kernel} may be either a string of C code or a \emph{loopy kernel} (see \cref{sec:pyop2_codegen}).
+Both \pycode{Dats} associate data with some \pycode{target_set} and hence are addressed with a map relating these sets (\pycode{src_to_target_map}).
+\pycode{dat0} is accessed using the \pycode{READ} access descriptor, meaning that it only needs to be packed and passed into the local kernel, whereas \pycode{dat1} is accessed with \pycode{WRITE}, so it only requires unpacking.
+
 \begin{listing}
   \centering
   \caption{Code to construct and execute a \pyop2 parallel loop.}
@@ -385,16 +394,24 @@ Observe that, since the DoFs are associated with multiple mesh entities, data ar
   \label{listing:pyop2_parloop_demo}
 \end{listing}
 
-In order to apply kernels to these data structures, a \emph{parallel loop} is constructed and executed.
-The loop takes as arguments a \emph{local kernel}, \emph{iteration set} and any number of \emph{arguments} that specify the pack/unpack instructions needed to prepare data for the local kernel.
-Constructing a parallel loop requires an invocation like that shown in \cref{listing:pyop2_parloop_demo}.
-\pycode{kernel} is the local kernel representing the stencil operation to be performed per iteration, \pycode{src_set} is the set that is iterated over (termed the \emph{iteration set}), and \pycode{dat0} and \pycode{dat1} are \pycode{Dat} objects that are passed through to the local kernel.
-\pycode{kernel} may be either a string of C code or a \emph{loopy kernel} (see \cref{sec:pyop2_codegen}).
-Both \pycode{Dats} associate data with some \pycode{target_set} and hence are addressed with a map relating these sets (\pycode{src_to_target_map}).
-\pycode{dat0} is accessed using the \pycode{READ} access descriptor, meaning that it only needs to be packed and passed into the local kernel, whereas \pycode{dat1} is accessed with \pycode{WRITE}, so it only requires unpacking.
 
 \subsubsection{Interleaving computation and communication}
 \label{sec:pyop2_interleave}
+
+By keeping careful track of the parallel decomposition of sets, \pyop2 is capable of interleaving computation and communication when executing parallel loops.
+To do so each set is split, by the user, into 3 parts:
+\begin{description}
+  \item[\coreiter{}]
+    Set elements that do not require any data from other processes during a parallel loop.
+  \item[\ownediter{}]
+    Set elements that are owned by the current process but require data from other processes.
+  \item[\ghostiter{}]
+    Set elements present on a process that belong to another process.
+\end{description}
+From this partitioning it is possible to interleave computation and communication.
+Computations over \coreiter{} points do not read any ghost data, and hence can be executed without waiting for any communication to complete, whereas \ownediter{} points need valid ghost data and so must wait for all communication to be completed before beginning.
+This is shown in \cref{alg:pyop2_comp_comm_overlap}.
+\ghostiter{} points are not iterated over.
 
 \begin{algorithm}
   \caption{The \pyop2 parallel loop execution algorithm to interleave computation and communication.}
@@ -415,20 +432,6 @@ Both \pycode{Dats} associate data with some \pycode{target_set} and hence are ad
   \label{alg:pyop2_comp_comm_overlap}
 \end{algorithm}
 
-By keeping careful track of the parallel decomposition of sets, \pyop2 is capable of interleaving computation and communication when executing parallel loops.
-To do so each set is split, by the user, into 3 parts:
-\begin{description}
-  \item[\coreiter{}]
-    Set elements that do not require any data from other processes during a parallel loop.
-  \item[\ownediter{}]
-    Set elements that are owned by the current process but require data from other processes.
-  \item[\ghostiter{}]
-    Set elements present on a process that belong to another process.
-\end{description}
-From this partitioning it is possible to interleave computation and communication.
-Computations over \coreiter{} points do not read any ghost data, and hence can be executed without waiting for any communication to complete, whereas \ownediter{} points need valid ghost data and so must wait for all communication to be completed before beginning.
-This is shown in \cref{alg:pyop2_comp_comm_overlap}.
-\ghostiter{} points are not iterated over.
 
 To facilitate this algorithm, \pyop2 arranges sets, and thus stores data, in a partitioned manner, where \coreiter{} points precede all \ownediter{} points and all \ownediter{} precede all \ghostiter{} points:
 \begin{center}
